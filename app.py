@@ -667,7 +667,8 @@ with aba4:
             st.error(
                 f"🔴 {n_absurdos} ABSURDO(S) MANIFESTO(S) — "
                 "o texto perdeu completamente o sentido normativo. "
-                "A CCJ **deve** intervir com ofício justificado (art. 250, §1º RI)."
+                "**A CCJ NÃO deve oferecer Redação Final** — deve propor reabertura da discussão "
+                "(art. 250, **§2º** RI)."
             )
             for al in alertas:
                 st.markdown(f"> 🔴 {al}")
@@ -722,11 +723,17 @@ with aba5:
     else:
         res = st.session_state.resultado_harm
 
-        if res.erros_criticos:
+        _alertas_aba5 = getattr(res, 'alertas_absurdos', [])
+        _bloqueado    = bool(res.erros_criticos or _alertas_aba5)
+        if _bloqueado:
+            n_bloq = len(res.erros_criticos) + len(_alertas_aba5)
             st.error(
-                "⚠️ Há erros críticos! Verifique a aba de Harmonização. "
-                "O art. 250, §2º do RI determina que, nesse caso, a CCJ deve propor "
-                "a reabertura da discussão em vez de oferecer redação final."
+                f"🚫 **REDAÇÃO FINAL BLOQUEADA** — {n_bloq} problema(s) de §2º detectado(s). "
+                "O art. 250, **§2º** RI determina que, havendo incoerência notória, contradição "
+                "evidente ou manifesto absurdo, a CCJ **não deve oferecer Redação Final** e deve "
+                "propor reabertura da discussão.  \n"
+                "O texto abaixo é um **rascunho de trabalho** para diagnóstico — não é uma "
+                "Redação Final formal."
             )
 
         st.subheader("📄 Texto Harmonizado")

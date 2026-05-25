@@ -219,23 +219,48 @@ def exportar_redacao_final_docx(
 
     doc.add_paragraph()
 
+    # Determina se §2º bloqueia a Redação Final formal
+    _alertas_norm = alertas_absurdos or []
+    _erros_norm   = erros or []
+    tem_sec_2     = bool(_erros_norm or _alertas_norm)
+
+    if tem_sec_2:
+        titulo_doc = "RASCUNHO DE TRABALHO — NÃO É REDAÇÃO FINAL"
+    else:
+        titulo_doc = tipo_redacao.upper()
+
     tipo_rdz_p = doc.add_paragraph()
     tipo_rdz_p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    run = tipo_rdz_p.add_run(tipo_redacao.upper())
-    run.bold = True
-    run.font.size = Pt(14)
+    run_titulo = tipo_rdz_p.add_run(titulo_doc)
+    run_titulo.bold = True
+    run_titulo.font.size = Pt(14)
+    if tem_sec_2:
+        run_titulo.font.color.rgb = RGBColor(0xC0, 0x00, 0x00)
+
+    if tem_sec_2:
+        p_bloq = doc.add_paragraph()
+        p_bloq.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        r_bloq = p_bloq.add_run(
+            "bloqueado — erros críticos ou absurdos manifestos detectados (art. 250, §2º RI)"
+        )
+        r_bloq.italic = True
+        r_bloq.font.size = Pt(10)
+        r_bloq.font.color.rgb = RGBColor(0xC0, 0x00, 0x00)
 
     if nome_projeto:
-        nome_com_sufixo = _aplicar_sufixo_a(nome_projeto)
+        # Sufixo -A só na Redação Final/Vencido formal (sem §2º)
+        nome_doc = _aplicar_sufixo_a(nome_projeto) if not tem_sec_2 else nome_projeto
         p_proj = doc.add_paragraph()
         p_proj.alignment = WD_ALIGN_PARAGRAPH.CENTER
-        p_proj.add_run(nome_com_sufixo).bold = True
+        p_proj.add_run(nome_doc).bold = True
 
     doc.add_paragraph(f"Elaborada em {datetime.date.today().strftime('%d/%m/%Y')}")
     doc.add_paragraph()
 
-    # ── Texto harmonizado ──
-    for linha in texto.split('\n'):
+    # ── Texto harmonizado (marcadores inline de trabalho são removidos do DOCX) ──
+    _marker_re  = re.compile(r'\s*\[\[⚠️ CCJ:[^\]]*\]\]', re.UNICODE)
+    texto_limpo = _marker_re.sub('', texto)
+    for linha in texto_limpo.split('\n'):
         p = doc.add_paragraph(linha)
         # Artigos em negrito
         if re.match(r'\s*Art\.\s*\d+', linha):

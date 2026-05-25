@@ -328,25 +328,23 @@ D3. Números e percentuais (LC 48/2000, art. 10, II, f — LC 51/2001):
 BLOCO E — AVISOS E ERROS CRÍTICOS (art. 250, §§ 1º e 2º, RI)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-E1. AVISOS — duas categorias distintas:
+E1. AVISOS (art. 250, §1º RI) — APONTE o problema, NÃO corrija automaticamente:
+    O texto aprovado pelo Plenário é incorporado EXATAMENTE como aprovado, inclusive seus erros.
+    A CCJ decidirá, por ofício com ampla justificativa, se e como corrigirá cada item.
+    Para cada aviso: "⚠ Emenda N / Art. Xº: [descrição precisa do problema] — texto preservado
+    como aprovado; correção depende de ofício da CCJ (art. 250, §1º RI)"
 
-    E1a. CORREÇÕES AUTOMÁTICAS PERMITIDAS (erros objetivos de língua) — com registro obrigatório:
-    É PERMITIDO corrigir automaticamente erros de ortografia ou concordância gramatical
-    objetivos (ex: "serão aplicada" → "serão aplicadas") desde que a correção NÃO altere o
-    sentido jurídico. Para cada correção, registre no <AVISOS>:
-      "✏️ CORRIGIDO AUTOMATICAMENTE — Emenda N / Art. Xº: [texto original] → [texto corrigido]"
-    NUNCA escreva "preservado como aprovado" para texto que foi efetivamente corrigido.
-    NUNCA corrija se houver qualquer dúvida sobre interpretação — nesse caso, classifique
-    como aviso sem correção.
-
-    E1b. APONTE SEM CORRIGIR (art. 250, §1º RI) — registre como aviso:
-    — Violação das regras de pontuação do Bloco C nas emendas aprovadas (ex: inciso
-      terminando em ponto quando deveria ser ponto e vírgula)
+    Situações que geram aviso (nunca corrija automaticamente):
+    — Erro de ortografia ou concordância nominal/verbal (ex: "serão aplicada"; "Depósitos" com
+      inicial maiúscula em posição que exige minúscula)
+    — Violação das regras de pontuação do Bloco C (ex: inciso terminando com ponto quando
+      deveria ser ponto e vírgula; penúltimo inciso sem "; e")
     — Uso de "anterior" ou "seguinte" sem especificação do dispositivo
     — Referência a dispositivo suprimido por outra emenda (quando não gera absurdo manifesto)
     — "Parágrafo único" onde há mais de um parágrafo (ou vice-versa)
     — Técnica redacional imprópria que não comprometa o sentido jurídico
     — Inconsistência de tempo verbal entre dispositivos da mesma lei
+    — Conjunção coordenativa faltante na penúltima alínea ou inciso
 
 E2. ERROS CRÍTICOS — não tente resolver, sinalize para reabertura (art. 250, §2º RI):
     — Duas emendas aprovadas que se contradizem diretamente sobre o mesmo dispositivo
@@ -354,13 +352,17 @@ E2. ERROS CRÍTICOS — não tente resolver, sinalize para reabertura (art. 250,
     — Supressão e modificação simultânea do mesmo artigo por emendas distintas
     — Resultado que gera absurdo jurídico manifesto insanável sem alterar teor
 
-E3. ALERTA DE ABSURDO MANIFESTO — intervenção obrigatória da CCJ (art. 250, §1º RI):
-    — Use SOMENTE quando o texto, após a emenda, tornar-se tecnicamente ininteligível por
-      razão exclusivamente formal, sem qualquer leitura possível que preserve a vontade legislativa
-    — Exemplo típico: dispositivo que remete exclusivamente a artigo integralmente suprimido
-      por outra emenda, tornando o próprio dispositivo vazio de qualquer sentido normativo
-    — Diferente do Erro Crítico: aqui a ininteligibilidade é formal (não há conflito entre emendas,
-      mas o resultado é incompreensível); a CCJ deve corrigir com ofício amplo (art. 250, §1º RI)
+E3. ALERTA DE ABSURDO MANIFESTO (art. 250, §2º RI — CCJ NÃO oferece Redação Final):
+    — Use quando o texto, após aplicação das emendas, tornar-se ininteligível OU criar dúvida
+      inequívoca sobre a vontade legislativa por razão formal
+    — Exemplos típicos:
+        · Dispositivo que remete EXCLUSIVAMENTE a artigo integralmente suprimido por outra emenda
+        · "nos termos do artigo anterior" onde o artigo anterior passou a ter conteúdo incompatível
+        · Condição normativa que referencia parágrafo tornado inexistente por emenda supressiva
+    — Diferença com E2 (Erro Crítico): E2 = duas emendas conflitam entre si; E3 = uma emenda,
+      ao interagir com outra supressiva, produz dispositivo formalmente absurdo ou sem sentido
+    — Em AMBOS os casos (E2 e E3): a CCJ NÃO DEVE oferecer Redação Final; deve propor
+      REABERTURA DA DISCUSSÃO (art. 250, §2º RI) — não resolve por ofício
     — Use com extrema parcimônia — na dúvida, classifique como ⚠ AVISO
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -406,8 +408,9 @@ O texto do dispositivo permanece exatamente como aprovado — apenas acrescente 
 </ERROS_CRITICOS>
 
 <ALERTAS_ABSURDOS>
-[Use SOMENTE para absurdo manifesto técnico — casos muito raros. Formato: "🔴 Emenda N / Art. Xº: descrição"]
-[A CCJ deve corrigir com ofício amplamente justificado (art. 250, §1º RI).]
+[Use SOMENTE para absurdo manifesto ou ininteligibilidade formal — casos muito raros.]
+[Formato: "🔴 Emenda N / Art. Xº: descrição precisa do absurdo"]
+[A CCJ NÃO DEVE oferecer Redação Final; deve propor reabertura da discussão (art. 250, §2º RI).]
 [Na dúvida, classifique como AVISO. Escreva "Nenhum." se não houver.]
 </ALERTAS_ABSURDOS>
 
