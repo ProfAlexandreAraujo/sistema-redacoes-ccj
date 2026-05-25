@@ -281,12 +281,14 @@ def exportar_redacao_final_docx(
         doc.add_paragraph()
 
         if alertas_absurdos:
-            h3 = doc.add_heading('🔴 ABSURDO MANIFESTO — INTERVENÇÃO OBRIGATÓRIA DA CCJ', level=3)
+            h3 = doc.add_heading('🔴 ABSURDO MANIFESTO — REABERTURA DA DISCUSSÃO (art. 250, §2º, RI)', level=3)
             h3.runs[0].font.color.rgb = RGBColor(0xC0, 0x00, 0x00)
             doc.add_paragraph(
-                "Os itens abaixo tornaram o texto tecnicamente ininteligível por razão "
-                "exclusivamente formal. A CCJ deve corrigir com ofício amplamente justificado "
-                "(art. 250, §1º, RI)."
+                "Os itens abaixo configuram incoerência notória, contradição evidente ou "
+                "manifesto absurdo capaz de gerar dúvida quanto à vontade legislativa. "
+                "Nos termos do art. 250, §2º, do Regimento Interno, a CCJ deverá "
+                "eximir-se de oferecer Redação Final e propor, em parecer, a reabertura "
+                "da discussão quanto aos aspectos indicados."
             )
             for al in alertas_absurdos:
                 doc.add_paragraph(f"🔴  {al}", style='List Bullet')
@@ -304,8 +306,10 @@ def exportar_redacao_final_docx(
         if avisos:
             doc.add_heading('⚠️ Avisos redacionais (art. 250, §1º, RI)', level=3)
             doc.add_paragraph(
-                "Os itens abaixo foram preservados exatamente como aprovados. "
-                "Correção possível mediante ofício justificado (art. 250, §1º, RI)."
+                "Os itens abaixo compreendem correções de linguagem incorporadas à minuta "
+                "(registradas no log para formalização pela CCJ) ou impropriedades apontadas "
+                "sem alteração do texto aprovado — em ambos os casos, observada a "
+                "formalização prevista no art. 250, §1º, do Regimento Interno."
             )
             for a in avisos:
                 doc.add_paragraph(f"⚠  {a}", style='List Bullet')
@@ -347,7 +351,7 @@ def exportar_relatorio_problemas_txt(
     ]
     alertas_absurdos = alertas_absurdos or []
     if alertas_absurdos:
-        linhas += ["", "🔴 ABSURDO MANIFESTO — INTERVENÇÃO OBRIGATÓRIA DA CCJ (art. 250 §1º RI):", "-" * 50]
+        linhas += ["", "🔴 ABSURDO MANIFESTO — REABERTURA DA DISCUSSÃO (art. 250, §2º, RI):", "-" * 50]
         linhas += [f"  🔴 {al}" for al in alertas_absurdos]
     if erros:
         linhas += ["", "🚨 ERROS CRÍTICOS (podem exigir reabertura — art. 250 §2º RI):", "-" * 50]

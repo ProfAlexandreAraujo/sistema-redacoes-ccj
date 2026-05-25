@@ -207,6 +207,30 @@ if _DOCX_OK:
             any("17-A/2026" in t for t in txts_b))
     except Exception as e:
         chk("DOCX sem §2º", False, str(e))
+
+    # 7c — Texto de absurdo manifesto menciona §2º e reabertura (não §1º)
+    try:
+        chk("Absurdo no DOCX menciona §2º (não §1º)",
+            any("§2" in t and ("reabertura" in t.lower() or "eximir" in t.lower())
+                for t in txts_a))
+        chk("Absurdo no DOCX NÃO menciona ofício §1º",
+            not any("§1" in t and "ofício" in t.lower() for t in txts_a))
+    except Exception as e:
+        chk("7c — fundamentação §2º no DOCX", False, str(e))
+
+    # 7d — Seção de avisos não afirma que textos foram "preservados exatamente"
+    try:
+        docx_e1 = exportar_redacao_final_docx(
+            texto="Art. 1º Texto.",
+            nome_projeto="PLC 17/2026",
+            avisos=["⚠ E1 / Art. 1º: corrigido — 'serão aplicada' → 'serão aplicadas'"],
+            erros=[], alertas_absurdos=[],
+        )
+        txts_e1 = [p.text for p in Document(BytesIO(docx_e1)).paragraphs]
+        chk("Avisos com E1: seção NÃO diz 'preservados exatamente como aprovados'",
+            not any("preservados exatamente como aprovados" in t for t in txts_e1))
+    except Exception as e:
+        chk("7d — texto avisos E1", False, str(e))
 else:
     print("  ⏭  DOCX — python-docx não disponível, pulando")
 
