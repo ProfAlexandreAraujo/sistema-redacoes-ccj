@@ -264,17 +264,21 @@ Para cada emenda, identifique:
 - tipo: "Modificativa" | "Supressiva" | "Aditiva" | "Substitutiva" | "Aglutinativa" | "Outro"
 - alvo: dispositivo afetado (ex: "Art. 5º", "Art. 10, §3º", "Inciso II do Art. 7º", "Anexo I", etc.) ou null
 - novo_texto: para Modificativa/Aditiva/Substitutiva, o texto novo a ser inserido; null para Supressiva
+- texto_bruto: texto integral original da emenda EXATAMENTE como aparece no documento, sem omissão
 - autor: nome do vereador autor, se mencionado; null caso contrário
 - notas: observações relevantes (ex: emenda está incompleta, referência ambígua, etc.) ou null
 
 Responda SOMENTE com JSON válido no formato:
 {{"emendas": [
-  {{"numero": 1, "tipo": "Modificativa", "alvo": "Art. 5º", "novo_texto": "...", "autor": "Fulano", "notas": null}},
+  {{"numero": 1, "tipo": "Modificativa", "alvo": "Art. 5º", "novo_texto": "...", "texto_bruto": "Emenda nº 1 — ...", "autor": "Fulano", "notas": null}},
+  {{"numero": 2, "tipo": "Supressiva",   "alvo": "Art. 4º", "novo_texto": null,  "texto_bruto": "Emenda nº 2 — Suprima-se o Art. 4º", "autor": null, "notas": null}},
   ...
 ]}}
 
 TEXTO DAS EMENDAS:
 {chunk}"""
+
+        n_antes = len(todas_emendas)   # para corrigir offset ao final do lote
 
         try:
             with client.messages.stream(
@@ -292,9 +296,16 @@ TEXTO DAS EMENDAS:
 
             for item in data.get("emendas", []):
                 tipo_map = {t.value: t for t in TipoEmenda}
+                # texto_bruto: preferir campo explícito; fallback para novo_texto ou
+                # para o texto do item como string (nunca vazio para emendas supressivas)
+                texto_bruto = (
+                    item.get("texto_bruto")
+                    or item.get("novo_texto")
+                    or f"[Emenda {item.get('numero', '?')} — {item.get('tipo', '')} | {item.get('alvo', '')}]"
+                )
                 e = Emenda(
                     numero      = item.get("numero", offset + len(todas_emendas) + 1),
-                    texto_bruto = item.get("novo_texto") or "",
+                    texto_bruto = texto_bruto,
                     tipo        = tipo_map.get(item.get("tipo") or "", TipoEmenda.OUTRO),
                     alvo        = item.get("alvo"),
                     novo_texto  = item.get("novo_texto"),
@@ -315,7 +326,7 @@ TEXTO DAS EMENDAS:
                         notas_parse="Parsing automático falhou — revisar manualmente"
                     ))
 
-        offset += len(todas_emendas)
+        offset += len(todas_emendas) - n_antes   # incrementa só o lote atual
 
     # Garante unicidade e ordenação por número
     todas_emendas.sort(key=lambda e: e.numero)

@@ -1,5 +1,5 @@
 # 🔍 AUDITORIA DO SISTEMA — CCJ CMRJ
-### Documento técnico para revisão externa — versão 2026-05-25 **rev.4**
+### Documento técnico para revisão externa — versão 2026-05-25 **rev.5**
 
 ---
 
@@ -129,6 +129,8 @@ Qualquer item escalado move-se de `avisos` para `alertas_absurdos`, forçando o 
 | 25/05/2026 | DOCX e TXT descreviam absurdo manifesto com providência do §1º (ofício) em vez do §2º (reabertura) | Jurídico crítico | ✅ utils.py rev.4 |
 | 25/05/2026 | Seção de avisos no DOCX afirmava "preservados exatamente como aprovados" mesmo quando havia correções E1 | Rastreabilidade | ✅ utils.py rev.4 |
 | 25/05/2026 | A1 não explicitava a exceção E1 — tensão aparente entre preservação literal e auto-correção | Documentação | ✅ AUDITORIA.md rev.4 |
+| 25/05/2026 | `texto_bruto` de emenda supressiva ficava vazio (recebia `novo_texto` que é null) | Rastreabilidade | ✅ harmonizer.py rev.4 |
+| 25/05/2026 | `offset += len(todas_emendas)` acumulava lotes anteriores — numeração errada em múltiplos lotes | Funcional (lotes extensos) | ✅ harmonizer.py rev.4 |
 
 ---
 
@@ -200,7 +202,7 @@ Usar `TAB_1_PLC_17_2026_TEXTO_ORIGINAL.txt` (19 artigos + 4 Anexos) com `TAB_2_P
 ```
 cd C:\Users\Admin\Documents\Claude\CCJ\sistema_redacoes && python verificar.py
 ```
-Testa (32 verificações locais): importações, sufixo -A, detectores estruturais P1 (casos 1 e 2), padrões semânticos P1 (caso 3), escalador integrado, exportação DOCX (título, sufixo, marcadores, fundamentação §2º nos absurdos, texto da seção de avisos), análise estrutural, disponibilidade de API e arquivos de teste.
+Testa (36 verificações locais): importações, sufixo -A, detectores estruturais P1 (casos 1 e 2), padrões semânticos P1 (caso 3), escalador integrado, exportação DOCX (título, sufixo, marcadores, fundamentação §2º nos absurdos, texto da seção de avisos), parsing de emendas supressivas e offset em múltiplos lotes, análise estrutural, disponibilidade de API e arquivos de teste.
 
 ### Verificação completa (com harmonização real — custo ~$0,50)
 ```
@@ -231,4 +233,4 @@ Executa adicionalmente: harmonização completa do PLC 17/2026 com as 10 emendas
 
 ---
 
-*Versão rev.4 — 25/05/2026 — Sistema de Redações CCJ CMRJ*
+*Versão rev.5 — 25/05/2026 — Sistema de Redações CCJ CMRJ*

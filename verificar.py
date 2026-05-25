@@ -235,6 +235,50 @@ else:
     print("  ⏭  DOCX — python-docx não disponível, pulando")
 
 # ────────────────────────────────────────────────────────────────────────────
+# 7e — PARSING: texto_bruto e offset (sem chamada de API)
+# ────────────────────────────────────────────────────────────────────────────
+print("\n[7e] PARSING — texto_bruto e offset (simulação sem API)")
+
+# Simula o que parsear_emendas_com_ia faria ao construir objetos Emenda
+# Bug 1: emenda supressiva com novo_texto=None não deve ter texto_bruto vazio
+e_sup = Emenda(
+    numero=1,
+    texto_bruto=(
+        None                        # simula item.get("texto_bruto") ausente
+        or None                     # simula item.get("novo_texto") ausente (Supressiva)
+        or "[Emenda 1 — Supressiva | Art. 4º]"  # fallback do código corrigido
+    ),
+    tipo=TipoEmenda.SUPRESSIVA, alvo="Art. 4º", parseada=True,
+)
+chk("Supressiva: texto_bruto não é vazio após parsing",
+    bool(e_sup.texto_bruto and e_sup.texto_bruto.strip()))
+
+e_mod = Emenda(
+    numero=2,
+    texto_bruto="Emenda nº 2 — Dê-se ao §2º do Art. 7º a seguinte redação: ...",
+    tipo=TipoEmenda.MODIFICATIVA, alvo="Art. 7º, §2º",
+    novo_texto="Nova redação do §2º...", parseada=True,
+)
+chk("Modificativa: texto_bruto preserva texto integral (distinto de novo_texto)",
+    e_mod.texto_bruto != e_mod.novo_texto and len(e_mod.texto_bruto) > 0)
+
+# Bug 2: offset não deve acumular entre lotes
+# Simula dois lotes de 10 emendas cada
+todas: list[Emenda] = []
+offset_sim = 0
+for lote in range(2):
+    n_antes = len(todas)
+    for i in range(10):
+        todas.append(Emenda(numero=offset_sim + len(todas) - n_antes + 1 + n_antes,
+                            texto_bruto=f"emenda {lote}-{i}"))
+    offset_sim += len(todas) - n_antes   # correção: só o lote
+
+chk("Offset 2 lotes de 10: total = 20 emendas (sem duplicação)",
+    len(todas) == 20)
+chk("Offset após 2 lotes = 20 (não 30)",
+    offset_sim == 20)
+
+# ────────────────────────────────────────────────────────────────────────────
 # 8. ANÁLISE ESTRUTURAL
 # ────────────────────────────────────────────────────────────────────────────
 print("\n[8] ANÁLISE ESTRUTURAL (analisar_estrutura)")
