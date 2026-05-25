@@ -128,12 +128,12 @@ TEXTO DAS EMENDAS:
 {chunk}"""
 
         try:
-            resp = client.messages.create(
+            with client.messages.stream(
                 model="claude-sonnet-4-6",
-                max_tokens=8192,
+                max_tokens=16000,
                 messages=[{"role": "user", "content": prompt}]
-            )
-            resp_text = resp.content[0].text
+            ) as stream:
+                resp_text = stream.get_final_text()
 
             # Extrai JSON da resposta
             match = re.search(r'\{.*\}', resp_text, re.DOTALL)
@@ -366,7 +366,7 @@ e referências cruzadas corrigidas. Respeitar obrigatoriamente toda a pontuaçã
 
     with client.messages.stream(
         model="claude-sonnet-4-6",
-        max_tokens=16000,
+        max_tokens=28000,
         messages=[{"role": "user", "content": prompt}]
     ) as stream:
         resp_text = stream.get_final_text()
