@@ -330,6 +330,28 @@ try:
                        resultado.texto_harmonizado)))
     chk("[API] 'artigo anterior' preservado no §4º",
         "nos termos do artigo anterior" in resultado.texto_harmonizado)
+    # E1 — auto-correções registradas no LOG (critérios 3 e 6 do AUDITORIA.md)
+    chk("[API] E1: 'serão aplicadas' corrigido no texto (Emenda 8)",
+        "serão aplicadas" in resultado.texto_harmonizado,
+        "verificar se Emenda 8 foi corrigida")
+    chk("[API] E1: 'depósitos' em minúscula no texto (Emenda 9)",
+        bool(re.search(r'\bdepósitos\b', resultado.texto_harmonizado)),
+        "verificar se Emenda 9 foi corrigida")
+    chk("[API] E1: LOG registra correção de concordância",
+        any("serão aplicad" in l.lower() or "E1" in l for l in resultado.log_alteracoes),
+        f"log tem {len(resultado.log_alteracoes)} entradas")
+    # Critério 5: "; e" → aviso apenas, NÃO auto-corrigido
+    chk("[API] E1: ausência de '; e' gera aviso (não auto-corrige — LC 48/2000 apenas)",
+        any("; e" in a.lower() or "conectivo" in a.lower() or "penúltim" in a.lower()
+            for a in resultado.avisos),
+        "esperado: aviso sobre '; e' em AVISOS §1º")
+    # CA/mérito: observações sobre parâmetros urbanísticos NÃO devem aparecer em AVISOS
+    chk("[API] Sem observações de mérito/CA nos AVISOS",
+        not any(re.search(r'\bCA\b|\bcoeficiente de aproveitamento\b|\bganharit\b|'
+                          r'setor [AB].*maior|maior.*setor|gabarito.*CA|CA.*gabarito',
+                          a, re.IGNORECASE)
+                for a in resultado.avisos),
+        "AVISOS não devem conter análises de mérito urbanístico")
     chk("[API] Marcadores inline removidos do DOCX",
         not any("[[" in t for t in [p.text for p in Document(BytesIO(
             exportar_redacao_final_docx(

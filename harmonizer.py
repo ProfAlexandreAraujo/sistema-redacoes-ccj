@@ -495,8 +495,8 @@ E1. CORREÇÕES AUTOMÁTICAS DE LINGUAGEM (art. 250, §1º RI):
     — Concordância nominal e verbal (ex: "serão aplicada" → "serão aplicadas")
     — Caixa incorreta em palavras comuns (ex: "Depósitos" → "depósitos" quando não for nome
       próprio ou início de inciso)
-    — Pontuação do Bloco C (ex: inciso encerrando com "." → ";"; penúltimo inciso sem "; e"
-      → acrescentar "; e"; última alínea sem "." → acrescentar ".")
+    — Pontuação do Bloco C, EXCETO o conectivo "; e" (ex: inciso encerrando com "." → ";";
+      última alínea sem "." → acrescentar ".")
     — Uniformização de tempo verbal dentro do mesmo artigo
 
     Para cada correção: LOG_ALTERACOES → "E1 / Art. Xº: [original] → [corrigido]"
@@ -514,6 +514,8 @@ E1. CORREÇÕES AUTOMÁTICAS DE LINGUAGEM (art. 250, §1º RI):
     — "Parágrafo único" onde há mais de um parágrafo (ou vice-versa)
     — Referência a dispositivo suprimido que não configure absurdo manifesto (E3)
     — Técnica redacional imprópria que comprometa o sentido jurídico
+    — Ausência do conectivo "; e" antes do penúltimo inciso (LC 48/2000, art. 9º, VIII —
+      não consta da LC 95/1998 federal; adoção opcional na prática legislativa municipal)
 
 E2. ERROS CRÍTICOS — não tente resolver, sinalize para reabertura (art. 250, §2º RI):
     — Duas emendas aprovadas que se contradizem diretamente sobre o mesmo dispositivo
@@ -587,6 +589,14 @@ O texto do dispositivo permanece exatamente como aprovado — apenas acrescente 
 <AVISOS>
 [Um aviso por linha. Formato: "⚠ Emenda N / Art. Xº: descrição detalhada do problema"]
 [Base legal do aviso entre colchetes, ex: [LC 48/2000, art. 9º, VIII]]
+[⚠ RESTRIÇÃO ABSOLUTA: AVISOS são estritamente para problemas de FORMA/LINGUAGEM.
+ NUNCA inclua observações sobre conteúdo, mérito ou política urbanística, como:
+ — comparações entre coeficientes de aproveitamento (CA), gabaritos, parâmetros urbanísticos
+ — consistência interna dos valores numéricos aprovados pelo Plenário
+ — opinião ou análise sobre se os parâmetros fazem sentido urbanisticamente
+ — qualquer observação do tipo "CA do Setor X é maior/menor que Y"
+ Esses são assuntos de mérito — soberania do Plenário — fora da competência da CCJ na
+ Redação Final. Inclua-os aqui e o sistema ficará comprometido.]
 [Escreva "Nenhum aviso." se não houver.]
 </AVISOS>
 

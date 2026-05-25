@@ -71,7 +71,7 @@ Para cada correção: LOG → `E1 / Art. Xº: [original] → [corrigido]` e AVIS
 **CORRIJA automaticamente:**
 - Concordância nominal/verbal (ex: "serão aplicada" → "serão aplicadas")
 - Caixa incorreta em palavras comuns (ex: "Depósitos" → "depósitos" quando não for nome próprio)
-- Pontuação de incisos/alíneas (Bloco C da LC 48/2000: ponto e vírgula, "; e", ponto final)
+- Pontuação de incisos/alíneas (Bloco C da LC 48/2000: ponto e vírgula, ponto final) — **exceto** o conectivo "; e"
 
 **NUNCA ALTERE** (mesmo que pareça erro):
 - Números, valores, prazos, percentuais, coeficientes, coordenadas, medidas
@@ -84,6 +84,7 @@ Para cada correção: LOG → `E1 / Art. Xº: [original] → [corrigido]` e AVIS
 - Uso de "anterior" ou "seguinte" sem especificação do dispositivo (D2)
 - "Parágrafo único" onde há mais de um parágrafo (ou vice-versa)
 - Técnica redacional imprópria que comprometa o sentido jurídico
+- Ausência do conectivo "; e" antes do penúltimo inciso (LC 48/2000 apenas — não exigido pela LC 95/1998 federal; prática legislativa municipal o ignora com frequência)
 
 ### E2 — Erros Críticos (§2º RI)
 Contradição entre emendas aprovadas → sinaliza para reabertura. **Nunca resolve.**
@@ -131,7 +132,7 @@ Usar `TAB_1_PLC_17_2026_TEXTO_ORIGINAL.txt` (19 artigos + 4 Anexos) com `TAB_2_P
 | 1 — Supressiva Art. 4º | Suprimir art. 4º; renumerar | Art. 4º suprimido; novo Art. 4º com "definida no Art. 4º" → 🔴 Absurdo §2º (circular) |
 | 2 — Modificativa §2º Art. 7º | Coeficiente 4 → 6; "Art. 6º" → "Art. 5º" | Verbatim; remissão atualizada (A2) |
 | 3 — Aditiva novo art. após Art. 10 | Inserir art. monitoramento | Novo Art. 10; "arts. 9º e 10" → "arts. 8º e 9º" (A2) |
-| 4 — Modificativa incisos Art. 14 | Incisos III, IV + novo V | Verbatim; pontuação corrigida automaticamente (E1) + LOG |
+| 4 — Modificativa incisos Art. 14 | Incisos III, IV + novo V | Verbatim; pontuação (`;` e `.`) corrigida automaticamente (E1) + LOG; ausência de "; e" → ⚠ aviso apenas (LC 48/2000, não LC 95/1998) |
 | 5 — Supressiva §1º Art. 13 | Suprimir §1º; §2º → §1º | §1º verbatim com "Atendida a condição prevista no §1º deste artigo" + 🔴 Absurdo §2º |
 | 6 — Modificativa Anexo III | CA Máximo Setores A e B | A: 8,0→16,0; B: 6,0→18,0; C e D inalterados |
 | 7 — Aditiva Anexo V | Adicionar Anexo V | Inserido; "Art. 18" → "Art. 17" (A2) |
@@ -151,7 +152,7 @@ Usar `TAB_1_PLC_17_2026_TEXTO_ORIGINAL.txt` (19 artigos + 4 Anexos) com `TAB_2_P
 | 2 | Emenda 5 — Absurdo §2º | 🔴 em ALERTAS_ABSURDOS; fundamentado no art. 250, §2º RI |
 | 3 | Emenda 8 — "serão aplicada" corrigido (E1) | "serão aplicadas" no texto; LOG registra correção |
 | 4 | Emenda 8 — pontuação inciso IV (E1) | Encerra com "." conforme técnica; LOG registra |
-| 5 | Emenda 4 — conjunção adicionada (E1) | Penúltima alínea com "; e"; LOG registra |
+| 5 | Emenda 4 — conjunção "; e" ausente | ⚠ aviso gerado (não auto-corrigido — LC 48/2000 apenas, prática ignora) |
 | 6 | Emenda 9 — "Depósitos" corrigido (E1) | "depósitos" no texto; LOG registra |
 | 7 | Emenda 10 — "artigo anterior" preservado | "nos termos do artigo anterior" no §4º; 🔴 Absurdo sinalizado |
 | 8 | Emendas 1, 5 e 10 — ≥3 Absurdos §2º | ALERTAS_ABSURDOS com ≥3 itens |
