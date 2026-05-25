@@ -131,7 +131,7 @@ TEXTO DAS EMENDAS:
         try:
             with client.messages.stream(
                 model="claude-sonnet-4-6",
-                max_tokens=16000,
+                max_tokens=20000,
                 messages=[{"role": "user", "content": prompt}]
             ) as stream:
                 resp_text = stream.get_final_text()
@@ -389,7 +389,7 @@ e referências cruzadas corrigidas. Respeitar obrigatoriamente toda a pontuaçã
 
     with client.messages.stream(
         model="claude-sonnet-4-6",
-        max_tokens=28000,
+        max_tokens=40000,
         messages=[{"role": "user", "content": prompt}]
     ) as stream:
         resp_text = stream.get_final_text()
