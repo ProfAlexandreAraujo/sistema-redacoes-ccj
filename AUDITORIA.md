@@ -49,7 +49,7 @@ Exemplos: dispositivo que remete a artigo integralmente suprimido; "artigo anter
 
 ---
 
-## 4. Regras do prompt de IA (estado atual — rev.2)
+## 4. Regras do prompt de IA (estado atual — rev.3) + pós-processamento Python
 
 ### A1 — Preservação verbatim (REGRA ABSOLUTA)
 Ao incorporar o texto de emenda aprovada, copiar LITERALMENTE — cada palavra, cada cláusula, cada vírgula. Mesmo que o texto aprovado contenha referência a dispositivo suprimido, crie absurdo manifesto ou contenha cláusula problemática, **nunca** remover, parafrasear ou simplificar. Copiar o absurdo e registrar em ALERTAS_ABSURDOS.
@@ -69,6 +69,15 @@ Contradição entre emendas aprovadas → sinaliza para reabertura. Nunca resolv
 ### E3 — Absurdo Manifesto (§2º RI)
 Ininteligibilidade formal de um dispositivo → sinaliza para reabertura. Nunca resolve.
 
+### P1 — Pós-processamento Python (camada de segurança independente do modelo)
+Após o modelo responder, `harmonizer.py` executa dois detectores estruturais sobre o **texto harmonizado** para escalar absurdos que o modelo teimou em classificar como §1º:
+
+- **Caso 1 — Autoreferência circular**: Art. N cujo corpo referencia `no Art. N` (mesmo número). Detectado por regex sobre os blocos de artigo.
+- **Caso 2 — Condição normativa inoperante**: §N cujo corpo contém `§N deste artigo` (parágrafo que remete a si mesmo). Detectado por regex sobre parágrafos numerados.
+- **Caso 3 — Semântica de avisos**: varredura nos textos dos avisos por palavras-chave que indicam absurdo não detectado estruturalmente (ex: "artigo anterior.*incompatível", "condição.*suprimida", "§.*foi suprimido").
+
+Qualquer item escalado é movido de `avisos` para `alertas_absurdos`, o que força o DOCX a ser gerado como "RASCUNHO DE TRABALHO".
+
 ---
 
 ## 5. Histórico de correções aplicadas
@@ -77,10 +86,11 @@ Ininteligibilidade formal de um dispositivo → sinaliza para reabertura. Nunca 
 |---|---|---|---|
 | 25/05/2026 | AI removia cláusula aprovada para "resolver" absurdo | Crítico | ✅ Corrigido (A1 verbatim) |
 | 25/05/2026 | Correções sem log explícito | Médio | ✅ Corrigido (E1 flag-only) |
-| 25/05/2026 | Absurdo manifesto classificado como §1º em vez de §2º | Crítico | ✅ Corrigido (E3 rev.2) |
+| 25/05/2026 | Absurdo manifesto classificado como §1º em vez de §2º (prompt) | Crítico | ✅ Corrigido (E3 rev.2) |
 | 25/05/2026 | DOCX exportado como "Redação Final" mesmo com §2º | Regimental | ✅ Corrigido (utils.py) |
 | 25/05/2026 | Marcadores inline presentes no DOCX exportado | Médio | ✅ Corrigido (utils.py) |
 | 25/05/2026 | Correções automáticas de gramática/pontuação | Regimental | ✅ Corrigido (E1 flag-only) |
+| 25/05/2026 | IA persiste em classificar absurdos como §1º mesmo com E3 rev.2 | Crítico | ✅ Corrigido (harmonizer.py — pós-processamento Python) |
 
 ---
 
