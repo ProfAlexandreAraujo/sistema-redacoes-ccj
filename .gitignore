@@ -1,0 +1,31 @@
+# Chaves e segredos — NUNCA versionar
+.streamlit/secrets.toml
+*.env
+.env.*
+
+# Sessões salvas (dados de trabalho locais)
+sessoes_salvas/
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.Python
+*.egg-info/
+dist/
+build/
+*.egg
+.eggs/
+
+# Ambiente virtual
+venv/
+.venv/
+env/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
