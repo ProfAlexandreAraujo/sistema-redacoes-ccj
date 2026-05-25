@@ -573,12 +573,20 @@ with aba4:
                 f"sobre o projeto **{nome_projeto or 'sem nome'}**."
             )
 
-            aviso_grande = aprovadas_count > 50
-            if aviso_grande:
-                st.info(
-                    f"ℹ️ {aprovadas_count} emendas aprovadas — o processamento pode levar "
-                    "até 2 minutos. Aguarde."
-                )
+            # Estimativa de tempo
+            if aprovadas_count <= 30:
+                tempo_est = "30–60 segundos"
+            elif aprovadas_count <= 80:
+                tempo_est = "1–3 minutos"
+            elif aprovadas_count <= 130:
+                tempo_est = "3–5 minutos"
+            else:
+                tempo_est = "5–8 minutos"
+
+            st.info(
+                f"⏱️ **Tempo estimado: {tempo_est}** para {aprovadas_count} emendas. "
+                "A IA está processando — **não recarregue a página** enquanto o spinner estiver ativo."
+            )
 
             if st.button(
                 f"🔄 Harmonizar agora ({aprovadas_count} emendas)",
@@ -586,7 +594,8 @@ with aba4:
                 use_container_width=True,
             ):
                 with st.spinner(
-                    f"Aplicando {aprovadas_count} emendas e harmonizando o texto... aguarde..."
+                    f"⚙️ Harmonizando {aprovadas_count} emendas — aguarde, isso é normal demorar. "
+                    "NÃO feche nem recarregue esta página..."
                 ):
                     try:
                         resultado = harmonizar_texto(

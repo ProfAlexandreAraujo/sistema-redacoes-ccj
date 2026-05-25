@@ -389,7 +389,7 @@ e referências cruzadas corrigidas. Respeitar obrigatoriamente toda a pontuaçã
 
     with client.messages.stream(
         model="claude-sonnet-4-6",
-        max_tokens=40000,
+        max_tokens=60000,   # teto: 64k — seguro para PLCs grandes + 180 emendas
         messages=[{"role": "user", "content": prompt}]
     ) as stream:
         resp_text = stream.get_final_text()
