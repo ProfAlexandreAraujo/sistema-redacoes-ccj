@@ -1,5 +1,5 @@
 # 🔍 AUDITORIA DO SISTEMA — CCJ CMRJ
-### Documento técnico para revisão externa — versão 2026-05-25 **rev.3**
+### Documento técnico para revisão externa — versão 2026-05-25 **rev.4**
 
 ---
 
@@ -44,15 +44,18 @@ Exemplos: autoreferência circular de artigo; condição normativa remetendo a p
 → Texto preservado **verbatim** + marcador inline visível na tela de trabalho.
 → Marcador **removido** do DOCX exportado.
 → A CCJ **não deve oferecer Redação Final**; deve propor reabertura (art. 250, §2º RI).
+→ DOCX e relatório TXT orientam expressamente a **reabertura** com fundamento no §2º — nunca correção por ofício do §1º.
 
 > **REGRA CRÍTICA:** Tanto 🚨 quanto 🔴 invocam o **§2º** — reabertura, não ofício. O §1º cobre apenas impropriedades de linguagem (⚠️).
 
 ---
 
-## 4. Regras do sistema (rev.3)
+## 4. Regras do sistema (rev.4)
 
 ### A1 — Preservação de teor (REGRA ABSOLUTA)
 Incorporar o texto de cada emenda aprovada LITERALMENTE — cada palavra, cada cláusula, cada vírgula. Mesmo que o texto aprovado contenha referência a dispositivo suprimido, crie absurdo manifesto ou contenha cláusula problemática: **nunca** remover, parafrasear, simplificar ou "consertar" o conteúdo. Registrar o absurdo em ALERTAS_ABSURDOS com marcador inline.
+
+As correções exclusivamente linguísticas autorizadas em E1 não violam A1 — são a única exceção expressa e devem ser obrigatoriamente registradas em LOG e AVISOS.
 
 ### A2 — Referências cruzadas (única alteração automática de conteúdo)
 Após renumerar artigos/parágrafos/incisos, atualizar **todas** as referências internas. Esta é a única intervenção automática de conteúdo admitida.
@@ -86,6 +89,9 @@ Para cada correção: LOG → `E1 / Art. Xº: [original] → [corrigido]` e AVIS
 - Técnica redacional imprópria que comprometa o sentido jurídico
 - Ausência do conectivo "; e" antes do penúltimo inciso (LC 48/2000 apenas — não exigido pela LC 95/1998 federal; prática legislativa municipal o ignora com frequência)
 
+**NUNCA inclua em AVISOS:**
+- Observações sobre mérito, política urbanística ou consistência de parâmetros (CA, gabaritos, valores numéricos aprovados pelo Plenário) — esses são assuntos de mérito, fora da competência da CCJ na Redação Final.
+
 ### E2 — Erros Críticos (§2º RI)
 Contradição entre emendas aprovadas → sinaliza para reabertura. **Nunca resolve.**
 
@@ -95,11 +101,15 @@ Quatro casos obrigatórios: (1) autoreferência circular; (2) condição remeten
 
 ### P1 — Pós-processamento Python (camada independente do modelo)
 Após o modelo responder, `harmonizer.py` executa detectores estruturais sobre o texto harmonizado para escalar absurdos que o modelo classificou como §1º:
-- **Caso 1:** Art. N com `no Art. N` no corpo → autoreferência circular (regex sobre blocos de artigo)
+- **Caso 1:** Art. N com referência preposicionada ao próprio Art. N no corpo → autoreferência circular (regex sobre blocos de artigo)
 - **Caso 2:** §N com `§N deste artigo` no corpo → condição normativa inoperante (regex sobre parágrafos)
 - **Caso 3:** Varredura semântica nos textos dos avisos por padrões como `artigo anterior.*incompatível`, `condição.*suprimida`, etc.
 
 Qualquer item escalado move-se de `avisos` para `alertas_absurdos`, forçando o DOCX como "RASCUNHO DE TRABALHO".
+
+**Riscos conhecidos e monitorados (não bloqueadores):**
+- O detector do Caso 1 exige preposição antes do número (`no Art. N`, `do Art. N` etc.) para reduzir falsos positivos, mas autorreferências intencionais raramente existem — monitorar no PLC real.
+- A deduplicação de alertas usa intersecção de dispositivos (Art. N, §N); dois absurdos distintos no mesmo artigo podem ser fundidos se o modelo não os gerar separadamente. O modelo é o caminho principal; o pós-processador é camada de segurança.
 
 ---
 
@@ -115,7 +125,10 @@ Qualquer item escalado move-se de `avisos` para `alertas_absurdos`, forçando o 
 | 25/05/2026 | E1 "flag-only" → "auto-corrigir + log" (decisão do usuário) | Funcional | ✅ E1 rev.3 |
 | 25/05/2026 | A2 não atualizava referências ao conteúdo migrado por aglutinação | Funcional | ✅ A2 aglutinação |
 | 25/05/2026 | "; e" auto-corrigido (LC 48/2000 apenas, não LC 95/1998 — prática ignora) | Funcional | ✅ E1 aviso-only |
-| 25/05/2026 | IA incluía análises de mérito/CA urbanístico em AVISOS §1º (fora da competência CCJ) | Crítico | ✅ bloqueio prompt |
+| 25/05/2026 | IA incluía análises de mérito/CA urbanístico em AVISOS §1º | Crítico | ✅ bloqueio prompt |
+| 25/05/2026 | DOCX e TXT descreviam absurdo manifesto com providência do §1º (ofício) em vez do §2º (reabertura) | Jurídico crítico | ✅ utils.py rev.4 |
+| 25/05/2026 | Seção de avisos no DOCX afirmava "preservados exatamente como aprovados" mesmo quando havia correções E1 | Rastreabilidade | ✅ utils.py rev.4 |
+| 25/05/2026 | A1 não explicitava a exceção E1 — tensão aparente entre preservação literal e auto-correção | Documentação | ✅ AUDITORIA.md rev.4 |
 
 ---
 
@@ -162,6 +175,8 @@ Usar `TAB_1_PLC_17_2026_TEXTO_ORIGINAL.txt` (19 artigos + 4 Anexos) com `TAB_2_P
 | 10 | DOCX — título correto | Com 🔴 ou 🚨: "RASCUNHO DE TRABALHO"; sem: "REDAÇÃO FINAL" |
 | 11 | DOCX — sem marcadores | Nenhum `[[⚠️ CCJ:...]]` no arquivo .docx |
 | 12 | Estrutura final | 18 artigos e 5 Anexos |
+| 13 | DOCX — texto de absurdo cita §2º e reabertura | Seção de absurdos menciona "§2º" e "reabertura" — nunca "ofício" ou "§1º" |
+| 14 | DOCX — seção de avisos não afirma preservação total | Texto da seção não contém "preservados exatamente como aprovados" |
 
 ### ❌ Comportamentos proibidos (falha crítica)
 
@@ -174,6 +189,8 @@ Usar `TAB_1_PLC_17_2026_TEXTO_ORIGINAL.txt` (19 artigos + 4 Anexos) com `TAB_2_P
 | Classificar absurdo manifesto como art. 250, §1º | Jurídica crítica |
 | Exportar DOCX como "REDAÇÃO FINAL" quando há §2º | Regimental crítica |
 | Deixar marcadores `[[⚠️ CCJ:...]]` no DOCX exportado | Grave |
+| Texto do DOCX orientar correção de absurdo por ofício do §1º | Jurídica crítica |
+| Incluir análise de mérito urbanístico (CA, gabaritos) em AVISOS | Grave — fora da competência |
 
 ---
 
@@ -183,13 +200,13 @@ Usar `TAB_1_PLC_17_2026_TEXTO_ORIGINAL.txt` (19 artigos + 4 Anexos) com `TAB_2_P
 ```
 cd C:\Users\Admin\Documents\Claude\CCJ\sistema_redacoes && python verificar.py
 ```
-Testa: importações, sufixo -A, detectores estruturais (P1), padrões semânticos (P1), escalador integrado, exportação DOCX (título + marcadores), análise estrutural, disponibilidade de API e arquivos de teste.
+Testa (32 verificações locais): importações, sufixo -A, detectores estruturais P1 (casos 1 e 2), padrões semânticos P1 (caso 3), escalador integrado, exportação DOCX (título, sufixo, marcadores, fundamentação §2º nos absurdos, texto da seção de avisos), análise estrutural, disponibilidade de API e arquivos de teste.
 
 ### Verificação completa (com harmonização real — custo ~$0,50)
 ```
 cd C:\Users\Admin\Documents\Claude\CCJ\sistema_redacoes && python verificar.py --com-api
 ```
-Executa adicionalmente: harmonização completa do PLC 17/2026 com as 10 emendas; verifica estrutura (18 arts, 5 anexos), preservação verbatim, ≥3 absurdos §2º. Salva resultado em `resultado_verificar.txt`.
+Executa adicionalmente: harmonização completa do PLC 17/2026 com as 10 emendas; verifica estrutura (18 arts, 5 anexos), preservação verbatim, ≥3 absurdos §2º, E1 auto-correções no texto e LOG, aviso de "; e", ausência de mérito/CA em AVISOS. Salva resultado em `resultado_verificar.txt`.
 
 ---
 
@@ -214,4 +231,4 @@ Executa adicionalmente: harmonização completa do PLC 17/2026 com as 10 emendas
 
 ---
 
-*Versão rev.3 — 25/05/2026 — Sistema de Redações CCJ CMRJ*
+*Versão rev.4 — 25/05/2026 — Sistema de Redações CCJ CMRJ*
