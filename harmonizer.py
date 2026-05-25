@@ -657,7 +657,17 @@ O texto do dispositivo permanece exatamente como aprovado — apenas acrescente 
         m = re.search(rf'<{tag}>(.*?)</{tag}>', resp_text, re.DOTALL)
         return m.group(1).strip() if m else default
 
-    texto_harm    = extrair("TEXTO_HARMONIZADO", texto_original)
+    # Validação obrigatória: <TEXTO_HARMONIZADO> deve estar presente.
+    # Se ausente, a resposta da IA está malformada — jamais usar o original silenciosamente,
+    # pois isso omitiria todos os alertas e entregaria o texto sem harmonização como válido.
+    if not re.search(r'<TEXTO_HARMONIZADO>', resp_text):
+        raise ValueError(
+            "A resposta da IA não contém a tag <TEXTO_HARMONIZADO>. "
+            "O formato XML esperado não foi recebido (resposta possivelmente truncada ou recusada). "
+            "Tente novamente; se o erro persistir, reduza o número de emendas por lote."
+        )
+
+    texto_harm    = extrair("TEXTO_HARMONIZADO", "")
     mapa_raw      = extrair("MAPA_RENUMERACAO", "")
     avisos_raw    = extrair("AVISOS", "")
     erros_raw     = extrair("ERROS_CRITICOS", "")

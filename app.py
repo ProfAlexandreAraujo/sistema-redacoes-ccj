@@ -108,6 +108,17 @@ def init_state():
 
 init_state()
 
+
+def _invalidar_resultado() -> None:
+    """Limpa resultado harmonizado e todo estado derivado da aba 5.
+    Deve ser chamado em qualquer ponto que altere emendas, votação ou texto original —
+    evita que uma redação antiga seja exportada após mudanças no conjunto de emendas.
+    """
+    st.session_state.resultado_harm = None
+    st.session_state.pop('confirmar_sec_2_aba5', None)
+    st.session_state.pop('texto_redacao_final', None)
+
+
 # Resolve API key (secrets > env > manual)
 _api_key_resolvida, _chave_embutida = _resolver_api_key()
 if _chave_embutida:
@@ -198,7 +209,7 @@ with st.sidebar:
             st.session_state.nome_projeto  = np
             st.session_state.texto_original = to
             st.session_state.emendas        = ems
-            st.session_state.resultado_harm = None
+            _invalidar_resultado()
             st.rerun()
 
 
@@ -285,9 +296,7 @@ with aba1:
     )
     if texto_edit != st.session_state.texto_original:
         st.session_state.texto_original = texto_edit
-        st.session_state.resultado_harm = None   # invalida harmonização anterior
-        st.session_state.pop('confirmar_sec_2_aba5', None)
-        st.session_state.pop('texto_redacao_final', None)
+        _invalidar_resultado()
 
     if st.session_state.texto_original:
         struct = analisar_estrutura(st.session_state.texto_original)
@@ -354,9 +363,7 @@ with aba2:
                     try:
                         novas = parsear_emendas_com_ia(texto_emendas_input, api_key)
                         st.session_state.emendas = novas
-                        st.session_state.resultado_harm = None
-                        st.session_state.pop('confirmar_sec_2_aba5', None)
-                        st.session_state.pop('texto_redacao_final', None)
+                        _invalidar_resultado()
                         st.success(f"✅ {len(novas)} emendas identificadas!")
                         st.rerun()
                     except Exception as ex:
@@ -385,6 +392,7 @@ with aba2:
                         ))
                 novas.sort(key=lambda e: e.numero)
                 st.session_state.emendas = novas
+                _invalidar_resultado()
                 st.success(f"{len(novas)} emendas importadas. Complete tipo/alvo manualmente.")
                 st.rerun()
 
@@ -414,6 +422,7 @@ with aba2:
                     parseada=True,
                 ))
                 st.session_state.emendas.sort(key=lambda e: e.numero)
+                _invalidar_resultado()
                 st.success(f"Emenda {num_em} adicionada!")
                 st.rerun()
 
@@ -426,13 +435,12 @@ with aba2:
         c1, c2, c3 = st.columns(3)
         if c1.button("🗑️ Remover todas", use_container_width=True):
             st.session_state.emendas = []
-            st.session_state.resultado_harm = None
-            st.session_state.pop('confirmar_sec_2_aba5', None)
-            st.session_state.pop('texto_redacao_final', None)
+            _invalidar_resultado()
             st.rerun()
         if c2.button("🔄 Limpar status (tudo pendente)", use_container_width=True):
             for e in st.session_state.emendas:
                 e.status = StatusEmenda.PENDENTE
+            _invalidar_resultado()
             st.rerun()
 
         filtro = st.selectbox("Filtro:", ["Todas", "Pendente", "Aprovada", "Rejeitada", "Prejudicada"])
@@ -495,9 +503,14 @@ with aba2:
                         ),
                         key=f"sel_tipo_{i}",
                     )
+                    _tipo_atual = em.tipo.value if em.tipo else TipoEmenda.OUTRO.value
+                    if novo_tipo != _tipo_atual:
+                        _invalidar_resultado()
                     st.session_state.emendas[i].tipo = tipo_map.get(novo_tipo)
 
                     novo_alvo = st.text_input("Alvo:", value=em.alvo or "", key=f"alvo_{i}")
+                    if novo_alvo != (em.alvo or ""):
+                        _invalidar_resultado()
                     st.session_state.emendas[i].alvo = novo_alvo or None
 
 
@@ -516,12 +529,15 @@ with aba3:
         c1, c2, c3, c4, c5 = st.columns(5)
         if c1.button("✅ Todas Aprovadas", use_container_width=True):
             for e in st.session_state.emendas: e.status = StatusEmenda.APROVADA
+            _invalidar_resultado()
             st.rerun()
         if c2.button("❌ Todas Rejeitadas", use_container_width=True):
             for e in st.session_state.emendas: e.status = StatusEmenda.REJEITADA
+            _invalidar_resultado()
             st.rerun()
         if c3.button("⬜ Limpar tudo", use_container_width=True):
             for e in st.session_state.emendas: e.status = StatusEmenda.PENDENTE
+            _invalidar_resultado()
             st.rerun()
 
         filtro_vot = c4.selectbox("Filtrar:", ["Todas","Pendente","Aprovada","Rejeitada","Prejudicada"],
@@ -552,9 +568,11 @@ with aba3:
 
             if c4.button("✅ Aprov.", key=f"v_apr_{i}", use_container_width=True):
                 st.session_state.emendas[i].status = StatusEmenda.APROVADA
+                _invalidar_resultado()
                 st.rerun()
             if c5.button("❌ Rejeit.", key=f"v_rej_{i}", use_container_width=True):
                 st.session_state.emendas[i].status = StatusEmenda.REJEITADA
+                _invalidar_resultado()
                 st.rerun()
 
             # Expandir para ver texto se necessário
@@ -564,9 +582,11 @@ with aba3:
                 cc1, cc2 = st.columns(2)
                 if cc1.button("✅ Aprovada", key=f"vx_apr_{i}"):
                     st.session_state.emendas[i].status = StatusEmenda.APROVADA
+                    _invalidar_resultado()
                     st.rerun()
                 if cc2.button("⚠️ Prejudicada", key=f"vx_pre_{i}"):
                     st.session_state.emendas[i].status = StatusEmenda.PREJUDICADA
+                    _invalidar_resultado()
                     st.rerun()
 
 

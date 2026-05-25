@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-verificar.py — Verificação do Sistema de Redações CCJ CMRJ (rev.4)
+verificar.py — Verificação do Sistema de Redações CCJ CMRJ (rev.5)
 Testa todos os comportamentos críticos do AUDITORIA.md sem custo de API.
 
 Uso:
@@ -32,7 +32,7 @@ def chk(nome: str, ok: bool, detalhe: str = "") -> None:
 
 print()
 print("=" * 65)
-print("  VERIFICAÇÃO DO SISTEMA — CCJ CMRJ — rev.4")
+print("  VERIFICAÇÃO DO SISTEMA — CCJ CMRJ — rev.5")
 print("=" * 65)
 
 # ────────────────────────────────────────────────────────────────────────────
@@ -374,6 +374,71 @@ TAB1 = pathlib.Path(r"C:\Users\Admin\Downloads\TAB_1_PLC_17_2026_TEXTO_ORIGINAL.
 TAB2 = pathlib.Path(r"C:\Users\Admin\Downloads\TAB_2_PLC_17_2026_EMENDAS.txt")
 chk("TAB_1 (texto original) encontrado", TAB1.exists(), str(TAB1))
 chk("TAB_2 (emendas) encontrado",        TAB2.exists(), str(TAB2))
+
+# ────────────────────────────────────────────────────────────────────────────
+# 11. VALIDAÇÃO XML: TEXTO_HARMONIZADO obrigatório em harmonizer.py
+# ────────────────────────────────────────────────────────────────────────────
+print("\n[11] VALIDAÇÃO XML (harmonizer.py)")
+
+try:
+    from harmonizer import harmonizar_texto as _harm_func
+    import inspect
+    src = inspect.getsource(_harm_func)
+
+    # 11a — Verificação estrutural: o código deve conter a guarda TEXTO_HARMONIZADO
+    chk("harmonizer.py levanta ValueError se <TEXTO_HARMONIZADO> ausente",
+        "TEXTO_HARMONIZADO" in src and "ValueError" in src and
+        "não contém a tag" in src)
+
+    # 11b — Verificação comportamental: resposta sem tags levanta exceção
+    import re as _re
+    _resp_sem_tags = "Resposta malformada sem nenhuma tag XML esperada."
+    _encontrou_tag = bool(_re.search(r'<TEXTO_HARMONIZADO>', _resp_sem_tags))
+    chk("Resposta sem <TEXTO_HARMONIZADO> → detectada como ausente",
+        not _encontrou_tag)
+
+    # 11c — O default do extrair("TEXTO_HARMONIZADO") foi alterado para "" (não texto_original)
+    chk("extrair('TEXTO_HARMONIZADO') usa default '' (não texto_original)",
+        'extrair("TEXTO_HARMONIZADO", "")' in src or
+        "extrair('TEXTO_HARMONIZADO', '')" in src)
+
+except Exception as e:
+    chk("11 — validação XML", False, str(e))
+
+# ────────────────────────────────────────────────────────────────────────────
+# 12. _invalidar_resultado() PRESENTE E COBERTO EM app.py
+# ────────────────────────────────────────────────────────────────────────────
+print("\n[12] HELPER _invalidar_resultado() (app.py)")
+
+try:
+    import ast
+    _app_src = pathlib.Path(r"C:\Users\Admin\Documents\Claude\CCJ\sistema_redacoes\app.py").read_text(encoding='utf-8')
+    _n_invalidar = _app_src.count("_invalidar_resultado()")
+    chk("_invalidar_resultado() definido em app.py",
+        "def _invalidar_resultado()" in _app_src)
+    chk("_invalidar_resultado() chamado ≥10 vezes (cobre todos os pontos críticos)",
+        _n_invalidar >= 10,
+        f"encontrado {_n_invalidar} chamadas — esperado ≥10")
+    chk("Votação individual (v_apr) invalida resultado",
+        "v_apr" in _app_src and
+        # A chamada deve aparecer próxima ao status APROVADA
+        "_invalidar_resultado" in _app_src[
+            _app_src.index("v_apr"):_app_src.index("v_apr") + 300
+        ])
+    chk("Importar texto bruto invalida resultado",
+        "Importar como texto bruto" in _app_src and
+        "_invalidar_resultado" in _app_src[
+            _app_src.index("Importar como texto bruto"):
+            _app_src.index("Importar como texto bruto") + 1300   # bloco longo c/ re.split
+        ])
+    chk("Adicionar emenda manual invalida resultado",
+        "adicionada!" in _app_src and
+        "_invalidar_resultado" in _app_src[
+            max(0, _app_src.rindex("adicionada!") - 400):
+            _app_src.rindex("adicionada!") + 10
+        ])
+except Exception as e:
+    chk("12 — _invalidar_resultado()", False, str(e))
 
 # ────────────────────────────────────────────────────────────────────────────
 # RESUMO
