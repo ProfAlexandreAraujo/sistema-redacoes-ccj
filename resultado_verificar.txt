@@ -1,0 +1,278 @@
+=== RESULTADO HARMONIZAÇÃO PLC 17/2026 — VERIFICAR.PY ===
+
+Artigos: 18  |  Anexos: 5
+
+--- ALERTAS §2º (4) ---
+  🔴 Emenda 1 / Art. 4º final (ex-Art. 5º original) — CASO 1 — AUTOREFERÊNCIA CIRCULAR: A Emenda 1 suprimiu o Art. 4º original (delimitação georreferenciada da área de abrangência). O Art. 5º original, que passa a ser o Art. 4º final, contém no caput a expressão "Observada a área de abrangência definida no Art. 4º". Com a renumeração, o Art. 4º final aponta para si mesmo, configurando autoreferência circular. O dispositivo foi reproduzido verbatim com marcador inline. A CCJ NÃO deve oferecer Redação Final para este dispositivo; propõe-se reabertura da discussão nos termos do art. 250, §2º, do Regimento Interno, para que o Plenário delibere sobre a correção da remissão (possivelmente para os Anexos I e II) ou a reinserção de artigo de delimitação. [art. 250, §2º RI; E3, Caso 1]
+  🔴 Emenda 10 / Art. 11 final, caput — CASO 4 — REFERÊNCIA EXCLUSIVA A DISPOSITIVO SUPRIMIDO: O caput do Art. 11 final (texto aprovado pela Emenda 10, aglutinativa) contém a expressão "área de abrangência definida no Art. 4º". O Art. 4º original — que definia a área de abrangência georreferenciada — foi integralmente suprimido pela Emenda 1. O novo Art. 4º final (ex-Art. 5º original) trata dos setores de planejamento, não da delimitação do perímetro, e já constitui ele mesmo dispositivo com absurdo manifesto (CASO 1). A única remissão operativa do caput do Art. 11 final aponta para conteúdo que não mais existe como dispositivo normativo autônomo, tornando o caput operativamente vazio quanto ao critério de abrangência territorial. O dispositivo foi reproduzido verbatim com marcador inline. A CCJ NÃO deve oferecer Redação Final para este dispositivo; propõe-se reabertura da discussão nos termos do art. 250, §2º, do Regimento Interno. [art. 250, §2º RI; E3, Caso 4]
+  🔴 Emenda 10 / Art. 11 final, §4º — CASO 3 — REMISSÃO MATERIALMENTE INCOMPATÍVEL: O §4º do Art. 11 final (texto aprovado pela Emenda 10) dispõe que "O potencial construtivo certificado será utilizado nos termos do artigo anterior". O "artigo anterior" ao Art. 11 final, após todas as renumerações, é o Art. 10 final — artigo inserido pela Emenda 3, que trata exclusivamente de sistema permanente de monitoramento e fiscalização dos empreendimentos licenciados na AEIU-ZPN. O conteúdo do Art. 10 final é completamente incompatível com o objeto do §4º (utilização de potencial construtivo certificado). No texto original da Emenda 10, a expressão "artigo anterior" provavelmente pretendia remeter ao próprio Art. 11 em sua feição anterior (antes da aglutinação) ou ao conjunto dos parágrafos precedentes, mas, como dispositivo normativo, aponta para conteúdo de monitoramento, tornando o §4º normalmente inoperante. O dispositivo foi reproduzido verbatim com marcador inline. A CCJ NÃO deve oferecer Redação Final para este parágrafo; propõe-se reabertura da discussão nos termos do art. 250, §2º, do Regimento Interno. [art. 250, §2º RI; E3, Caso 3; LC 48/2000, art. 10, II, g]
+  🔴 Emenda 5 / Art. 12 final (ex-Art. 13 original), §1º (ex-§2º original) — CASO 2 — CONDIÇÃO NORMATIVA INOPERANTE (AUTOREFERÊNCIA): A Emenda 5 suprimiu o §1º original do Art. 13 (que exigia declaração técnica prévia de inexistência de interferência como condição para a concessão do direito de superfície). Com a supressão, o §2º original — "Atendida a condição prevista no §1º deste artigo, fica dispensada a apresentação, pelo superficiário, de estudo complementar de interferência estrutural, ressalvada exigência superveniente motivada por risco não identificado no exame inicial" — foi renumerado para §1º. O §1º final do Art. 12 remete à "condição prevista no §1º deste artigo", que é o próprio parágrafo que faz a remissão. A condição normativa de dispensa tornou-se autoreferencial e inoperante: o §1º dispensa o estudo complementar desde que atendida a condição prevista no §1º (si mesmo), o que é logicamente impossível. O dispositivo foi reproduzido verbatim com marcador inline. A CCJ NÃO deve oferecer Redação Final para este parágrafo; propõe-se reabertura da discussão nos termos do art. 250, §2º, do Regimento Interno, para que o Plenário delibere sobre a supressão também do §2º original (hoje §1º final), alteração de sua redação, ou reinserção do §1º original suprimido. [art. 250, §2º RI; E3, Caso 2]
+
+--- ERROS CRÍTICOS (0) ---
+
+--- AVISOS §1º (8) ---
+  ⚠ Emenda 6 / Anexo III — Setor A: CA Máximo alterado de 8,0 para 16,0. O §2º do Art. 6º final (ex-Art. 7º original, modificado pela Emenda 2) prevê condição especial para coeficiente "superior a seis inteiros". Com CA Máximo agora em 16,0 para o Setor A, a condição do §2º incide apenas sobre a faixa de 6 a 16 CA. A aparente desproporção entre o patamar condicional (6) e o limite máximo (16) é questão de mérito e não cabe à CCJ corrigir, mas recomenda-se atenção do Plenário. [LC 95/1998, art. 11, II]
+  ⚠ Emenda 6 / Anexo III — Setor B: CA Máximo alterado de 6,0 para 18,0. O Setor B passa a ter CA Máximo superior ao do Setor A (16,0), inversão em relação ao gabarito (Setor A: 47m/15 pav; Setor B: 35m/11 pav). A desproporção entre gabarito e CA Máximo é questão de mérito; registra-se para conhecimento dos órgãos de controle. [LC 95/1998, art. 11, II]
+  ⚠ Emenda 4 / Art. 13 final (ex-Art. 14 original) — Pontuação: O inciso III, que não é imediatamente antecedente ao último inciso completo (o inciso IV desdobra-se em alíneas e o inciso V é o último), termina com ";" no texto aprovado. A rigor, o inciso imediatamente anterior ao último deve receber "; e" ou "; ou". Como o inciso IV termina com ":" (por ter alíneas), há ambiguidade estrutural quanto à posição do conector cumulativo. O texto foi preservado como aprovado; a questão pontuação estrutural em incisos com alíneas pode merecer apreciação da Mesa. [LC 48/2000, art. 9º, VI e VII]
+  ⚠ Emenda 10 / Art. 11 final — Referência vaga "artigo anterior" no §4º: além do absurdo manifesto já identificado na seção ALERTAS_ABSURDOS (CASO 3), registra-se que a expressão "artigo anterior" é referência vaga expressamente vedada pela técnica legislativa aplicável. [LC 48/2000, art. 10, II, g]
+  ⚠ E1 / Art. 9º final, inciso I: pontuação ajustada de ";" para "; e" (penúltimo inciso de rol com dois itens, de sentido cumulativo). [LC 48/2000, art. 9º, VII]
+  ⚠ E1 / Art. 9º final, inciso II (ex-inciso III original do Art. 10): "Depósitos" → "depósitos" (inicial minúscula obrigatória em inciso — regra C2). [LC 48/2000, art. 9º, VI]
+  ⚠ E1 / Art. 15 final (ex-Art. 16 original — Emenda 8): "que serão aplicada" → "que serão aplicadas" (concordância verbal — correção automática por E1). [LC 95/1998, art. 11, II, b]
+  ⚠ E1 / Art. 15 final, inciso IV: pontuação ajustada de ";" para "." (último inciso do rol — regra C2). [LC 48/2000, art. 9º, VII]
+
+--- LOG DE ALTERAÇÕES ---
+  Emenda 1 (Supressiva): suprimido integralmente o Art. 4º original (delimitação georreferenciada da AEIU-ZPN); Arts. 5º a 19 originais renumerados sequencialmente para Arts. 4º a 18 finais.
+  Emenda 2 (Modificativa): substituída a redação do §2º do Art. 7º original (→ §2º do Art. 6º final) — patamar de coeficiente alterado de "quatro inteiros" para "seis inteiros"; acrescida referência ao gabarito.
+  A2 / Art. 6º final, §2º: "Art. 6º" → "Art. 5º" (renumeração — Art. 6º original = gabarito → Art. 5º final; Emenda 1).
+  Emenda 3 (Aditiva): acrescido novo artigo após o Art. 10 original (→ Art. 9º final), passando a ser o Art. 10 final — sistema permanente de monitoramento e fiscalização.
+  A2 / Art. 10 final, caput: "Art. 9º" → "Art. 8º" (renumeração — Art. 9º original = usos permitidos → Art. 8º final; Emenda 1).
+  A2 / Art. 10 final, caput: "Art. 10" → "Art. 9º" (renumeração — Art. 10 original = vedações → Art. 9º final; Emenda 1).
+  A2 / Art. 10 final, §2º: "Art. 9º" → "Art. 8º" (renumeração — mesma base; Emenda 1).
+  A2 / Art. 10 final, §2º: "Art. 10" → "Art. 9º" (renumeração — mesma base; Emenda 1).
+  Emenda 4 (Modificativa): substituída a redação dos incisos III e IV do Art. 14 original (→ Art. 13 final); acrescido inciso V com alíneas a), b) e c).
+  Emenda 5 (Supressiva): suprimido integralmente o §1º do Art. 13 original (→ Art. 12 final); §§ 2º e 3º originais renumerados para §§ 1º e 2º do Art. 12 final.
+  Emenda 6 (Modificativa — Anexo III): CA Máximo do Setor A alterado de 8,0 para 16,0; CA Máximo do Setor B alterado de 6,0 para 18,0; Setores C e D preservados.
+  Emenda 7 (Aditiva — Anexo V): acrescido Anexo V — Programa de Metas da AEIU-ZPN, com Metas 1, 2 e 3.
+  A2 / Anexo V, Meta 2: "Art. 18" → "Art. 17" (renumeração — Art. 18 original = prazo de adequação → Art. 17 final; Emenda 1).
+  Emenda 8 (Substitutiva): substituída integralmente a redação do Art. 16 original (→ Art. 15 final).
+  A2 / Art. 15 final, caput: "Arts. 9º e 10" → "Arts. 8º e 9º" (renumeração — Arts. 9º e 10 originais → Arts. 8º e 9º finais; Emenda 1).
+  E1 / Art. 15 final, caput: "que serão aplicada" → "que serão aplicadas" (concordância verbal — correção automática).
+  E1 / Art. 15 final, inciso IV: pontuação ";" → "." (último inciso — regra C2; correção automática).
+  Emenda 9 (Supressiva): suprimido integralmente o inciso II do Art. 10 original (→ Art. 9º final); inciso III original renumerado para inciso II do Art. 9º final.
+  E1 / Art. 9º final, inciso II (ex-inciso III original): "Depósitos" → "depósitos" (inicial maiúscula indevida em inciso — correção automática; regra C2).
+  E1 / Art. 9º final, inciso I: pontuação ";" → "; e" (penúltimo inciso de rol binário cumulativo — correção automática; regra C2).
+  Emenda 10 (Aglutinativa): aglutinados os conteúdos dos Arts. 11 e 12 originais (→ Arts. 10 e 11 intermediários após Emenda 1; → Arts. 11 e 12 intermediários após Emenda 3) em artigo único, passando o conteúdo aglutinado a ser o Art. 11 final; Art. 12 original suprimido pela aglutinação.
+  A2 / Art. 11 final, §2º: "Art. 6º" → "Art. 5º" (renumeração — Art. 6º original = gabarito → Art. 5º final; Emenda 1).
+  A2 / Art. 11 final, §2º: "Art. 7º" → "Art. 6º" (renumeração — Art. 7º original = CA → Art. 6º final; Emenda 1).
+  A2-aglut / Art. 14 final, Parágrafo único: "Art. 12" → "Art. 11" (conteúdo da transferência de potencial construtivo migrou do Art. 12 original para o Art. 11 final pela aglutinação — Emenda 10).
+
+--- TEXTO HARMONIZADO ---
+PROJETO DE LEI COMPLEMENTAR Nº 17/2026
+
+Institui a Área de Especial Interesse Urbanístico da Zona Portuária Norte — AEIU-ZPN, estabelece parâmetros de ocupação do solo, cria instrumentos de gestão e dá outras providências.
+
+A CÂMARA MUNICIPAL DO RIO DE JANEIRO
+DECRETA:
+
+CAPÍTULO I
+DISPOSIÇÕES GERAIS
+
+Art. 1º Fica instituída a Área de Especial Interesse Urbanístico da Zona Portuária Norte — AEIU-ZPN, destinada à transformação urbanística coordenada de território caracterizado pela presença de imóveis subutilizados, infraestruturas logísticas desativadas e eixos de mobilidade de interesse municipal.
+
+Parágrafo único. Para os fins desta Lei Complementar, a AEIU-ZPN compreende o perímetro delimitado nesta Lei Complementar, os setores de intervenção nela instituídos, os parâmetros urbanísticos especiais, os instrumentos de gestão territorial e financeira e as definições técnicas constantes do Anexo IV.
+
+Art. 2º São objetivos da AEIU-ZPN:
+
+I — promover a requalificação urbanística, ambiental e paisagística da Zona Portuária Norte;
+
+II — ampliar a oferta de moradia, inclusive de interesse social, em áreas atendidas por infraestrutura urbana e transporte coletivo;
+
+III — estimular a reconversão de galpões e imóveis ociosos para usos residenciais, culturais, produtivos e de inovação;
+
+IV — integrar os espaços públicos, frentes d'água, estações de transporte e equipamentos culturais existentes ou projetados;
+
+V — recuperar para a coletividade parcela da valorização imobiliária decorrente dos investimentos públicos e da alteração de parâmetros urbanísticos; e
+
+VI — assegurar a implantação progressiva de medidas de drenagem urbana, arborização, mobilidade ativa e preservação da memória portuária.
+
+Art. 3º Constituem diretrizes da AEIU-ZPN:
+
+I — articulação entre investimentos públicos, empreendimentos privados e programas habitacionais;
+
+II — prioridade para ocupação de terrenos não edificados, subutilizados ou sem uso compatível com sua localização urbana;
+
+III — preservação dos bens protegidos, dos elementos representativos da paisagem industrial-portuária e das visadas de interesse cultural;
+
+IV — adoção de parâmetros diferenciados por setor, de acordo com a capacidade de suporte da infraestrutura e com a ambiência urbana pretendida; e
+
+V — destinação transparente dos recursos obtidos mediante contrapartidas à execução das intervenções previstas nesta Lei Complementar.
+
+Art. 4º Observada a área de abrangência definida no Art. 4º, a AEIU-ZPN é composta pelos seguintes setores de planejamento e intervenção:
+[[⚠️ CCJ: DISPOSITIVO ININTELIGÍVEL — ver seção ALERTAS_ABSURDOS]]
+
+I — Setor de Transformação Portuária — STP, destinado à implantação de novos empreendimentos e à reestruturação das grandes quadras, subdividido em:
+
+a) Setor A — Eixo dos Armazéns;
+
+b) Setor B — Frente do Canal; e
+
+c) Setor C — Terminal Norte;
+
+II — Setor de Qualificação Urbana — SQU, correspondente ao Setor D — Morro da Estação, destinado à consolidação do tecido urbano existente, à preservação da ambiência local e à implantação de equipamentos públicos de escala vicinal.
+
+CAPÍTULO II
+PARÂMETROS DE OCUPAÇÃO DO SOLO
+
+Art. 5º O gabarito máximo das edificações situadas na AEIU-ZPN será definido por setor, consideradas a altura total da edificação e a quantidade máxima de pavimentos, observadas as condições de afastamento, ventilação, iluminação, segurança e proteção do patrimônio cultural aplicáveis.
+
+§ 1º Os limites máximos de gabarito de cada setor constam do Anexo III desta Lei Complementar e somente poderão ser alcançados quando o empreendimento atender às obrigações de qualificação do espaço público estabelecidas no licenciamento.
+
+§ 2º Nas quadras confrontantes com bens tombados ou preservados, o órgão de tutela poderá exigir escalonamento volumétrico, preservado o limite máximo do setor e vedada a formação de empena cega voltada para o bem protegido.
+
+Art. 6º O coeficiente de aproveitamento básico — CA Básico e o coeficiente de aproveitamento máximo — CA Máximo aplicáveis aos imóveis integrantes da AEIU-ZPN são os definidos no Anexo III desta Lei Complementar.
+
+§ 1º A área edificada compreendida entre o CA Básico e o CA Máximo dependerá da utilização dos instrumentos previstos no Capítulo III e da demonstração de atendimento à infraestrutura urbana necessária ao empreendimento.
+
+§ 2º No Setor A, a utilização de coeficiente superior a seis inteiros dependerá da implantação, pelo empreendedor, de área pública de circulação de pedestres conectada à via estrutural e da observância do gabarito previsto no Art. 5º, sem prejuízo das demais contrapartidas devidas.
+
+§ 3º O cálculo do coeficiente de aproveitamento não incluirá as áreas técnicas indispensáveis ao funcionamento da edificação, os reservatórios de retenção de águas pluviais e as áreas de circulação pública gravadas como servidão administrativa, na forma do regulamento.
+
+Art. 7º A taxa de ocupação máxima dos lotes situados na AEIU-ZPN será a prevista no Anexo III desta Lei Complementar, devendo o licenciamento preservar áreas permeáveis, soluções de drenagem e rotas de acesso público nos empreendimentos de grande porte.
+
+Parágrafo único. Nos empreendimentos com área total edificável superior a vinte mil metros quadrados, no mínimo quinze por cento da área livre do lote deverá constituir espaço de fruição pública em horário regulamentado pelo órgão municipal competente.
+
+Art. 8º São permitidos na AEIU-ZPN, observados os parâmetros do setor e as restrições decorrentes da proteção cultural e ambiental:
+
+I — o uso residencial unifamiliar e multifamiliar;
+
+II — os usos comerciais e de serviços, compreendidos:
+
+a) comércio varejista e alimentação;
+
+b) escritórios, coworkings, incubadoras e serviços profissionais; e
+
+c) hospedagem, centros de convenções e equipamentos turísticos;
+
+III — os equipamentos públicos, culturais, educacionais, esportivos e de saúde; e
+
+IV — as atividades produtivas de baixo impacto, os laboratórios de inovação e a economia criativa, desde que não gerem incomodidade incompatível com o uso residencial.
+
+Art. 9º São vedados na AEIU-ZPN:
+
+I — depósitos de produtos inflamáveis, explosivos ou tóxicos, salvo aqueles estritamente necessários ao funcionamento regular de atividade licenciada e armazenados na forma da legislação aplicável; e
+
+II — depósitos abertos de sucata, pátios de veículos inservíveis e atividades que produzam emissão contínua de poeira, vibração ou odor incompatível com os usos admitidos nesta Lei Complementar.
+
+CAPÍTULO III
+INSTRUMENTOS DE GESTÃO
+
+Art. 10. O órgão municipal de planejamento urbano implantará sistema permanente de monitoramento e fiscalização dos empreendimentos licenciados na AEIU-ZPN, destinado à verificação dos usos admitidos no Art. 8º e das vedações previstas no Art. 9º desta Lei Complementar.
+
+§ 1º O sistema de monitoramento reunirá informações sobre licenciamento, execução de contrapartidas, ocupação efetiva dos imóveis, geração de impactos viários e atendimento às obrigações de drenagem e fruição pública.
+
+§ 2º Constatada atividade incompatível com o Art. 8º ou vedada pelo Art. 9º, o órgão competente lavrará auto de infração e adotará as providências sancionatórias previstas nesta Lei Complementar.
+
+Art. 11. Os empreendimentos situados na área de abrangência definida no Art. 4º que pretendam utilizar área edificável superior ao CA Básico ficam sujeitos à outorga onerosa do direito de construir, podendo o Município admitir, de forma complementar, a transferência de potencial construtivo originado em imóveis protegidos ou destinados a equipamentos públicos, parques, vias de circulação ou habitação de interesse social.
+[[⚠️ CCJ: DISPOSITIVO ININTELIGÍVEL — ver seção ALERTAS_ABSURDOS]]
+
+§ 1º A contrapartida decorrente da outorga onerosa será calculada com base na área adicional licenciada, no valor unitário do terreno, no fator de planejamento incidente no setor e no fator de interesse social aplicável ao uso proposto.
+
+§ 2º A área adicional licenciada e o potencial construtivo transferido observarão o gabarito máximo previsto no Art. 5º e o CA Máximo estabelecido no Art. 6º desta Lei Complementar.
+
+§ 3º O certificado de potencial construtivo transferível identificará o imóvel emissor, a área correspondente, o prazo de utilização, as áreas receptoras admitidas e o registro das transferências realizadas.
+
+§ 4º O potencial construtivo certificado será utilizado nos termos do artigo anterior, observado o limite máximo aplicável ao setor receptor e a prévia averbação do benefício no registro do imóvel.
+[[⚠️ CCJ: DISPOSITIVO ININTELIGÍVEL — ver seção ALERTAS_ABSURDOS]]
+
+Art. 12. O Município poderá conceder direito de superfície sobre áreas públicas, sobre o espaço aéreo de vias estruturais ou sobre áreas destinadas a equipamentos de mobilidade, exclusivamente para finalidades compatíveis com os objetivos da AEIU-ZPN.
+
+§ 1º Atendida a condição prevista no § 1º deste artigo, fica dispensada a apresentação, pelo superficiário, de estudo complementar de interferência estrutural, ressalvada exigência superveniente motivada por risco não identificado no exame inicial.
+[[⚠️ CCJ: DISPOSITIVO ININTELIGÍVEL — ver seção ALERTAS_ABSURDOS]]
+
+§ 2º O contrato de concessão de direito de superfície deverá fixar prazo, finalidade, contrapartida, obrigações de manutenção, condições de reversão e hipóteses de extinção antecipada.
+
+Art. 13. As contrapartidas financeiras ou urbanísticas decorrentes dos instrumentos disciplinados nesta Lei Complementar serão aplicadas prioritariamente em:
+
+I — implantação e qualificação de áreas públicas, praças, passeios, ciclovias e conexões de mobilidade ativa;
+
+II — provisão de habitação de interesse social e assistência técnica para melhoria habitacional no perímetro ou em sua área de influência imediata;
+
+III — restauração de bens protegidos, preservação da paisagem cultural portuária e manutenção de centros de memória comunitária;
+
+IV — execução de obras estruturantes de drenagem e mobilidade, compreendidas:
+
+a) implantação de reservatórios de retenção, jardins de chuva e redes verdes de drenagem; e
+
+b) requalificação de vias de conexão com estações de transporte coletivo;
+
+V — implantação de equipamentos públicos e programas permanentes de inclusão produtiva, compreendidos:
+
+a) centros de formação profissional;
+
+b) incubadoras de empreendimentos locais; e
+
+c) espaços públicos destinados a feiras, economia solidária e atividades culturais.
+
+Art. 14. Fica criado o Fundo de Desenvolvimento Urbano da AEIU-ZPN — FDU-ZPN, de natureza contábil, destinado a receber os recursos provenientes da outorga onerosa prevista no Art. 11, da transferência de potencial construtivo prevista no Art. 11 e das demais contrapartidas instituídas nesta Lei Complementar.
+
+Parágrafo único. Os recursos do FDU-ZPN serão aplicados exclusivamente em intervenções compatíveis com os objetivos previstos no Art. 2º, mediante plano anual de investimentos submetido a publicidade e controle social.
+
+CAPÍTULO IV
+PENALIDADES
+
+Art. 15. O infrator que descumprir as condições de licenciamento, os parâmetros urbanísticos ou as restrições de uso, conforme os Arts. 8º e 9º, ficará sujeito às seguintes penalidades, que serão aplicadas pelo órgão competente:
+
+I — advertência formal, quando a irregularidade for sanável e não houver dano relevante;
+
+II — multa de mil e quinhentas Unidades Fiscais Municipais, quando a irregularidade não for corrigida no prazo assinalado;
+
+III — multa de cinco mil Unidades Fiscais Municipais e suspensão temporária da licença, em caso de reincidência ou impacto urbanístico significativo; e
+
+IV — cassação da licença, interdição imediata da atividade e obrigação de recomposição integral do dano, quando houver risco à segurança, à saúde pública, ao meio ambiente ou ao patrimônio cultural.
+
+CAPÍTULO V
+DISPOSIÇÕES FINAIS
+
+Art. 16. Das penalidades aplicadas com fundamento nesta Lei Complementar caberá recurso administrativo ao órgão municipal competente, no prazo de trinta dias contados da ciência da decisão.
+
+§ 1º O recurso terá efeito suspensivo quanto à exigibilidade da multa, salvo quando a manutenção da atividade representar risco iminente à segurança, à saúde, ao meio ambiente ou ao patrimônio protegido.
+
+§ 2º A decisão do recurso deverá ser motivada e indicar, quando mantida a penalidade, o prazo e as condições para regularização do empreendimento ou encerramento da atividade.
+
+Art. 17. Os estabelecimentos e empreendimentos regularmente licenciados antes da entrada em vigor desta Lei Complementar terão prazo de trezentos e sessenta dias para adequar seus usos, acessos, sistemas de drenagem e condições operacionais às exigências aplicáveis da AEIU-ZPN.
+
+Parágrafo único. O prazo previsto no caput poderá ser prorrogado, uma única vez, por até cento e oitenta dias, mediante requerimento fundamentado do interessado e manifestação técnica do órgão municipal competente.
+
+Art. 18. Esta Lei Complementar entra em vigor após decorridos noventa dias de sua publicação oficial.
+
+ANEXO I
+MAPA DE DELIMITAÇÃO DA AEIU-ZPN
+
+Delimitação georreferenciada da área de abrangência: Do ponto P1, de coordenadas UTM X 680.000,000 e UTM Y 7.450.000,000, seguindo pelo eixo da Avenida do Cais Norte até o ponto P2, de coordenadas UTM X 680.420,350 e UTM Y 7.450.145,720; deste ponto, acompanhando o alinhamento da antiga faixa ferroviária até o ponto P3, de coordenadas UTM X 680.875,900 e UTM Y 7.450.310,640; seguindo pelo eixo da Rua do Guindaste Velho até o ponto P4, de coordenadas UTM X 681.140,550 e UTM Y 7.450.022,810; deste, pela divisa dos lotes voltados para a Praça das Docas até o ponto P5, de coordenadas UTM X 681.020,180 e UTM Y 7.449.615,430; seguindo pelo eixo da Avenida da Estação Marítima até o ponto P6, de coordenadas UTM X 680.620,740 e UTM Y 7.449.380,110; deste, pelo prolongamento da Travessa do Moinho até o ponto P7, de coordenadas UTM X 680.195,260 e UTM Y 7.449.510,980; seguindo pelo eixo da Rua da Alfândega Nova até o ponto P8, de coordenadas UTM X 679.880,470 e UTM Y 7.449.760,350; e, deste ponto, pelo eixo da Rua dos Estaleiros até o ponto P1, fechando o perímetro.
+
+ANEXO II
+MAPA DOS SETORES
+
+Setor A — Eixo dos Armazéns: área entre a Avenida do Cais Norte, a faixa ferroviária, a Rua do Guindaste Velho e a Travessa do Moinho, destinada a empreendimentos mistos.
+
+Setor B — Frente do Canal: área confrontante com a Avenida da Estação Marítima e a Praça das Docas, destinada a usos públicos, residenciais, turísticos e comerciais.
+
+Setor C — Terminal Norte: área entre a Rua dos Estaleiros e a Avenida do Cais Norte, destinada às conexões de mobilidade.
+
+Setor D — Morro da Estação: área ao sul da Travessa do Moinho, destinada à qualificação urbana e à habitação de interesse social.
+
+ANEXO III
+QUADRO DE PARÂMETROS URBANÍSTICOS
+
+Setor | Gabarito (m/pav) | CA Básico | CA Máximo | TO (%)
+Setor A | 47m/15 pav | 1,0 | 16,0 | 70%
+Setor B | 35m/11 pav | 1,0 | 18,0 | 65%
+Setor C | 23m/7 pav | 1,0 | 4,0 | 60%
+Setor D | 17m/5 pav | 1,0 | 2,5 | 50%
+
+ANEXO IV
+GLOSSÁRIO DE TERMOS TÉCNICOS
+
+Para os fins desta Lei Complementar, entende-se por:
+
+I — Área Total Edificável — ATE: soma das áreas computáveis do empreendimento;
+
+II — CA Básico: potencial construtivo utilizável sem contrapartida adicional;
+
+III — CA Máximo: limite de aproveitamento construtivo alcançável por instrumento desta Lei Complementar;
+
+IV — gabarito: limite de altura e de pavimentos da edificação;
+
+V — espaço de fruição pública: área privada destinada ao uso público nos horários do licenciamento;
+
+VI — potencial construtivo transferível: área edificável certificada para utilização em imóvel distinto; e
+
+VII — taxa de ocupação — TO: relação percentual entre projeção da edificação e área do lote.
+
+ANEXO V
+PROGRAMA DE METAS DA AEIU-ZPN
+
+Meta | Objeto | Prazo máximo | Responsável
+Meta 1 | Implantação do corredor de circulação de pedestres entre o Setor A e a estação de transporte coletivo | 24 meses da publicação da Lei Complementar | Secretaria Municipal de Desenvolvimento Urbano
+Meta 2 | Adequação operacional dos estabelecimentos existentes, observadas as condições e o prazo previstos no Art. 17 | 18 meses da publicação da Lei Complementar | Órgão municipal de licenciamento urbanístico
+Meta 3 | Implantação dos jardins de chuva e do parque linear da Frente do Canal | 36 meses da publicação da Lei Complementar | Fundo de Desenvolvimento Urbano da AEIU-ZPN e órgão municipal ambiental
