@@ -582,7 +582,7 @@ E3. ALERTA DE ABSURDO MANIFESTO (art. 250, §2º RI — providência regimental 
 
     Diferença com E2: E2 = duas emendas conflitam; E3 = uma emenda, ao interagir com outra
     supressiva ou de renumeração, produz dispositivo normalmente inoperante.
-    Em AMBOS (E2 e E3): CCJ NÃO deve oferecer Redação Final; propor REABERTURA (§2º RI).
+    Em AMBOS (E2 e E3): a providência regimental indicada é a reabertura da discussão (§2º RI).
     Para casos fora dos quatro acima: na dúvida, classifique como ⚠ AVISO.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

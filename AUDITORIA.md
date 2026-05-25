@@ -247,4 +247,179 @@ Executa adicionalmente: harmonização completa do PLC 17/2026 com as 10 emendas
 
 ---
 
+---
+
+## 11. Extratos de código para verificação (rev.6)
+
+Esta seção contém os trechos mais críticos do código atual para facilitar a auditoria. O código completo está em https://github.com/ProfAlexandreAraujo/sistema-redacoes-ccj
+
+---
+
+### 11.1 `utils.py` — lógica de dois modos (`exportar_redacao_final_docx`)
+
+```python
+def exportar_redacao_final_docx(
+    texto, nome_projeto, avisos, erros,
+    alertas_absurdos=None, mapa=None, log=None,
+    tipo_redacao="Redação Final",
+    prosseguir_com_alerta_sec_2: bool = False,   # ← NOVO (rev.6)
+) -> bytes:
+    _alertas_norm = alertas_absurdos or []
+    _erros_norm   = erros or []
+    tem_sec_2     = bool(_erros_norm or _alertas_norm)
+
+    # MODO: rascunho (padrão) vs redação final (confirmação explícita)
+    eh_rascunho = tem_sec_2 and not prosseguir_com_alerta_sec_2
+
+    if eh_rascunho:
+        titulo_doc = "RASCUNHO DE TRABALHO — NÃO É REDAÇÃO FINAL"
+    else:
+        titulo_doc = tipo_redacao.upper()
+
+    run_titulo.bold = True
+    run_titulo.font.size = Pt(14)
+    if eh_rascunho:
+        run_titulo.font.color.rgb = RGBColor(0xC0, 0x00, 0x00)   # vermelho
+
+    if eh_rascunho:
+        r_alerta.add_run("⚠ RASCUNHO — existem alertas de §2º ... Confirme ciência na aba 5.")
+    elif tem_sec_2:
+        r_alerta.add_run("⚠ ALERTA CRÍTICO PENDENTE — ART. 250, §2º RI — "
+                         "O relator tomou ciência ... reabertura da discussão.")
+
+    # Sufixo -A: apenas no documento formal
+    nome_doc = nome_projeto if eh_rascunho else _aplicar_sufixo_a(nome_projeto)
+
+    # Log do DOCX: registra o override humano com data
+    log_final = list(log or [])
+    if tem_sec_2 and prosseguir_com_alerta_sec_2:
+        log_final.append(
+            f"OVERRIDE-HUMANO / Art. 250, §2º RI — Relator tomou ciência dos alertas "
+            f"({len(_erros_norm)} erro(s) crítico(s), {len(_alertas_norm)} absurdo(s) manifesto(s)) "
+            f"e optou por prosseguir com a Redação Final em {datetime.date.today():%d/%m/%Y}."
+        )
+```
+
+---
+
+### 11.2 `app.py` — aba 5, confirmação do relator
+
+```python
+_alertas_aba5     = getattr(res, 'alertas_absurdos', [])
+_tem_sec_2        = bool(res.erros_criticos or _alertas_aba5)
+_prosseguir_sec_2 = False   # default conservador
+
+if _tem_sec_2:
+    st.warning(
+        f"⚠️ {n_sec2} alerta(s) de §2º ... A providência regimental indicada é a reabertura.\n"
+        "O documento será exportado como RASCUNHO DE TRABALHO por padrão.\n"
+        "Se o relator tomou ciência e deseja prosseguir, marque a opção abaixo."
+    )
+    _prosseguir_sec_2 = st.checkbox(
+        "✅ Confirmo ciência dos alertas críticos (§2º RI) e desejo exportar como Redação Final",
+        value=False,
+        key="confirmar_sec_2_aba5",
+    )
+    if _prosseguir_sec_2:
+        st.error("🔴 Este documento será exportado como Redação Final com ALERTA CRÍTICO PENDENTE...")
+
+# Nome do arquivo reflete o modo
+_slug_doc = "rascunho_trabalho" if (_tem_sec_2 and not _prosseguir_sec_2) else _slug_tipo
+
+docx_bytes = exportar_redacao_final_docx(
+    ...,
+    prosseguir_com_alerta_sec_2=_prosseguir_sec_2,
+)
+```
+
+---
+
+### 11.3 `harmonizer.py` — regras do prompt (E1.5, E2, E3) — trecho literal
+
+```
+E1.5. PROIBIÇÃO ABSOLUTA — ANÁLISES DE MÉRITO NOS AVISOS:
+    NUNCA inclua em AVISOS qualquer observação sobre:
+    — Coeficiente de aproveitamento (CA): comparações, proporções, relações entre setores
+    — Gabaritos, alturas, número de pavimentos: análises de adequação
+    — Consistência dos parâmetros urbanísticos aprovados pelo Plenário
+    — Qualquer julgamento sobre se os valores fazem sentido técnico ou urbanístico
+    Esses são assuntos de MÉRITO — soberania exclusiva do Plenário — totalmente fora da
+    competência da CCJ na Redação Final. Colocá-los em AVISOS contamina o documento.
+    Se perceber algo desse tipo, OMITA. Não registre. Não "avise com ressalva".
+
+E2. ERROS CRÍTICOS — não tente resolver; a providência regimental indicada
+    é a reabertura da discussão (art. 250, §2º RI):
+    [contradição direta entre emendas, impossibilidade de cumprimento simultâneo, etc.]
+
+E3. ALERTA DE ABSURDO MANIFESTO (art. 250, §2º RI — providência regimental
+    indicada é a reabertura):
+    [4 casos: autoreferência circular, condição inoperante, remissão incompatível,
+     referência exclusiva a dispositivo suprimido]
+    Em AMBOS (E2 e E3): a providência regimental indicada é a reabertura da discussão (§2º RI).
+```
+
+---
+
+### 11.4 `harmonizer.py` — pós-processador P1 (camada Python independente do modelo)
+
+```python
+# Caso 1 — Autoreferência circular (regex estrutural sobre blocos de artigo)
+refs_art = re.findall(
+    r'\b(?:n[oa]s?|d[oa]s?|ao?|conform[ae]?|observad[oa])\s+[Aa]rt\.?\s*(\d+)',
+    corpo
+)
+if any(r == num_art for r in refs_art):
+    alertas.append(f"🔴 Art. {num_art}: autoreferência circular — reabertura (§2º RI)")
+
+# Caso 2 — Condição normativa inoperante (§N remete a §N deste artigo)
+if ref_m.group(1) == par_num:
+    alertas.append(f"🔴 §{par_num}º: condição normativa inoperante — reabertura (§2º RI)")
+
+# Caso 3 — Padrões semânticos nos textos dos avisos
+_PADROES_ABSURDO_AVISO = re.compile(
+    r'referência circular|autoref|artigo anterior.*incompatível'
+    r'|condição.*suprimid|§.*não existe mais|§.*foi suprimid'
+    r'|artigo anterior.*monitoramento|artigo anterior.*versa\b',
+    re.IGNORECASE | re.DOTALL
+)
+```
+
+---
+
+### 11.5 Resultado dos testes automatizados (verificar.py rev.4)
+
+```
+[7] EXPORTAÇÃO DOCX
+  ✅  §2º sem confirmação → título 'RASCUNHO DE TRABALHO'
+  ✅  §2º sem confirmação → NÃO contém 'REDAÇÃO FINAL' no título
+  ✅  §2º sem confirmação → sufixo -A NÃO aplicado no rascunho
+  ✅  §2º sem confirmação → aviso de rascunho presente no cabeçalho
+  ✅  Marcadores [[⚠️ CCJ:...]] removidos do DOCX
+  ✅  §2º com confirmação → título contém 'REDAÇÃO FINAL'
+  ✅  §2º com confirmação → sufixo -A aplicado ('17-A/2026')
+  ✅  §2º com confirmação → 'ALERTA CRÍTICO PENDENTE' no cabeçalho
+  ✅  §2º com confirmação → log contém 'OVERRIDE-HUMANO'
+  ✅  Sem §2º → título 'REDAÇÃO FINAL'
+  ✅  Sem §2º → sufixo -A aplicado ('17-A/2026')
+  ✅  Sem §2º → NÃO contém 'RASCUNHO'
+  ✅  Absurdo no DOCX menciona §2º (não §1º)
+  ✅  Absurdo no DOCX NÃO menciona ofício §1º
+  ✅  Avisos com E1: seção NÃO diz 'preservados exatamente como aprovados'
+
+RESULTADO FINAL: 42/43 (único fail = ANTHROPIC_API_KEY ausente — esperado em ambiente local)
+```
+
+---
+
+### 11.6 Riscos residuais conhecidos e aceitos
+
+| Risco | Probabilidade | Mitigação |
+|---|---|---|
+| Detector P1 Caso 1 pode ter falso positivo em autorreferência intencional | Muito baixa (raramente existe) | Monitorar no PLC real; o P1 é camada de segurança, não bloqueio |
+| Deduplicação pode fundir dois absurdos no mesmo artigo se modelo gerar texto similar | Baixa | O modelo é o caminho principal; duplicatas protegem, não suprimem |
+| Modelo pode classificar absurdo manifesto como ⚠ Aviso | Baixa após E3 rev.3 + P1 | P1 escalona independentemente da classificação do modelo |
+| Relator pode confirmar ciência sem ler os alertas (checkbox impulsivo) | Possível | Interface exige leitura do warning + checkbox + 2º st.error; log OVERRIDE-HUMANO rastreável |
+
+---
+
 *Versão rev.6 — 25/05/2026 — Sistema de Redações CCJ CMRJ*
