@@ -294,7 +294,7 @@ TEXTO DAS EMENDAS:
                 continue
             data = json.loads(match.group())
 
-            for item in data.get("emendas", []):
+            for idx_item, item in enumerate(data.get("emendas", []), start=1):
                 tipo_map = {t.value: t for t in TipoEmenda}
                 # texto_bruto: preferir campo explícito; fallback para novo_texto ou
                 # para o texto do item como string (nunca vazio para emendas supressivas)
@@ -303,8 +303,11 @@ TEXTO DAS EMENDAS:
                     or item.get("novo_texto")
                     or f"[Emenda {item.get('numero', '?')} — {item.get('tipo', '')} | {item.get('alvo', '')}]"
                 )
+                numero = item.get("numero")
+                if numero is None:
+                    numero = offset + idx_item   # posição no lote, não acumulativo
                 e = Emenda(
-                    numero      = item.get("numero", offset + len(todas_emendas) + 1),
+                    numero      = numero,
                     texto_bruto = texto_bruto,
                     tipo        = tipo_map.get(item.get("tipo") or "", TipoEmenda.OUTRO),
                     alvo        = item.get("alvo"),
@@ -397,8 +400,10 @@ A1. PRESERVAÇÃO DO TEOR — REGRA ABSOLUTA INVIOLÁVEL (art. 250 RI / soberani
       o problema em <ALERTAS_ABSURDOS> com marcador inline no texto (ver formato abaixo).
     → A supressão de QUALQUER cláusula ou palavra do texto aprovado — mesmo que pareça
       "resolver" um problema técnico — é alteração de teor vedada pelo art. 250 RI.
-    → A ÚNICA modificação automática permitida é a atualização de referências cruzadas
-      internas decorrente de renumeração (ver A2).
+    → As correções exclusivamente linguísticas previstas em E1 (concordância, caixa,
+      pontuação objetiva) constituem EXCEÇÃO EXPRESSA e autorizada à preservação literal,
+      devendo ser obrigatoriamente registradas em LOG e AVISOS.
+    → Fora das hipóteses E1 e A2, nenhuma alteração automática é permitida.
 
 A2. REFERÊNCIAS CRUZADAS (única alteração automática de conteúdo permitida)
     Após renumerar artigos, atualize TODAS as referências internas:
@@ -528,8 +533,6 @@ E1. CORREÇÕES AUTOMÁTICAS DE LINGUAGEM (art. 250, §1º RI):
     — "Parágrafo único" onde há mais de um parágrafo (ou vice-versa)
     — Referência a dispositivo suprimido que não configure absurdo manifesto (E3)
     — Técnica redacional imprópria que comprometa o sentido jurídico
-    — Ausência do conectivo "; e" antes do penúltimo inciso (LC 48/2000, art. 9º, VIII —
-      não consta da LC 95/1998 federal; adoção opcional na prática legislativa municipal)
 
 E1.5. PROIBIÇÃO ABSOLUTA — ANÁLISES DE MÉRITO NOS AVISOS:
     NUNCA inclua em AVISOS qualquer observação sobre:

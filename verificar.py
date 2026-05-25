@@ -172,7 +172,7 @@ if _DOCX_OK:
         "Art. 3º Conclusão."
     )
 
-    # 7a — Com §2º → RASCUNHO, sem sufixo -A, sem marcadores
+    # 7a — Com §2º → REDAÇÃO FINAL com -A + aviso em vermelho (sem bloqueio)
     try:
         docx_a = exportar_redacao_final_docx(
             texto=TEXTO_MARCADOR, nome_projeto="PLC 17/2026",
@@ -181,18 +181,18 @@ if _DOCX_OK:
         )
         doc_a  = Document(BytesIO(docx_a))
         txts_a = [p.text for p in doc_a.paragraphs]
-        chk("Com §2º → título 'RASCUNHO DE TRABALHO'",
-            any("RASCUNHO DE TRABALHO" in t for t in txts_a))
-        chk("Com §2º → NÃO contém 'REDAÇÃO FINAL' como título",
-            not any(t.strip() == "REDAÇÃO FINAL" for t in txts_a))
-        chk("Com §2º → NÃO aplica sufixo -A (rascunho informal)",
-            not any("17-A/2026" in t for t in txts_a))
+        chk("Com §2º → título é REDAÇÃO FINAL (sem bloqueio)",
+            any("REDAÇÃO FINAL" in t for t in txts_a))
+        chk("Com §2º → sufixo -A aplicado mesmo com alertas",
+            any("17-A/2026" in t for t in txts_a))
+        chk("Com §2º → aviso de atenção presente no cabeçalho",
+            any("ATENÇÃO" in t for t in txts_a))
         chk("Marcadores [[⚠️ CCJ:...]] removidos do DOCX",
             not any("[[" in t for t in txts_a))
     except Exception as e:
         chk("DOCX com §2º", False, str(e))
 
-    # 7b — Sem §2º → REDAÇÃO FINAL com sufixo -A
+    # 7b — Sem §2º → REDAÇÃO FINAL com sufixo -A, sem aviso
     try:
         docx_b = exportar_redacao_final_docx(
             texto="Art. 1º Texto limpo sem problemas.",
@@ -208,7 +208,7 @@ if _DOCX_OK:
     except Exception as e:
         chk("DOCX sem §2º", False, str(e))
 
-    # 7c — Texto de absurdo manifesto menciona §2º e reabertura (não §1º)
+    # 7c — Texto de absurdo manifesto no anexo menciona §2º e reabertura (não §1º)
     try:
         chk("Absurdo no DOCX menciona §2º (não §1º)",
             any("§2" in t and ("reabertura" in t.lower() or "eximir" in t.lower())
@@ -262,21 +262,25 @@ e_mod = Emenda(
 chk("Modificativa: texto_bruto preserva texto integral (distinto de novo_texto)",
     e_mod.texto_bruto != e_mod.novo_texto and len(e_mod.texto_bruto) > 0)
 
-# Bug 2: offset não deve acumular entre lotes
-# Simula dois lotes de 10 emendas cada
-todas: list[Emenda] = []
+# Bug 2: offset — simula a fórmula REAL do código corrigido (idx_item, não len(todas))
+# Dois lotes de 2 emendas sem número → esperado: [1, 2, 3, 4]
+todas2: list[Emenda] = []
 offset_sim = 0
 for lote in range(2):
-    n_antes = len(todas)
-    for i in range(10):
-        todas.append(Emenda(numero=offset_sim + len(todas) - n_antes + 1 + n_antes,
-                            texto_bruto=f"emenda {lote}-{i}"))
-    offset_sim += len(todas) - n_antes   # correção: só o lote
+    n_antes = len(todas2)
+    itens_lote = [{"tipo": "Supressiva", "alvo": f"Art. {lote*2+i+1}"} for i in range(2)]
+    for idx_item, item in enumerate(itens_lote, start=1):
+        numero = item.get("numero")          # None — sem número explícito
+        if numero is None:
+            numero = offset_sim + idx_item   # fórmula corrigida
+        todas2.append(Emenda(numero=numero, texto_bruto=f"emenda lote{lote} item{idx_item}"))
+    offset_sim += len(todas2) - n_antes
 
-chk("Offset 2 lotes de 10: total = 20 emendas (sem duplicação)",
-    len(todas) == 20)
-chk("Offset após 2 lotes = 20 (não 30)",
-    offset_sim == 20)
+chk("Offset 2 lotes de 2: sequência é [1,2,3,4] (não [1,2,5,6])",
+    [e.numero for e in todas2] == [1, 2, 3, 4],
+    f"sequência: {[e.numero for e in todas2]}")
+chk("Offset após 2 lotes = 4 (não 6)",
+    offset_sim == 4, f"offset={offset_sim}")
 
 # ────────────────────────────────────────────────────────────────────────────
 # 8. ANÁLISE ESTRUTURAL
@@ -408,11 +412,6 @@ try:
     chk("[API] E1: LOG registra correção de concordância",
         any("serão aplicad" in l.lower() or "E1" in l for l in resultado.log_alteracoes),
         f"log tem {len(resultado.log_alteracoes)} entradas")
-    # Critério 5: "; e" → aviso apenas, NÃO auto-corrigido
-    chk("[API] E1: ausência de '; e' gera aviso (não auto-corrige — LC 48/2000 apenas)",
-        any("; e" in a.lower() or "conectivo" in a.lower() or "penúltim" in a.lower()
-            for a in resultado.avisos),
-        "esperado: aviso sobre '; e' em AVISOS §1º")
     # CA/mérito: observações sobre parâmetros urbanísticos NÃO devem aparecer em AVISOS
     chk("[API] Sem observações de mérito/CA nos AVISOS",
         not any(re.search(r'\bCA\b|\bcoeficiente de aproveitamento\b|\bganharit\b|'
