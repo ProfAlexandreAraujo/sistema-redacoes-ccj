@@ -605,10 +605,24 @@ with aba4:
                             nome_projeto,
                         )
                         st.session_state.resultado_harm = resultado
-                        st.success("✅ Harmonização concluída! Vá para a aba Redação Final.")
+
+                        # ── Salvar sessão automaticamente para não perder o trabalho ──
+                        try:
+                            p = salvar_sessao(nome_projeto, texto_original, emendas)
+                            st.success(
+                                f"✅ Harmonização concluída! Sessão salva automaticamente em `{p.name}`. "
+                                "**Vá para a aba Redação Final e baixe o .docx agora.**"
+                            )
+                        except Exception:
+                            st.success("✅ Harmonização concluída! Vá para a aba Redação Final.")
+
                         st.rerun()
                     except Exception as ex:
                         st.error(f"Erro na harmonização: {ex}")
+                        st.warning(
+                            "💡 Se o erro for de conexão ou timeout, tente novamente — "
+                            "o estado das emendas foi preservado."
+                        )
         else:
             st.warning("Preencha os pré-requisitos para habilitar a harmonização.")
 
