@@ -100,6 +100,7 @@ def init_state():
         'emendas':           [],
         'resultado_harm':    None,
         'aba_votacao_ativa': False,
+        'tipo_redacao':      'Redação Final',
     }
     for k, v in defaults.items():
         if k not in st.session_state:
@@ -205,12 +206,15 @@ with st.sidebar:
 # ABAS PRINCIPAIS
 # ─────────────────────────────────────────────────────────────────────────────
 
+_tipo_rdz = st.session_state.get('tipo_redacao', 'Redação Final')
+_icon_rdz  = "✅" if _tipo_rdz == "Redação Final" else "📋"
+
 aba1, aba2, aba3, aba4, aba5 = st.tabs([
     "📄 1 · Projeto",
     "📝 2 · Emendas",
     "🗳️ 3 · Votação",
     "⚖️ 4 · Harmonizar",
-    "✅ 5 · Redação Final",
+    f"{_icon_rdz} 5 · {_tipo_rdz}",
 ])
 
 
@@ -227,10 +231,28 @@ with aba1:
         np_input = st.text_input(
             "Identificação do Projeto",
             value=st.session_state.nome_projeto,
-            placeholder="Ex: PLC 93/2025 — Plano Diretor",
+            placeholder="Ex: PLC 92/2025 — AEIU Praça XI Maravilha",
         )
         if np_input != st.session_state.nome_projeto:
             st.session_state.nome_projeto = np_input
+
+        tipo_rdz_input = st.radio(
+            "Tipo de redação:",
+            ["Redação Final", "Redação do Vencido"],
+            index=["Redação Final", "Redação do Vencido"].index(
+                st.session_state.get('tipo_redacao', 'Redação Final')
+            ),
+            horizontal=True,
+            help=(
+                "**Redação Final** — elaborada após a segunda discussão "
+                "(projeto aprovado definitivamente pelo Plenário).  \n"
+                "**Redação do Vencido** — elaborada após a primeira discussão "
+                "(emendas aprovadas; projeto segue para segunda discussão)."
+            ),
+        )
+        if tipo_rdz_input != st.session_state.get('tipo_redacao'):
+            st.session_state.tipo_redacao = tipo_rdz_input
+            st.rerun()
 
     with c2:
         arq = st.file_uploader("Upload do projeto (.docx, .txt ou .pdf)", type=['docx', 'txt', 'pdf'])
@@ -692,10 +714,11 @@ with aba4:
 # ══════════════════════════════════════════════════════════════════════════════
 
 with aba5:
-    st.header("Redação Final")
+    _tipo_rdz_aba5 = st.session_state.get('tipo_redacao', 'Redação Final')
+    st.header(_tipo_rdz_aba5)
 
     if not st.session_state.resultado_harm:
-        st.info("Execute a harmonização na aba 4 para gerar a redação final.")
+        st.info(f"Execute a harmonização na aba 4 para gerar a {_tipo_rdz_aba5.lower()}.")
     else:
         res = st.session_state.resultado_harm
 
@@ -725,11 +748,15 @@ with aba5:
 
         ec1, ec2, ec3 = st.columns(3)
 
+        # Slug para nome de arquivo
+        _slug_tipo  = "redacao_final" if _tipo_rdz_aba5 == "Redação Final" else "redacao_vencido"
+        _slug_proj  = re.sub(r'[^\w]', '_', nome_projeto or 'projeto')
+
         # TXT simples
         ec1.download_button(
             label="📄 Baixar .txt",
             data=texto_editavel.encode('utf-8'),
-            file_name=f"redacao_final_{re.sub(r'[^\\w]','_',nome_projeto or 'projeto')}.txt",
+            file_name=f"{_slug_tipo}_{_slug_proj}.txt",
             mime="text/plain",
             use_container_width=True,
         )
@@ -743,11 +770,12 @@ with aba5:
             alertas_absurdos=getattr(res, 'alertas_absurdos', []),
             mapa=res.mapa_renumeracao,
             log=res.log_alteracoes,
+            tipo_redacao=_tipo_rdz_aba5,
         )
         ec2.download_button(
             label="📝 Baixar .docx",
             data=docx_bytes,
-            file_name=f"redacao_final_{re.sub(r'[^\\w]','_',nome_projeto or 'projeto')}.docx",
+            file_name=f"{_slug_tipo}_{_slug_proj}.docx",
             mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
             use_container_width=True,
         )

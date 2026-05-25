@@ -178,6 +178,17 @@ def carregar_sessao(caminho: Path) -> tuple[str, str, list[Emenda]]:
 # EXPORTAÇÃO PARA DOCX
 # ─────────────────────────────────────────────────────────────────────────────
 
+def _aplicar_sufixo_a(nome: str) -> str:
+    """
+    Insere o sufixo -A obrigatório no número do projeto.
+    Exemplos:
+        'PLC 92/2025'                      → 'PLC 92-A/2025'
+        'PLC 92/2025 — AEIU Praça XI'     → 'PLC 92-A/2025 — AEIU Praça XI'
+        'PLC 92 2025'  (sem barra)         → 'PLC 92 2025'  (não altera)
+    """
+    return re.sub(r'(\d+)\s*(/\s*\d{4})', r'\1-A\2', nome)
+
+
 def exportar_redacao_final_docx(
     texto: str,
     nome_projeto: str,
@@ -186,6 +197,7 @@ def exportar_redacao_final_docx(
     alertas_absurdos: list[str] = None,
     mapa: dict = None,
     log: list[str] = None,
+    tipo_redacao: str = "Redação Final",
 ) -> bytes:
     """
     Gera arquivo .docx formatado com o texto harmonizado.
@@ -207,16 +219,17 @@ def exportar_redacao_final_docx(
 
     doc.add_paragraph()
 
-    tipo_rdz = doc.add_paragraph()
-    tipo_rdz.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    run = tipo_rdz.add_run('REDAÇÃO FINAL')
+    tipo_rdz_p = doc.add_paragraph()
+    tipo_rdz_p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    run = tipo_rdz_p.add_run(tipo_redacao.upper())
     run.bold = True
     run.font.size = Pt(14)
 
     if nome_projeto:
+        nome_com_sufixo = _aplicar_sufixo_a(nome_projeto)
         p_proj = doc.add_paragraph()
         p_proj.alignment = WD_ALIGN_PARAGRAPH.CENTER
-        p_proj.add_run(nome_projeto).bold = True
+        p_proj.add_run(nome_com_sufixo).bold = True
 
     doc.add_paragraph(f"Elaborada em {datetime.date.today().strftime('%d/%m/%Y')}")
     doc.add_paragraph()
