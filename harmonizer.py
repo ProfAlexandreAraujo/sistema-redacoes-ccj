@@ -389,12 +389,22 @@ A1. PRESERVAÇÃO DO TEOR — REGRA ABSOLUTA INVIOLÁVEL (art. 250 RI / soberani
     → A ÚNICA modificação automática permitida é a atualização de referências cruzadas
       internas decorrente de renumeração (ver A2).
 
-A2. REFERÊNCIAS CRUZADAS (única alteração automática permitida)
+A2. REFERÊNCIAS CRUZADAS (única alteração automática de conteúdo permitida)
     Após renumerar artigos, atualize TODAS as referências internas:
     — "conforme o art. 10" → se art. 10 virou art. 8, corrija para "conforme o art. 8"
     — "nos termos do § 2º do art. 5º" → atualize ambos os números se houver mudança
     — "previsto no inciso III" → atualize se o inciso foi renumerado
     Nunca use as expressões "anterior", "seguinte" ou equivalentes vagas (LC 48/2000, art. 10, II, g).
+
+    ⚠ REGRA ESPECIAL — EMENDAS AGLUTINATIVAS:
+    Quando a emenda unifica art. X e art. Y em art. X (suprimindo art. Y), o CONTEÚDO
+    de Y migra para X. Qualquer referência ao conteúdo que estava em Y deve apontar para
+    X final — NÃO para o artigo que por renumeração sequencial herda o número de Y.
+    Exemplo: arts. 11 e 12 originais aglutinados em art. 11 final; outro artigo dizia
+    "transferência prevista no Art. 12" → deve passar a "transferência prevista no Art. 11"
+    (e não para o art. 12 final, que é o art. 13 original renumerado com outro conteúdo).
+    Registre no LOG_ALTERACOES: "A2-aglut / Art. Xº: 'Art. Y' → 'Art. X' (conteúdo migrou
+    pela aglutinação — Emenda N)"
 
 A3. ANEXOS (preservação integral obrigatória)
     Os Anexos (mapas, quadros, tabelas, delimitações georreferenciadas) integram a lei mas
@@ -476,23 +486,34 @@ D3. Números e percentuais (LC 48/2000, art. 10, II, f — LC 51/2001):
 BLOCO E — AVISOS E ERROS CRÍTICOS (art. 250, §§ 1º e 2º, RI)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-E1. AVISOS (art. 250, §1º RI) — APONTE o problema, NÃO corrija automaticamente:
-    O texto aprovado pelo Plenário é incorporado EXATAMENTE como aprovado, inclusive seus erros.
-    A CCJ decidirá, por ofício com ampla justificativa, se e como corrigirá cada item.
-    Para cada aviso: "⚠ Emenda N / Art. Xº: [descrição precisa do problema] — texto preservado
-    como aprovado; correção depende de ofício da CCJ (art. 250, §1º RI)"
+E1. CORREÇÕES AUTOMÁTICAS DE LINGUAGEM (art. 250, §1º RI):
+    Erros de linguagem que NÃO alterem o significado jurídico devem ser CORRIGIDOS
+    AUTOMATICAMENTE. A preocupação central é preservar o TEOR (o que a lei manda, proíbe
+    ou permite) — não manter erros de português que não afetam a norma.
 
-    Situações que geram aviso (nunca corrija automaticamente):
-    — Erro de ortografia ou concordância nominal/verbal (ex: "serão aplicada"; "Depósitos" com
-      inicial maiúscula em posição que exige minúscula)
-    — Violação das regras de pontuação do Bloco C (ex: inciso terminando com ponto quando
-      deveria ser ponto e vírgula; penúltimo inciso sem "; e")
-    — Uso de "anterior" ou "seguinte" sem especificação do dispositivo
-    — Referência a dispositivo suprimido por outra emenda (quando não gera absurdo manifesto)
+    CORRIJA automaticamente e registre no LOG_ALTERACOES e em AVISOS:
+    — Concordância nominal e verbal (ex: "serão aplicada" → "serão aplicadas")
+    — Caixa incorreta em palavras comuns (ex: "Depósitos" → "depósitos" quando não for nome
+      próprio ou início de inciso)
+    — Pontuação do Bloco C (ex: inciso encerrando com "." → ";"; penúltimo inciso sem "; e"
+      → acrescentar "; e"; última alínea sem "." → acrescentar ".")
+    — Uniformização de tempo verbal dentro do mesmo artigo
+
+    Para cada correção: LOG_ALTERACOES → "E1 / Art. Xº: [original] → [corrigido]"
+                        AVISOS → "⚠ E1 / Art. Xº: corrigido automaticamente — [original] → [corrigido]"
+
+    NUNCA ALTERE (independentemente de parecer erro de português):
+    — Números, valores, prazos, percentuais, coeficientes, coordenadas, medidas
+    — Sujeito, objeto e verbo obrigacional/proibitivo de qualquer dispositivo
+    — Termos técnicos jurídicos e urbanísticos, mesmo que inusuais
+    — Qualquer expressão que defina o que a lei permite, proíbe ou obriga
+    — Remissões a outros dispositivos (salvo A2)
+
+    APONTE mas não corrija (geram apenas aviso ⚠, sem alteração):
+    — Uso de "anterior" ou "seguinte" sem especificação do dispositivo (D2)
     — "Parágrafo único" onde há mais de um parágrafo (ou vice-versa)
-    — Técnica redacional imprópria que não comprometa o sentido jurídico
-    — Inconsistência de tempo verbal entre dispositivos da mesma lei
-    — Conjunção coordenativa faltante na penúltima alínea ou inciso
+    — Referência a dispositivo suprimido que não configure absurdo manifesto (E3)
+    — Técnica redacional imprópria que comprometa o sentido jurídico
 
 E2. ERROS CRÍTICOS — não tente resolver, sinalize para reabertura (art. 250, §2º RI):
     — Duas emendas aprovadas que se contradizem diretamente sobre o mesmo dispositivo

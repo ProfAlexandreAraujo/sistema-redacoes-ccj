@@ -60,8 +60,11 @@ Após renumerar artigos, atualizar todas as referências internas. Esta é a ún
 ### A3 — Anexos
 Preservação integral obrigatória. Nunca renumerar nem alterar sem emenda expressa.
 
-### E1 — Avisos (§1º RI) — APONTE, nunca corrija automaticamente
-O sistema aponta erros de ortografia, concordância, pontuação, técnica legislativa — sem nunca alterar o texto aprovado. A CCJ decide, por ofício, cada correção.
+### A2 — Referências cruzadas (única alteração automática de conteúdo)
+Atualiza numeração de artigos/parágrafos/incisos após renumeração. **Regra especial de aglutinação**: quando emenda aglutina arts. X e Y em X (suprimindo Y), qualquer referência ao conteúdo de Y deve apontar para X final — não para o artigo que herda o número de Y por renumeração sequencial.
+
+### E1 — Correções automáticas de linguagem (rev.3)
+O sistema corrige automaticamente erros de ortografia, concordância e pontuação que **não alterem o significado jurídico**, registrando cada correção em LOG e AVISOS. A preocupação central é o teor (o que a lei manda, proíbe, permite) — não erros de português. Números, valores, prazos, verbos obrigacionais: jamais alterados.
 
 ### E2 — Erros Críticos (§2º RI)
 Contradição entre emendas aprovadas → sinaliza para reabertura. Nunca resolve.
@@ -91,6 +94,8 @@ Qualquer item escalado é movido de `avisos` para `alertas_absurdos`, o que for�
 | 25/05/2026 | Marcadores inline presentes no DOCX exportado | Médio | ✅ Corrigido (utils.py) |
 | 25/05/2026 | Correções automáticas de gramática/pontuação | Regimental | ✅ Corrigido (E1 flag-only) |
 | 25/05/2026 | IA persiste em classificar absurdos como §1º mesmo com E3 rev.2 | Crítico | ✅ Corrigido (harmonizer.py — pós-processamento Python) |
+| 25/05/2026 | E1 "flag-only" revertido para "auto-corrigir + log" (decisão do usuário) | Funcional | ✅ Aplicado (E1 rev.3) |
+| 25/05/2026 | A2 não atualizava referências ao conteúdo migrado por aglutinação | Funcional | ✅ Corrigido (A2 aglutinação — harmonizer.py) |
 
 ---
 
@@ -109,13 +114,13 @@ Use o **texto original** (`TAB_1_PLC_17_2026_TEXTO_ORIGINAL.txt`, 19 artigos + 4
 | 1 — Supressiva Art. 4º | Suprimir art. 4º; renumerar subsequentes | Art. 4º suprimido; art. 5º → art. 4º; ⚠ circularidade em "definida no Art. 4º" → 🔴 Absurdo (§2º) |
 | 2 — Modificativa §2º Art. 7º | Alterar coeficiente de 4 para 6; atualizar "Art. 6º" → "Art. 5º" | Texto incorporado verbatim; remissão atualizada |
 | 3 — Aditiva novo art. após Art. 10 | Inserir art. de monitoramento; renumerar | Novo art. 10; remissões arts. 9º e 10 atualizadas para arts. 8º e 9º |
-| 4 — Modificativa incisos Art. 14 | Alterar incisos III e IV; adicionar inciso V | Texto incorporado verbatim; ⚠ pontuação apontada como aviso — não corrigida |
-| 5 — Supressiva §1º Art. 13 | Suprimir §1º; §2º → §1º | Texto do §2º (→ §1º) preservado **verbatim** com "Atendida a condição prevista no §1º deste artigo" intacto + 🔴 Absurdo (§2º) |
+| 4 — Modificativa incisos Art. 14 | Alterar incisos III e IV; adicionar inciso V | Texto incorporado; pontuação corrigida automaticamente (E1) e registrada em LOG |
+| 5 — Supressiva §1º Art. 13 | Suprimir §1º; §2º → §1º | §1º resultante preservado **verbatim** com "Atendida a condição prevista no §1º deste artigo" intacto + 🔴 Absurdo (§2º) |
 | 6 — Modificativa Anexo III | Alterar CA Máximo Setores A e B | Setor A: 8,0 → 16,0; Setor B: 6,0 → 18,0; Setores C e D inalterados |
 | 7 — Aditiva Anexo V | Adicionar Anexo V ao final | Anexo V inserido; referência Art. 18 → Art. 17 atualizada |
-| 8 — Substitutiva Art. 16 | Substituir art. 16 integralmente | Texto incorporado verbatim; ⚠ "serão aplicada" apontado; ⚠ pontuação inciso IV apontada — nenhum corrigido automaticamente |
-| 9 — Supressiva inciso II Art. 10 | Suprimir inciso II; inciso III → inciso II | Inciso suprimido; renumeração correta; ⚠ "Depósitos" com maiúscula apontado; ⚠ pontuação inciso I apontada |
-| 10 — Aglutinativa Arts. 11 e 12 | Aglutinar em art. único; suprimir art. 12; renumerar | Texto incorporado verbatim; remissões "Art. 6º" → "Art. 5º" e "Art. 7º" → "Art. 6º" atualizadas; ⚠ "nos termos do artigo anterior" (§4º) → 🔴 Absurdo (§2º) |
+| 8 — Substitutiva Art. 16 | Substituir art. 16 integralmente | "serão aplicada" → "serão aplicadas" (E1 auto); pontuação inciso IV corrigida (E1 auto); tudo registrado |
+| 9 — Supressiva inciso II Art. 10 | Suprimir inciso II; inciso III → inciso II | Inciso suprimido; "Depósitos" → "depósitos" (E1 auto); pontuação corrigida (E1 auto); registrado |
+| 10 — Aglutinativa Arts. 11 e 12 | Aglutinar em art. único; suprimir art. 12; renumerar | Texto verbatim; "Art. 6º"→"Art. 5º", "Art. 7º"→"Art. 6º" atualizados; referências ao conteúdo de Art. 12 original → Art. 11 (A2-aglut); 🔴 "artigo anterior" §4º → Absurdo (§2º) |
 
 ---
 
@@ -126,26 +131,28 @@ Use o **texto original** (`TAB_1_PLC_17_2026_TEXTO_ORIGINAL.txt`, 19 artigos + 4
 | # | Verificação | Critério de aprovação |
 |---|---|---|
 | 1 | Emenda 5 — §1º preservado verbatim | Frase "Atendida a condição prevista no §1º deste artigo" **presente e intacta** no texto final |
-| 2 | Emenda 5 — Absurdo classificado como §2º | Alerta 🔴 presente em ALERTAS_ABSURDOS; fundamentado no art. 250, §2º RI |
-| 3 | Emenda 8 — "serão aplicada" não corrigido | Texto final traz "serão aplicada" exatamente; há aviso ⚠ apontando o erro |
-| 4 | Emenda 8 — pontuação não corrigida | Inciso IV termina com ";" (como aprovado); há aviso ⚠ sobre pontuação |
-| 5 | Emenda 4 — conjunção não acrescentada | "b) requalificação..." sem "; e" acrescentado; há aviso ⚠ se necessário |
-| 6 | Emenda 9 — "Depósitos" não corrigido | Letra maiúscula preservada; há aviso ⚠ sobre inicial maiúscula |
+| 2 | Emenda 5 — Absurdo classificado como §2º | Alerta 🔴 presente; fundamentado no art. 250, §2º RI |
+| 3 | Emenda 8 — "serão aplicada" corrigido (E1 auto) | Texto final traz "serão aplicadas"; LOG registra correção automática |
+| 4 | Emenda 8 — pontuação corrigida (E1 auto) | Inciso IV encerra com "." conforme técnica; LOG registra correção |
+| 5 | Emenda 4 — conjunção adicionada (E1 auto) | "b) requalificação..." com "; e" adicionado; LOG registra |
+| 6 | Emenda 9 — "Depósitos" corrigido (E1 auto) | "depósitos" (minúscula) no texto final; LOG registra |
 | 7 | Emenda 10 — "artigo anterior" preservado | Frase "nos termos do artigo anterior" presente no §4º; 🔴 Absurdo sinalizado |
-| 8 | Emendas 1 e 10 — Absurdos como §2º | Pelo menos 2 absurdos manifestos classificados como §2º (reabertura) |
-| 9 | DOCX exportado — sem "Redação Final" | Quando há 🔴 ou 🚨: documento exporta como "RASCUNHO DE TRABALHO", não "REDAÇÃO FINAL" |
-| 10 | DOCX exportado — sem marcadores inline | O arquivo .docx não contém `[[⚠️ CCJ:...]]` em nenhum parágrafo |
-| 11 | Estrutura final | 18 artigos e 5 Anexos |
+| 8 | Emendas 1, 5 e 10 — Absurdos como §2º | Pelo menos 3 absurdos manifestos classificados como §2º (reabertura) |
+| 9 | Emenda 10 — A2 aglutinação: ref. a conteúdo de Art. 12 → Art. 11 | Qualquer artigo que referencie o conteúdo da outorga/transferência aponta para Art. 11 final |
+| 10 | DOCX exportado — sem "Redação Final" | Quando há 🔴 ou 🚨: exporta como "RASCUNHO DE TRABALHO" |
+| 11 | DOCX exportado — sem marcadores inline | Nenhum `[[⚠️ CCJ:...]]` no arquivo .docx |
+| 12 | Estrutura final | 18 artigos e 5 Anexos |
 
 ### ❌ Comportamentos proibidos (falha crítica se ocorrer)
 
 | Comportamento proibido | Classificação |
 |---|---|
 | Remoção de "Atendida a condição prevista no §1º deste artigo" | Falha crítica — alteração de teor |
-| Correção automática de "serão aplicada" sem aviso | Falha crítica — falta de transparência |
+| Alteração de número, valor, prazo, percentual, coeficiente | Falha crítica — alteração de teor |
+| Alteração de sujeito, objeto ou verbo obrigacional/proibitivo | Falha crítica — alteração de teor |
+| Correção de linguagem SEM registrar em LOG e AVISOS | Falha — falta de transparência |
 | Absurdo manifesto classificado como art. 250, §1º | Falha jurídica crítica |
 | DOCX exportado como "REDAÇÃO FINAL" quando há §2º | Falha regimental crítica |
-| Conjunção "; e" acrescentada automaticamente em alínea | Falha — correção não autorizada |
 | Marcadores `[[⚠️ CCJ:...]]` no DOCX exportado | Falha — conteúdo não deliberado pelo Plenário |
 
 ---
