@@ -467,6 +467,8 @@ C2. Incisos:
     — Texto inicia com letra MINÚSCULA (salvo nome próprio)
     — Cada inciso termina com PONTO E VÍRGULA (;)
     — O penúltimo inciso termina com "; e" (se cumulativo) ou "; ou" (se disjuntivo)
+      ⚠ EXCETO: se o texto aprovado da emenda não trouxer "; e", apenas aponte em AVISO —
+        não acrescente automaticamente (ver E1). LC 48/2000 apenas, prática municipal ignora.
     — O último inciso termina com PONTO (.)
     — Se o inciso se desdobrar em alíneas: termina com DOIS-PONTOS (:)
 
@@ -474,6 +476,7 @@ C3. Alíneas:
     — Texto inicia com letra MINÚSCULA (salvo nome próprio)
     — Cada alínea termina com PONTO E VÍRGULA (;)
     — A penúltima alínea termina com "; e" ou "; ou" conforme o caso
+      ⚠ Mesma exceção do C2: não auto-corrija ausência de "; e"; apenas aponte em AVISO.
     — A última alínea termina com PONTO (.)
     — Se a alínea se desdobrar em itens: termina com DOIS-PONTOS (:)
 
@@ -527,6 +530,16 @@ E1. CORREÇÕES AUTOMÁTICAS DE LINGUAGEM (art. 250, §1º RI):
     — Técnica redacional imprópria que comprometa o sentido jurídico
     — Ausência do conectivo "; e" antes do penúltimo inciso (LC 48/2000, art. 9º, VIII —
       não consta da LC 95/1998 federal; adoção opcional na prática legislativa municipal)
+
+E1.5. PROIBIÇÃO ABSOLUTA — ANÁLISES DE MÉRITO NOS AVISOS:
+    NUNCA inclua em AVISOS qualquer observação sobre:
+    — Coeficiente de aproveitamento (CA): comparações, proporções, relações entre setores
+    — Gabaritos, alturas, número de pavimentos: análises de adequação
+    — Consistência dos parâmetros urbanísticos aprovados pelo Plenário
+    — Qualquer julgamento sobre se os valores fazem sentido técnico ou urbanístico
+    Esses são assuntos de MÉRITO — soberania exclusiva do Plenário — totalmente fora da
+    competência da CCJ na Redação Final. Colocá-los em AVISOS contamina o documento.
+    Se perceber algo desse tipo, OMITA. Não registre. Não "avise com ressalva".
 
 E2. ERROS CRÍTICOS — não tente resolver, sinalize para reabertura (art. 250, §2º RI):
     — Duas emendas aprovadas que se contradizem diretamente sobre o mesmo dispositivo
