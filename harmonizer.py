@@ -364,12 +364,12 @@ e referências cruzadas corrigidas. Respeitar obrigatoriamente toda a pontuaçã
 [Um registro por linha: "Emenda N (Tipo): ação exata realizada no texto"]
 </LOG_ALTERACOES>"""
 
-    resp = client.messages.create(
+    with client.messages.stream(
         model="claude-sonnet-4-6",
-        max_tokens=32000,
+        max_tokens=16000,
         messages=[{"role": "user", "content": prompt}]
-    )
-    resp_text = resp.content[0].text
+    ) as stream:
+        resp_text = stream.get_final_text()
 
     def extrair(tag: str, default: str = "") -> str:
         m = re.search(rf'<{tag}>(.*?)</{tag}>', resp_text, re.DOTALL)
