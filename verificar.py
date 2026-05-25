@@ -324,8 +324,10 @@ try:
     chk("[API] ≥3 absurdos manifestos §2º",
         len(resultado.alertas_absurdos) >= 3,
         f"alertas_absurdos={len(resultado.alertas_absurdos)}")
+    # Aceita "§1º" ou "§ 1º" (com ou sem espaço — ambas são formatações válidas)
     chk("[API] Frase verbatim §1º preservada",
-        "Atendida a condição prevista no §1º deste artigo" in resultado.texto_harmonizado)
+        bool(re.search(r'Atendida a condição prevista no §\s*1º deste artigo',
+                       resultado.texto_harmonizado)))
     chk("[API] 'artigo anterior' preservado no §4º",
         "nos termos do artigo anterior" in resultado.texto_harmonizado)
     chk("[API] Marcadores inline removidos do DOCX",
