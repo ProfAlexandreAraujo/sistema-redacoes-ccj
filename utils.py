@@ -46,12 +46,51 @@ def ler_txt(arquivo_bytes: bytes) -> str:
 # ─────────────────────────────────────────────────────────────────────────────
 
 def analisar_estrutura(texto: str) -> dict:
-    """Retorna contagem de elementos estruturais do projeto."""
-    artigos   = re.findall(r'\bArt\.\s*\d+', texto, re.IGNORECASE)
-    paragrafos = re.findall(r'§\s*\d+|Parágrafo\s+único', texto, re.IGNORECASE)
-    incisos   = re.findall(r'^\s+[IVX]+\s*[-–]', texto, re.MULTILINE)
-    alineas   = re.findall(r'^\s+[a-z]\)\s', texto, re.MULTILINE)
-    anexos    = re.findall(r'\bANEXO\s+[IVX\d]+', texto, re.IGNORECASE)
+    """Retorna contagem de elementos estruturais do projeto.
+
+    Regras baseadas na LC 95/1998, Decreto 12.002/2024 e LC Municipal 48/2000:
+    - Artigos: apenas cabeçalhos (início de linha), nunca referências internas
+    - Parágrafos: cabeçalhos § Nº ou "Parágrafo único" no início da linha
+    - Incisos: algarismos romanos seguidos de travessão (– ou —) ou hífen (-)
+    - Alíneas: letras minúsculas seguidas de ) no início da linha (com indentação)
+    - Anexos: palavra ANEXO seguida de numeral romano ou arábico no início da linha
+    """
+    # Artigos: início de linha, seguido de número ordinal (com ou sem º/o)
+    # Evita contar referências como "conforme o Art. 3º"
+    artigos    = re.findall(
+        r'^Art\.\s*\d+[ºo°]?',
+        texto, re.MULTILINE | re.IGNORECASE
+    )
+
+    # Parágrafos: início de linha (com possível indentação)
+    # Evita contar referências como "previsto no § 1º"
+    paragrafos = re.findall(
+        r'^\s*(?:§\s*\d+[ºo°]?|Parágrafo\s+único)',
+        texto, re.MULTILINE | re.IGNORECASE
+    )
+
+    # Incisos: numerais romanos no início da linha (com ou sem indentação)
+    # seguidos de travessão (–, —) ou hífen (-), conforme LC 95/98 art. 13
+    # Cobre até XX para projetos extensos
+    incisos    = re.findall(
+        r'^\s*(?:X{0,2}(?:IX|IV|V?I{0,3}))\s*[-–—]',
+        texto, re.MULTILINE
+    )
+    # Filtrar falsos positivos: remover matches vazios (ex: "—" sozinho)
+    incisos = [m for m in incisos if re.search(r'[IVX]', m)]
+
+    # Alíneas: letras minúsculas a-z seguidas de ) — LC 95/98 art. 13 III
+    alineas    = re.findall(
+        r'^\s+[a-z]\)\s',
+        texto, re.MULTILINE
+    )
+
+    # Anexos: início de linha
+    anexos     = re.findall(
+        r'^\s*ANEXO\s+[IVX\d]+',
+        texto, re.MULTILINE | re.IGNORECASE
+    )
+
     return {
         'artigos':    len(artigos),
         'paragrafos': len(paragrafos),
