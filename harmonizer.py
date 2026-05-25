@@ -353,17 +353,37 @@ E2. ERROS CRÍTICOS — não tente resolver, sinalize para reabertura (art. 250,
     — Resultado que gera absurdo jurídico manifesto insanável sem alterar teor
 
 E3. ALERTA DE ABSURDO MANIFESTO (art. 250, §2º RI — CCJ NÃO oferece Redação Final):
-    — Use quando o texto, após aplicação das emendas, tornar-se ininteligível OU criar dúvida
-      inequívoca sobre a vontade legislativa por razão formal
-    — Exemplos típicos:
-        · Dispositivo que remete EXCLUSIVAMENTE a artigo integralmente suprimido por outra emenda
-        · "nos termos do artigo anterior" onde o artigo anterior passou a ter conteúdo incompatível
-        · Condição normativa que referencia parágrafo tornado inexistente por emenda supressiva
-    — Diferença com E2 (Erro Crítico): E2 = duas emendas conflitam entre si; E3 = uma emenda,
-      ao interagir com outra supressiva, produz dispositivo formalmente absurdo ou sem sentido
-    — Em AMBOS os casos (E2 e E3): a CCJ NÃO DEVE oferecer Redação Final; deve propor
-      REABERTURA DA DISCUSSÃO (art. 250, §2º RI) — não resolve por ofício
-    — Use com extrema parcimônia — na dúvida, classifique como ⚠ AVISO
+    QUATRO SITUAÇÕES QUE OBRIGATORIAMENTE geram 🔴 — NÃO downgrade para ⚠ AVISO:
+
+    CASO 1 — AUTOREFERÊNCIA CIRCULAR:
+    Artigo ou parágrafo cujo texto referencia o PRÓPRIO número como se fosse outro dispositivo.
+    Exemplo real: Art. 4º original suprimido; Art. 5º renumerado para Art. 4º; caput do novo
+    Art. 4º diz "Observada a área de abrangência definida no Art. 4º" — o artigo aponta para
+    si mesmo. Isso é absurdo manifesto; classifique como 🔴.
+
+    CASO 2 — CONDIÇÃO NORMATIVA INOPERANTE:
+    Parágrafo que condiciona dispensa ou obrigação ao cumprimento de condição "prevista no §X
+    deste artigo", onde o §X referenciado: (a) foi suprimido por outra emenda — o §X não existe
+    mais; ou (b) É o próprio parágrafo que faz a remissão — autoreferência.
+    Exemplo real: §2º original diz "Atendida a condição prevista no §1º deste artigo, fica
+    dispensada..."; o §1º foi suprimido; o §2º passou a ser §1º e agora remete a si mesmo.
+    Isso é absurdo manifesto; classifique como 🔴.
+
+    CASO 3 — REMISSÃO MATERIALMENTE INCOMPATÍVEL:
+    "artigo anterior", "art. X" ou "§X" que aponta para dispositivo cujo conteúdo é completamente
+    incompatível com o objeto do parágrafo que faz a remissão.
+    Exemplo real: §4º sobre potencial construtivo certificado diz "nos termos do artigo anterior";
+    o artigo anterior, após renumeração, trata de monitoramento e fiscalização — conteúdo
+    completamente incompatível. Isso é absurdo manifesto; classifique como 🔴.
+
+    CASO 4 — REFERÊNCIA EXCLUSIVA A DISPOSITIVO SUPRIMIDO:
+    Dispositivo cuja ÚNICA remissão normativa operativa aponta para artigo integralmente
+    suprimido, tornando-o operativamente vazio de sentido.
+
+    Diferença com E2: E2 = duas emendas conflitam; E3 = uma emenda, ao interagir com outra
+    supressiva ou de renumeração, produz dispositivo normalmente inoperante.
+    Em AMBOS (E2 e E3): CCJ NÃO deve oferecer Redação Final; propor REABERTURA (§2º RI).
+    Para casos fora dos quatro acima: na dúvida, classifique como ⚠ AVISO.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 TEXTO ORIGINAL DO PROJETO:
