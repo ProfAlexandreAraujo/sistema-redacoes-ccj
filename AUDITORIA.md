@@ -1,5 +1,5 @@
 # 🔍 AUDITORIA DO SISTEMA — CCJ CMRJ
-### Documento técnico para revisão externa — versão 2026-05-25 **rev.8**
+### Documento técnico para revisão externa — versão 2026-05-25 **rev.9**
 
 ---
 
@@ -150,6 +150,7 @@ Qualquer item escalado move-se de `avisos` para `alertas_absurdos`, ativando o m
 | 25/05/2026 | Rótulo dos botões não indicava o modo real (RASCUNHO vs REDAÇÃO FINAL com alerta) | UX | ✅ app.py rev.7 — rótulos dinâmicos em .txt e .docx |
 | 25/05/2026 | Resultado antigo sobrevivia a mudanças em emendas/votação (importar texto bruto, adicionar emenda manual, editar tipo/alvo, botões de votação individual e em lote) | Rastreabilidade/Consistência | ✅ app.py rev.8 — `_invalidar_resultado()` helper aplicado em todos os 13+ pontos de mutação |
 | 25/05/2026 | `extrair("TEXTO_HARMONIZADO", texto_original)` — resposta da IA sem tags retornava silenciosamente o original sem alertas | Falha silenciosa crítica | ✅ harmonizer.py rev.8 — guarda obrigatória: ValueError se `<TEXTO_HARMONIZADO>` ausente; default alterado para `""` |
+| 25/05/2026 | Guarda rev.8 verificava só tag de abertura — resposta truncada (sem `</TEXTO_HARMONIZADO>`) passava na guarda mas `extrair()` devolvia `""` silenciosamente | Falha silenciosa crítica (apontada por auditor externo) | ✅ harmonizer.py rev.9 — guarda exige par completo + conteúdo não vazio; tags de alertas (`AVISOS`, `ERROS_CRITICOS`, `ALERTAS_ABSURDOS`, `LOG_ALTERACOES`) também obrigatórias |
 
 ---
 
@@ -222,7 +223,7 @@ Usar `TAB_1_PLC_17_2026_TEXTO_ORIGINAL.txt` (19 artigos + 4 Anexos) com `TAB_2_P
 ```
 cd C:\Users\Admin\Documents\Claude\CCJ\sistema_redacoes && python verificar.py
 ```
-Testa (53 verificações locais): importações, sufixo -A, detectores estruturais P1 (casos 1 e 2), padrões semânticos P1 (caso 3), escalador integrado, exportação DOCX em dois modos (§2º sem confirmação → RASCUNHO; §2º com confirmação → REDAÇÃO FINAL + ALERTA CRÍTICO + log OVERRIDE-HUMANO; sem §2º → REDAÇÃO FINAL normal), fundamentação §2º nos absurdos, texto da seção de avisos, **TXT modo rascunho** (cabeçalho de alerta, slug correto, conteúdo de reabertura), parsing de emendas supressivas e offset em múltiplos lotes, análise estrutural, disponibilidade de API e arquivos de teste.
+Testa (57 verificações locais): importações, sufixo -A, detectores estruturais P1 (casos 1 e 2), padrões semânticos P1 (caso 3), escalador integrado, exportação DOCX em dois modos (§2º sem confirmação → RASCUNHO; §2º com confirmação → REDAÇÃO FINAL + ALERTA CRÍTICO + log OVERRIDE-HUMANO; sem §2º → REDAÇÃO FINAL normal), fundamentação §2º nos absurdos, texto da seção de avisos, **TXT modo rascunho** (cabeçalho de alerta, slug correto, conteúdo de reabertura), parsing de emendas supressivas e offset em múltiplos lotes, análise estrutural, disponibilidade de API e arquivos de teste.
 
 ### Verificação completa (com harmonização real — custo ~$0,50)
 ```
@@ -415,19 +416,23 @@ _PADROES_ABSURDO_AVISO = re.compile(
   ✅  TXT rascunho: cabeçalho contém 'reabertura da discussão'
   ✅  TXT rascunho: nome slug é 'rascunho_trabalho'
 
-[11] VALIDAÇÃO XML (harmonizer.py)
-  ✅  harmonizer.py levanta ValueError se <TEXTO_HARMONIZADO> ausente
-  ✅  Resposta sem <TEXTO_HARMONIZADO> → detectada como ausente
-  ✅  extrair('TEXTO_HARMONIZADO') usa default '' (não texto_original)
+[11] VALIDAÇÃO XML (harmonizer.py) — rev.9
+  ✅  Guarda exige par completo </TEXTO_HARMONIZADO> (não só abertura)
+  ✅  Guarda rejeita conteúdo vazio (truncamento sem fechamento)
+  ✅  Tags de alertas obrigatórias (AVISOS, ERROS_CRITICOS, ALERTAS_ABSURDOS)
+  ✅  Resposta sem par completo → m_texto_harm é None
+  ✅  Resposta truncada (só abertura) → m_texto_harm é None
+  ✅  Resposta válida → texto extraído corretamente
+  ✅  texto_harm usa m_texto_harm.group(1) (não fallback)
 
-[12] HELPER _invalidar_resultado() (app.py)
+[12] HELPER _invalidar_resultado() (app.py) — rev.8
   ✅  _invalidar_resultado() definido em app.py
   ✅  _invalidar_resultado() chamado ≥10 vezes (cobre todos os pontos críticos)
   ✅  Votação individual (v_apr) invalida resultado
   ✅  Importar texto bruto invalida resultado
   ✅  Adicionar emenda manual invalida resultado
 
-RESULTADO FINAL: 53/54 (único fail = ANTHROPIC_API_KEY ausente — esperado em ambiente local)
+RESULTADO FINAL: 57/58 (único fail = ANTHROPIC_API_KEY ausente — esperado em ambiente local)
 ```
 
 ---
@@ -441,9 +446,9 @@ RESULTADO FINAL: 53/54 (único fail = ANTHROPIC_API_KEY ausente — esperado em 
 | Modelo pode classificar absurdo manifesto como ⚠ Aviso | Baixa após E3 rev.3 + P1 | Monitorado | P1 escalona independentemente da classificação do modelo |
 | Relator pode confirmar ciência sem ler os alertas (checkbox impulsivo) | Possível | **Residual** | Interface exige: warning → checkbox → 2º st.error → log OVERRIDE-HUMANO rastreável; sem fricção de senha deliberadamente (usabilidade) |
 | IA não preenche erros_criticos/alertas_absurdos e P1 não escalona → sai como REDAÇÃO FINAL normal | Baixa (dupla camada) | **Residual** | E2/E3 forçam o modelo; P1 cobre casos estruturais independentemente; se ambos falham, é falha de prompt não detectável sem API |
-| Resposta da IA sem tags XML → `<TEXTO_HARMONIZADO>` ausente | Baixa | **✅ Corrigido (rev.8)** | `ValueError` obrigatório se tag ausente; default de `extrair()` alterado para `""` (não `texto_original`) |
+| Resposta da IA truncada (sem `</TEXTO_HARMONIZADO>`) → passava na guarda rev.8 | Baixa | **✅ Corrigido (rev.9)** | Guarda exige par completo + conteúdo não vazio; tags de alertas obrigatórias também verificadas |
 | Resultado harmonizado sobrevivia a mudanças pós-harmonização | Possível em sessão longa | **✅ Corrigido (rev.8)** | `_invalidar_resultado()` aplicado em todos os pontos: votação, importação, edição, remoção de emendas |
 
 ---
 
-*Versão rev.8 — 25/05/2026 — Sistema de Redações CCJ CMRJ*
+*Versão rev.9 — 25/05/2026 — Sistema de Redações CCJ CMRJ*
