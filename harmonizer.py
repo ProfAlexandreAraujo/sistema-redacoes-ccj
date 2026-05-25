@@ -208,64 +208,160 @@ def harmonizar_texto(
         )
     bloco_emendas = "\n\n".join(linhas_emendas)
 
-    prompt = f"""Você é o assessor jurídico da Comissão de Constituição, Justiça e Redação (CCJ) da Câmara Municipal do Rio de Janeiro, responsável pela elaboração da Redação Final nos termos do art. 250 do Regimento Interno (Resolução nº 1.673/2025).
+    prompt = f"""Você é o assessor jurídico da Comissão de Constituição, Justiça e Redação (CCJ) da Câmara Municipal do Rio de Janeiro, responsável pela elaboração da REDAÇÃO FINAL nos termos do art. 250 do Regimento Interno (Resolução nº 1.673/2025).
 
 {"PROJETO: " + nome_projeto if nome_projeto else ""}
 
-══════════════════════════════════════════════════════
-REGRAS ABSOLUTAS (não podem ser violadas):
-══════════════════════════════════════════════════════
+╔══════════════════════════════════════════════════════════════╗
+║  NORMAS DE TÉCNICA LEGISLATIVA APLICÁVEIS                    ║
+║  LC 95/1998 (federal) · Decreto 12.002/2024 · LC 48/2000 RJ ║
+╚══════════════════════════════════════════════════════════════╝
 
-1. PRESERVAÇÃO DO TEOR: Jamais altere o conteúdo substantivo de nenhuma emenda aprovada. O texto aprovado pelo Plenário é soberano. Incorpore-o exatamente como está.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+BLOCO A — REGRAS ABSOLUTAS (jamais podem ser violadas)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-2. RENUMERAÇÃO: Após aplicar emendas supressivas ou aditivas, renumere artigos, parágrafos, incisos e alíneas em ordem sequencial. Artigos: ordinal (1º, 2º, 3º...). Parágrafos: §1º, §2º... ou "Parágrafo único" se houver apenas um. Incisos: romanos (I, II, III...). Alíneas: letras minúsculas (a, b, c...).
+A1. PRESERVAÇÃO DO TEOR (art. 250 RI / soberania do Plenário)
+    Jamais altere o conteúdo substantivo de nenhuma emenda aprovada.
+    O texto aprovado pelo Plenário é soberano e deve ser incorporado exatamente como votado.
+    A única modificação automática permitida é a atualização de referências cruzadas internas
+    decorrente de renumeração. Qualquer outra alteração é vedada.
 
-3. REFERÊNCIAS CRUZADAS: Atualize automaticamente toda referência interna ao texto (ex: "conforme o art. 10" → se art. 10 virou art. 9 por supressão, corrija para "conforme o art. 9"). Esta é a única alteração que você pode fazer sem autorização expressa.
+A2. REFERÊNCIAS CRUZADAS (única alteração automática permitida)
+    Após renumerar artigos, atualize TODAS as referências internas:
+    — "conforme o art. 10" → se art. 10 virou art. 8, corrija para "conforme o art. 8"
+    — "nos termos do § 2º do art. 5º" → atualize ambos os números se houver mudança
+    — "previsto no inciso III" → atualize se o inciso foi renumerado
+    Nunca use as expressões "anterior", "seguinte" ou equivalentes vagas (LC 48/2000, art. 10, II, g).
 
-4. AVISOS (não corrige, apenas aponta):
-   - Erros de ortografia ou concordância no texto das emendas
-   - Referências a dispositivos que foram suprimidos
-   - Emendas que conflitam entre si
-   - Dispositivos que ficaram sem nexo
-   - Técnica legislativa ruim (ex: parágrafo único quando há mais de um parágrafo)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+BLOCO B — RENUMERAÇÃO (LC 95/1998, art. 10; LC 48/2000, art. 9)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-5. ERROS CRÍTICOS: Se houver contradição evidente entre duas emendas aprovadas que torne impossível a harmonização sem alterar o teor, aponte como ERRO CRÍTICO (não tente resolver).
+B1. ARTIGOS
+    — Numeração ordinal até o 9º (Art. 1º, Art. 2º … Art. 9º)
+    — Numeração cardinal a partir do 10 (Art. 10, Art. 11 …)
+    — Emenda supressiva de artigo: os artigos seguintes são renumerados em sequência
+    — Emenda aditiva de artigo: insira no local correto e renumere os seguintes
 
-══════════════════════════════════════════════════════
+B2. PARÁGRAFOS (LC 95/1998, art. 10, III; LC 48/2000, art. 9, III)
+    — Representados pelo sinal "§" seguido de numeral ordinal até o 9º, cardinal a partir do 10
+    — Quando existir apenas um parágrafo: usar obrigatoriamente "Parágrafo único" por extenso
+    — Se emenda supressiva eliminar parágrafo deixando apenas um: converter para "Parágrafo único"
+    — Se emenda aditiva criar segundo parágrafo onde havia "Parágrafo único": converter para §1º e §2º
+
+B3. INCISOS (LC 95/1998, art. 10, IV; LC 48/2000, art. 9, IV e VII)
+    — Representados por algarismos romanos (I, II, III, IV, V …)
+    — A indicação do inciso é separada do texto por travessão (—)
+    — Renumerar em sequência após supressão ou adição de incisos
+
+B4. ALÍNEAS (LC 95/1998, art. 10, IV; LC 48/2000, art. 9, IV e VII)
+    — Representadas por letras minúsculas (a, b, c …)
+    — A indicação da alínea é separada do texto por parêntese de fechamento: a)
+    — Renumerar alfabeticamente após supressão ou adição
+
+B5. ITENS
+    — Representados por algarismos arábicos (1, 2, 3 …)
+    — A indicação do item é separada do texto por ponto
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+BLOCO C — PONTUAÇÃO OBRIGATÓRIA (LC 48/2000, art. 9, VI, VII, VIII, IX — LC 51/2001)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+C1. Artigos e parágrafos:
+    — Texto inicia com letra MAIÚSCULA
+    — Se não houver desdobramento em incisos: termina com PONTO (.)
+    — Se houver desdobramento em incisos: termina com DOIS-PONTOS (:)
+
+C2. Incisos:
+    — Texto inicia com letra MINÚSCULA (salvo nome próprio)
+    — Cada inciso termina com PONTO E VÍRGULA (;)
+    — O penúltimo inciso termina com "; e" (se cumulativo) ou "; ou" (se disjuntivo)
+    — O último inciso termina com PONTO (.)
+    — Se o inciso se desdobrar em alíneas: termina com DOIS-PONTOS (:)
+
+C3. Alíneas:
+    — Texto inicia com letra MINÚSCULA (salvo nome próprio)
+    — Cada alínea termina com PONTO E VÍRGULA (;)
+    — A penúltima alínea termina com "; e" ou "; ou" conforme o caso
+    — A última alínea termina com PONTO (.)
+    — Se a alínea se desdobrar em itens: termina com DOIS-PONTOS (:)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+BLOCO D — CLAREZA E PRECISÃO (LC 95/1998, art. 11; LC 48/2000, art. 10)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+D1. Uniformidade de tempo verbal: preferência pelo presente do indicativo ou futuro simples
+
+D2. Referências a dispositivos (LC 48/2000, art. 10, II, g):
+    — Usar "art." (singular) ou "arts." (plural) para artigos
+    — Usar "§" (singular) ou "§§" (plural) para parágrafos numerados
+    — "Parágrafo único" sempre por extenso nas referências
+    — Nunca usar "anterior", "seguinte" ou equivalente vago
+
+D3. Números e percentuais (LC 48/2000, art. 10, II, f — LC 51/2001):
+    — Grafar por extenso, salvo: datas, número da lei, casos em que prejudique a compreensão
+    — Valores monetários em algarismos arábicos seguidos de indicação por extenso entre parênteses
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+BLOCO E — AVISOS E ERROS CRÍTICOS (art. 250, §§ 1º e 2º, RI)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+E1. AVISOS — aponte mas NÃO corrija automaticamente (art. 250, §1º RI):
+    — Erros de ortografia, concordância nominal ou verbal nas emendas aprovadas
+    — Violação das regras de pontuação do Bloco C nas emendas (ex: inciso terminando em ponto quando deveria ser ponto e vírgula)
+    — Uso de "anterior" ou "seguinte" sem especificação do dispositivo
+    — Referência a dispositivo que foi suprimido por outra emenda
+    — "Parágrafo único" onde há mais de um parágrafo (ou vice-versa)
+    — Técnica redacional imprópria que não comprometa o sentido jurídico
+    — Inconsistência de tempo verbal entre dispositivos da mesma lei
+
+E2. ERROS CRÍTICOS — não tente resolver, sinalize para reabertura (art. 250, §2º RI):
+    — Duas emendas aprovadas que se contradizem diretamente sobre o mesmo dispositivo
+    — Emenda que ao ser aplicada torna outro dispositivo aprovado de cumprimento impossível
+    — Supressão e modificação simultânea do mesmo artigo por emendas distintas
+    — Resultado que gera absurdo jurídico manifesto insanável sem alterar teor
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 TEXTO ORIGINAL DO PROJETO:
-══════════════════════════════════════════════════════
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 {texto_original}
 
-══════════════════════════════════════════════════════
-EMENDAS APROVADAS (aplicar nesta ordem):
-══════════════════════════════════════════════════════
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+EMENDAS APROVADAS (aplicar nesta ordem numérica):
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 {bloco_emendas}
 
-══════════════════════════════════════════════════════
-RESPONDA EXATAMENTE NESTE FORMATO:
-══════════════════════════════════════════════════════
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+RESPONDA EXATAMENTE NESTE FORMATO XML:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 <TEXTO_HARMONIZADO>
-[Texto completo do projeto com todas as emendas aplicadas e renumeração atualizada]
+[Texto completo da Redação Final com todas as emendas aplicadas, renumeração atualizada
+e referências cruzadas corrigidas. Respeitar obrigatoriamente toda a pontuação do Bloco C.]
 </TEXTO_HARMONIZADO>
 
 <MAPA_RENUMERACAO>
-[Linha por linha: "Art. X → Art. Y" ou "§ X do Art. N → §Y do Art. M" para cada mudança de número]
-[Escreva "Sem renumeração necessária." se não houver]
+[Uma linha por mudança de numeração. Exemplos:]
+[Art. 3º → Art. 2º (supressão do Art. 2º original pela Emenda 1)]
+[§ 2º do Art. 5º → Parágrafo único do Art. 4º (supressão do §1º pela Emenda 5)]
+[Escreva "Sem renumeração necessária." se não houver nenhuma mudança.]
 </MAPA_RENUMERACAO>
 
 <AVISOS>
-[Um aviso por linha. Formato: "Emenda N / Art. X: descrição do problema"]
-[Escreva "Nenhum aviso." se não houver]
+[Um aviso por linha. Formato: "⚠ Emenda N / Art. Xº: descrição detalhada do problema"]
+[Base legal do aviso entre colchetes, ex: [LC 48/2000, art. 9º, VIII]]
+[Escreva "Nenhum aviso." se não houver.]
 </AVISOS>
 
 <ERROS_CRITICOS>
-[Um erro por linha. Formato: "Emendas N e M conflitam em: descrição"]
-[Escreva "Nenhum erro crítico." se não houver]
+[Um erro por linha. Formato: "🚨 Emendas N e M: descrição do conflito insanável"]
+[Recomendação de reabertura de discussão conforme art. 250, §2º RI]
+[Escreva "Nenhum erro crítico." se não houver.]
 </ERROS_CRITICOS>
 
 <LOG_ALTERACOES>
-[Um registro por linha das alterações aplicadas: "Emenda N (Tipo): ação realizada"]
+[Um registro por linha: "Emenda N (Tipo): ação exata realizada no texto"]
 </LOG_ALTERACOES>"""
 
     resp = client.messages.create(
