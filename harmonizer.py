@@ -68,6 +68,7 @@ class ResultadoHarmonizacao:
     texto_harmonizado: str
     avisos: list[str] = field(default_factory=list)
     erros_criticos: list[str] = field(default_factory=list)
+    alertas_absurdos: list[str] = field(default_factory=list)  # 🔴 Absurdo manifesto
     mapa_renumeracao: dict = field(default_factory=dict)
     log_alteracoes: list[str] = field(default_factory=list)
 
@@ -234,6 +235,13 @@ A2. REFERÊNCIAS CRUZADAS (única alteração automática permitida)
     — "previsto no inciso III" → atualize se o inciso foi renumerado
     Nunca use as expressões "anterior", "seguinte" ou equivalentes vagas (LC 48/2000, art. 10, II, g).
 
+A3. ANEXOS (preservação integral obrigatória)
+    Os Anexos (mapas, quadros, tabelas, delimitações georreferenciadas) integram a lei mas
+    NÃO devem ser renumerados nem alterados, salvo emenda expressa sobre eles.
+    Preserve o conteúdo de cada Anexo exatamente como consta no projeto original, inclusive
+    coordenadas UTM, tabelas de parâmetros e descrições de perímetros.
+    Referências a Anexos nos artigos devem ser atualizadas se o Anexo for renumerado por emenda.
+
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 BLOCO B — RENUMERAÇÃO (LC 95/1998, art. 10; LC 48/2000, art. 9)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -322,6 +330,15 @@ E2. ERROS CRÍTICOS — não tente resolver, sinalize para reabertura (art. 250,
     — Supressão e modificação simultânea do mesmo artigo por emendas distintas
     — Resultado que gera absurdo jurídico manifesto insanável sem alterar teor
 
+E3. ALERTA DE ABSURDO MANIFESTO — intervenção obrigatória da CCJ (art. 250, §1º RI):
+    — Use SOMENTE quando o texto, após a emenda, tornar-se tecnicamente ininteligível por
+      razão exclusivamente formal, sem qualquer leitura possível que preserve a vontade legislativa
+    — Exemplo típico: dispositivo que remete exclusivamente a artigo integralmente suprimido
+      por outra emenda, tornando o próprio dispositivo vazio de qualquer sentido normativo
+    — Diferente do Erro Crítico: aqui a ininteligibilidade é formal (não há conflito entre emendas,
+      mas o resultado é incompreensível); a CCJ deve corrigir com ofício amplo (art. 250, §1º RI)
+    — Use com extrema parcimônia — na dúvida, classifique como ⚠ AVISO
+
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 TEXTO ORIGINAL DO PROJETO:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -355,10 +372,16 @@ e referências cruzadas corrigidas. Respeitar obrigatoriamente toda a pontuaçã
 </AVISOS>
 
 <ERROS_CRITICOS>
-[Um erro por linha. Formato: "🚨 Emendas N e M: descrição do conflito insanável"]
+[Um erro por parágrafo. Formato: "🚨 Emendas N e M: descrição do conflito insanável"]
 [Recomendação de reabertura de discussão conforme art. 250, §2º RI]
 [Escreva "Nenhum erro crítico." se não houver.]
 </ERROS_CRITICOS>
+
+<ALERTAS_ABSURDOS>
+[Use SOMENTE para absurdo manifesto técnico — casos muito raros. Formato: "🔴 Emenda N / Art. Xº: descrição"]
+[A CCJ deve corrigir com ofício amplamente justificado (art. 250, §1º RI).]
+[Na dúvida, classifique como AVISO. Escreva "Nenhum." se não houver.]
+</ALERTAS_ABSURDOS>
 
 <LOG_ALTERACOES>
 [Um registro por linha: "Emenda N (Tipo): ação exata realizada no texto"]
@@ -375,11 +398,12 @@ e referências cruzadas corrigidas. Respeitar obrigatoriamente toda a pontuaçã
         m = re.search(rf'<{tag}>(.*?)</{tag}>', resp_text, re.DOTALL)
         return m.group(1).strip() if m else default
 
-    texto_harm  = extrair("TEXTO_HARMONIZADO", texto_original)
-    mapa_raw    = extrair("MAPA_RENUMERACAO", "")
-    avisos_raw  = extrair("AVISOS", "")
-    erros_raw   = extrair("ERROS_CRITICOS", "")
-    log_raw     = extrair("LOG_ALTERACOES", "")
+    texto_harm    = extrair("TEXTO_HARMONIZADO", texto_original)
+    mapa_raw      = extrair("MAPA_RENUMERACAO", "")
+    avisos_raw    = extrair("AVISOS", "")
+    erros_raw     = extrair("ERROS_CRITICOS", "")
+    alertas_raw   = extrair("ALERTAS_ABSURDOS", "")
+    log_raw       = extrair("LOG_ALTERACOES", "")
 
     # Mapa de renumeração
     mapa = {}
@@ -389,16 +413,25 @@ e referências cruzadas corrigidas. Respeitar obrigatoriamente toda a pontuaçã
             if len(partes) == 2:
                 mapa[partes[0].strip()] = partes[1].strip()
 
-    def parse_linhas(raw: str) -> list[str]:
-        lines = [l.strip() for l in raw.splitlines() if l.strip()]
-        if lines == ["Nenhum aviso."] or lines == ["Nenhum erro crítico."] or lines == ["Sem renumeração necessária."]:
-            return []
-        return lines
+    def parse_linhas(raw: str, modo: str = 'paragrafo') -> list[str]:
+        """
+        modo='paragrafo': agrupa linhas consecutivas em um item (sep. por linha em branco).
+            → corrige avisos multi-linha contados como muitos itens.
+        modo='linha': cada linha não-vazia é um item separado (para log de alterações).
+        """
+        skip = {"Nenhum aviso.", "Nenhum erro crítico.", "Nenhum.", "Sem renumeração necessária."}
+        if modo == 'paragrafo':
+            blocos = re.split(r'\n\s*\n', raw.strip())
+            items = [' '.join(l.strip() for l in b.splitlines() if l.strip()) for b in blocos]
+        else:
+            items = [l.strip() for l in raw.splitlines() if l.strip()]
+        return [i for i in items if i and i not in skip]
 
     return ResultadoHarmonizacao(
         texto_harmonizado = texto_harm,
-        avisos            = parse_linhas(avisos_raw),
-        erros_criticos    = parse_linhas(erros_raw),
+        avisos            = parse_linhas(avisos_raw,  modo='paragrafo'),
+        erros_criticos    = parse_linhas(erros_raw,   modo='paragrafo'),
+        alertas_absurdos  = parse_linhas(alertas_raw, modo='paragrafo'),
         mapa_renumeracao  = mapa,
-        log_alteracoes    = parse_linhas(log_raw),
+        log_alteracoes    = parse_linhas(log_raw,     modo='linha'),
     )

@@ -17,7 +17,7 @@ from harmonizer import (
     parsear_emendas_com_ia, harmonizar_texto,
 )
 from utils import (
-    ler_docx, ler_txt, analisar_estrutura,
+    ler_docx, ler_txt, ler_pdf, analisar_estrutura,
     salvar_sessao, listar_sessoes, carregar_sessao,
     exportar_redacao_final_docx, exportar_relatorio_problemas_txt,
 )
@@ -233,12 +233,26 @@ with aba1:
             st.session_state.nome_projeto = np_input
 
     with c2:
-        arq = st.file_uploader("Upload do projeto (.docx ou .txt)", type=['docx', 'txt'])
+        arq = st.file_uploader("Upload do projeto (.docx, .txt ou .pdf)", type=['docx', 'txt', 'pdf'])
         if arq:
             raw = arq.read()
-            txt = ler_docx(raw) if arq.name.endswith('.docx') else ler_txt(raw)
-            st.session_state.texto_original = txt
-            st.success(f"✅ '{arq.name}' carregado.")
+            if arq.name.endswith('.docx'):
+                txt = ler_docx(raw)
+            elif arq.name.endswith('.pdf'):
+                with st.spinner("Extraindo texto do PDF..."):
+                    try:
+                        txt = ler_pdf(raw)
+                    except ImportError as ex:
+                        st.error(str(ex))
+                        txt = ""
+            else:
+                txt = ler_txt(raw)
+            if txt:
+                st.session_state.texto_original = txt
+                st.success(f"✅ '{arq.name}' carregado.")
+                if arq.name.endswith('.pdf'):
+                    st.info("💡 Verifique o texto abaixo e remova cabeçalhos/rodapés ou seções de "
+                            "legislação citada que não façam parte da lei, se necessário.")
 
     texto_edit = st.text_area(
         "Texto integral do projeto:",
@@ -594,32 +608,58 @@ with aba4:
         res = st.session_state.resultado_harm
         st.divider()
 
-        n_erros  = len(res.erros_criticos)
-        n_avisos = len(res.avisos)
-        n_mapa   = len(res.mapa_renumeracao)
+        n_absurdos = len(getattr(res, 'alertas_absurdos', []))
+        n_erros    = len(res.erros_criticos)
+        n_avisos   = len(res.avisos)
+        n_mapa     = len(res.mapa_renumeracao)
+        n_log      = len(res.log_alteracoes)
 
         st.subheader("Resultado da última harmonização")
 
-        if res.erros_criticos:
-            st.error(f"🔴 {n_erros} ERRO(S) CRÍTICO(S) — pode exigir reabertura da discussão (art. 250 §2º RI)")
-            for e in res.erros_criticos:
-                st.markdown(f"> 🔴 {e}")
+        # ── Nível 1: Absurdo Manifesto ──
+        alertas = getattr(res, 'alertas_absurdos', [])
+        if alertas:
+            st.error(
+                f"🔴 {n_absurdos} ABSURDO(S) MANIFESTO(S) — "
+                "o texto perdeu completamente o sentido normativo. "
+                "A CCJ **deve** intervir com ofício justificado (art. 250, §1º RI)."
+            )
+            for al in alertas:
+                st.markdown(f"> 🔴 {al}")
 
+        # ── Nível 2: Erros Críticos ──
+        if res.erros_criticos:
+            st.error(
+                f"🚨 {n_erros} ERRO(S) CRÍTICO(S) — contradição entre emendas aprovadas. "
+                "Recomenda-se reabertura da discussão (art. 250, §2º RI)."
+            )
+            for e in res.erros_criticos:
+                st.markdown(f"> 🚨 {e}")
+
+        # ── Nível 3: Avisos jurídicos ──
         if res.avisos:
-            st.warning(f"⚠️ {n_avisos} aviso(s) identificado(s)")
+            st.warning(
+                f"⚠️ {n_avisos} aviso(s) redacional(is) — texto preservado como aprovado. "
+                "Correção possível mediante ofício (art. 250, §1º RI)."
+            )
             for a in res.avisos:
                 st.markdown(f"> ⚠️ {a}")
 
-        if not res.erros_criticos and not res.avisos:
-            st.success("✅ Nenhum problema detectado!")
+        if not alertas and not res.erros_criticos and not res.avisos:
+            st.success("✅ Nenhum problema jurídico ou redacional detectado!")
 
+        # ── Mapa e Log (operacionais) ──
         if res.mapa_renumeracao:
-            with st.expander(f"🔢 Mapa de renumeração ({n_mapa} alterações)"):
+            with st.expander(f"🔢 Mapa de renumeração ({n_mapa} dispositivos renumerados)"):
                 for orig, novo in res.mapa_renumeracao.items():
                     st.write(f"  **{orig}**  →  **{novo}**")
 
         if res.log_alteracoes:
-            with st.expander(f"📋 Log de alterações aplicadas ({len(res.log_alteracoes)})"):
+            with st.expander(f"📋 Log operacional ({n_log} ações registradas) — clique para ver"):
+                st.caption(
+                    "Registro técnico das operações realizadas. "
+                    "Não confundir com os avisos jurídicos acima."
+                )
                 for item in res.log_alteracoes:
                     st.write(f"• {item}")
 
@@ -677,6 +717,7 @@ with aba5:
             nome_projeto=nome_projeto,
             avisos=res.avisos,
             erros=res.erros_criticos,
+            alertas_absurdos=getattr(res, 'alertas_absurdos', []),
             mapa=res.mapa_renumeracao,
             log=res.log_alteracoes,
         )
@@ -689,9 +730,11 @@ with aba5:
         )
 
         # Relatório de problemas
-        if res.avisos or res.erros_criticos:
+        _alertas = getattr(res, 'alertas_absurdos', [])
+        if res.avisos or res.erros_criticos or _alertas:
             rel_txt = exportar_relatorio_problemas_txt(
-                nome_projeto, res.avisos, res.erros_criticos, res.mapa_renumeracao
+                nome_projeto, res.avisos, res.erros_criticos, res.mapa_renumeracao,
+                alertas_absurdos=_alertas,
             )
             ec3.download_button(
                 label="⚠️ Baixar Relatório de Problemas",

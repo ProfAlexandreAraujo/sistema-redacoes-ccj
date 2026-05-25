@@ -41,6 +41,41 @@ def ler_txt(arquivo_bytes: bytes) -> str:
     return arquivo_bytes.decode('utf-8', errors='replace')
 
 
+def ler_pdf(arquivo_bytes: bytes) -> str:
+    """Extrai texto de arquivo PDF usando pdfplumber.
+    Remove cabeçalhos e rodapés típicos de impressões web da CMRJ.
+    """
+    import re as _re
+    try:
+        import pdfplumber
+    except ImportError:
+        raise ImportError("pdfplumber não instalado. Execute: pip install pdfplumber")
+
+    paginas = []
+    with pdfplumber.open(BytesIO(arquivo_bytes)) as pdf:
+        for page in pdf.pages:
+            texto = page.extract_text() or ''
+            # Remove cabeçalhos/rodapés de PDFs impressos do site da CMRJ
+            texto = _re.sub(
+                r'\d{2}/\d{2}/\d{4},?\s*\d{2}:\d{2}\s+Projeto de Lei.*?\n', '', texto
+            )
+            texto = _re.sub(
+                r'https?://www\.camara\.rio/\S+\s*\n?', '', texto
+            )
+            paginas.append(texto)
+
+    texto_completo = '\n'.join(paginas)
+    # Parar antes de seções de processo/tramitação
+    for marcador in ('MENSAGEM Nº', 'LEGISLAÇÃO CITADA', 'TRAMITAÇÃO DO PROJETO',
+                     'Distribuição =>', 'Informações Básicas'):
+        idx = texto_completo.find(marcador)
+        if idx > 500:           # ignora se aparecer logo no início
+            texto_completo = texto_completo[:idx]
+            break
+
+    return texto_completo.strip()
+
+
 # ─────────────────────────────────────────────────────────────────────────────
 # ANÁLISE ESTRUTURAL RÁPIDA
 # ─────────────────────────────────────────────────────────────────────────────
@@ -148,8 +183,9 @@ def exportar_redacao_final_docx(
     nome_projeto: str,
     avisos: list[str],
     erros: list[str],
-    mapa: dict,
-    log: list[str],
+    alertas_absurdos: list[str] = None,
+    mapa: dict = None,
+    log: list[str] = None,
 ) -> bytes:
     """
     Gera arquivo .docx formatado com o texto harmonizado.
@@ -194,7 +230,10 @@ def exportar_redacao_final_docx(
                 run.bold = True
 
     # ── Folha de avisos (se houver) ──
-    if avisos or erros:
+    alertas_absurdos = alertas_absurdos or []
+    mapa = mapa or {}
+    log  = log  or []
+    if avisos or erros or alertas_absurdos:
         doc.add_page_break()
         doc.add_heading('ANEXO — AVISOS E ALERTAS DA CCJ', level=2)
         doc.add_paragraph(
@@ -203,13 +242,33 @@ def exportar_redacao_final_docx(
         )
         doc.add_paragraph()
 
+        if alertas_absurdos:
+            h3 = doc.add_heading('🔴 ABSURDO MANIFESTO — INTERVENÇÃO OBRIGATÓRIA DA CCJ', level=3)
+            h3.runs[0].font.color.rgb = RGBColor(0xC0, 0x00, 0x00)
+            doc.add_paragraph(
+                "Os itens abaixo tornaram o texto tecnicamente ininteligível por razão "
+                "exclusivamente formal. A CCJ deve corrigir com ofício amplamente justificado "
+                "(art. 250, §1º, RI)."
+            )
+            for al in alertas_absurdos:
+                doc.add_paragraph(f"🔴  {al}", style='List Bullet')
+
         if erros:
-            doc.add_heading('ERROS CRÍTICOS', level=3).runs[0].font.color.rgb = RGBColor(0xC0, 0x00, 0x00)
+            h3 = doc.add_heading('🚨 ERROS CRÍTICOS — REABERTURA DA DISCUSSÃO', level=3)
+            h3.runs[0].font.color.rgb = RGBColor(0xC0, 0x00, 0x00)
+            doc.add_paragraph(
+                "Os itens abaixo envolvem contradição entre emendas aprovadas. "
+                "A CCJ deve propor reabertura da discussão (art. 250, §2º, RI)."
+            )
             for e in erros:
-                p = doc.add_paragraph(f"🔴  {e}", style='List Bullet')
+                doc.add_paragraph(f"🚨  {e}", style='List Bullet')
 
         if avisos:
-            doc.add_heading('Avisos', level=3)
+            doc.add_heading('⚠️ Avisos redacionais (art. 250, §1º, RI)', level=3)
+            doc.add_paragraph(
+                "Os itens abaixo foram preservados exatamente como aprovados. "
+                "Correção possível mediante ofício justificado (art. 250, §1º, RI)."
+            )
             for a in avisos:
                 doc.add_paragraph(f"⚠  {a}", style='List Bullet')
 
@@ -237,6 +296,7 @@ def exportar_relatorio_problemas_txt(
     avisos: list[str],
     erros: list[str],
     mapa: dict,
+    alertas_absurdos: list[str] = None,
 ) -> str:
     """Gera relatório de problemas em texto simples."""
     linhas = [
@@ -247,11 +307,15 @@ def exportar_relatorio_problemas_txt(
         f"Data:    {datetime.date.today().strftime('%d/%m/%Y')}",
         "",
     ]
+    alertas_absurdos = alertas_absurdos or []
+    if alertas_absurdos:
+        linhas += ["", "🔴 ABSURDO MANIFESTO — INTERVENÇÃO OBRIGATÓRIA DA CCJ (art. 250 §1º RI):", "-" * 50]
+        linhas += [f"  🔴 {al}" for al in alertas_absurdos]
     if erros:
-        linhas += ["", "ERROS CRÍTICOS (podem exigir reabertura da discussão — art. 250 §2º RI):", "-" * 50]
-        linhas += [f"  🔴 {e}" for e in erros]
+        linhas += ["", "🚨 ERROS CRÍTICOS (podem exigir reabertura — art. 250 §2º RI):", "-" * 50]
+        linhas += [f"  🚨 {e}" for e in erros]
     if avisos:
-        linhas += ["", "AVISOS (art. 250 §1º RI — corrigíveis mediante ofício justificado):", "-" * 50]
+        linhas += ["", "⚠ AVISOS REDACIONAIS (art. 250 §1º RI — corrigíveis mediante ofício):", "-" * 50]
         linhas += [f"  ⚠  {a}" for a in avisos]
     if mapa:
         linhas += ["", "MAPA DE RENUMERAÇÃO:", "-" * 50]
