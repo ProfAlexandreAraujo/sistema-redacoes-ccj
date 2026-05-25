@@ -723,18 +723,29 @@ with aba5:
     else:
         res = st.session_state.resultado_harm
 
-        _alertas_aba5 = getattr(res, 'alertas_absurdos', [])
-        _bloqueado    = bool(res.erros_criticos or _alertas_aba5)
-        if _bloqueado:
-            n_bloq = len(res.erros_criticos) + len(_alertas_aba5)
-            st.error(
-                f"🚫 **REDAÇÃO FINAL BLOQUEADA** — {n_bloq} problema(s) de §2º detectado(s). "
-                "O art. 250, **§2º** RI determina que, havendo incoerência notória, contradição "
-                "evidente ou manifesto absurdo, a CCJ **não deve oferecer Redação Final** e deve "
-                "propor reabertura da discussão.  \n"
-                "O texto abaixo é um **rascunho de trabalho** para diagnóstico — não é uma "
-                "Redação Final formal."
+        _alertas_aba5      = getattr(res, 'alertas_absurdos', [])
+        _tem_sec_2         = bool(res.erros_criticos or _alertas_aba5)
+        _prosseguir_sec_2  = False   # default: exportar como RASCUNHO
+
+        if _tem_sec_2:
+            n_sec2 = len(res.erros_criticos) + len(_alertas_aba5)
+            st.warning(
+                f"⚠️ **{n_sec2} alerta(s) de §2º detectado(s)** — absurdo manifesto ou erro crítico. "
+                "A providência regimental indicada pelo art. 250, §2º RI é a **reabertura da discussão**.  \n"
+                "O documento será exportado como **RASCUNHO DE TRABALHO** por padrão.  \n"
+                "Se o relator tomou ciência e deseja prosseguir, marque a opção abaixo."
             )
+            _prosseguir_sec_2 = st.checkbox(
+                "✅ Confirmo ciência dos alertas críticos (§2º RI) e desejo exportar como **Redação Final**",
+                value=False,
+                key="confirmar_sec_2_aba5",
+            )
+            if _prosseguir_sec_2:
+                st.error(
+                    "🔴 **Atenção** — este documento será exportado como **Redação Final** com "
+                    "ALERTA CRÍTICO PENDENTE inscrito no cabeçalho e no log. "
+                    "A providência regimental indicada continua sendo a reabertura da discussão."
+                )
 
         st.subheader("📄 Texto Harmonizado")
         st.caption("Você pode editar o texto abaixo antes de exportar.")
@@ -769,6 +780,12 @@ with aba5:
         )
 
         # DOCX formatado
+        # O slug do arquivo reflete o modo: rascunho vs. redação final
+        _slug_doc = (
+            "rascunho_trabalho"
+            if (_tem_sec_2 and not _prosseguir_sec_2)
+            else _slug_tipo
+        )
         docx_bytes = exportar_redacao_final_docx(
             texto=texto_editavel,
             nome_projeto=nome_projeto,
@@ -778,11 +795,12 @@ with aba5:
             mapa=res.mapa_renumeracao,
             log=res.log_alteracoes,
             tipo_redacao=_tipo_rdz_aba5,
+            prosseguir_com_alerta_sec_2=_prosseguir_sec_2,
         )
         ec2.download_button(
             label="📝 Baixar .docx",
             data=docx_bytes,
-            file_name=f"{_slug_tipo}_{_slug_proj}.docx",
+            file_name=f"{_slug_doc}_{_slug_proj}.docx",
             mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
             use_container_width=True,
         )

@@ -1,5 +1,5 @@
 # 🔍 AUDITORIA DO SISTEMA — CCJ CMRJ
-### Documento técnico para revisão externa — versão 2026-05-25 **rev.5**
+### Documento técnico para revisão externa — versão 2026-05-25 **rev.6**
 
 ---
 
@@ -33,20 +33,31 @@ Incorreção ou impropriedade de linguagem que **não deturpa a vontade legislat
 → Erros de ortografia, concordância e pontuação: **o sistema corrige automaticamente** e registra em LOG e AVISOS.
 → Problemas de técnica legislativa que envolvam julgamento (ex: "artigo anterior" vago, "parágrafo único" incorreto): o sistema aponta, a CCJ decide por ofício.
 
-### 🚨 Erro Crítico — art. 250, §2º RI (CCJ NÃO oferece Redação Final)
+### 🚨 Erro Crítico — art. 250, §2º RI
 Duas emendas aprovadas que se **contradizem diretamente** sobre o mesmo dispositivo.
-→ A CCJ **não deve oferecer Redação Final**; deve propor reabertura da discussão.
-→ DOCX exportado como "RASCUNHO DE TRABALHO — NÃO É REDAÇÃO FINAL".
+→ A providência regimental indicada é a **reabertura da discussão**.
+→ O sistema exporta o DOCX como **"RASCUNHO DE TRABALHO — NÃO É REDAÇÃO FINAL"** por padrão.
+→ O relator pode confirmar ciência e exportar como Redação Final (com ALERTA CRÍTICO no cabeçalho e registro no log).
 
-### 🔴 Absurdo Manifesto — art. 250, §2º RI (CCJ NÃO oferece Redação Final)
+### 🔴 Absurdo Manifesto — art. 250, §2º RI
 Texto tecnicamente ininteligível ou que cria **dúvida inequívoca sobre a vontade legislativa** por razão exclusivamente formal.
 Exemplos: autoreferência circular de artigo; condição normativa remetendo a parágrafo suprimido; "artigo anterior" apontando para dispositivo incompatível.
 → Texto preservado **verbatim** + marcador inline visível na tela de trabalho.
 → Marcador **removido** do DOCX exportado.
-→ A CCJ **não deve oferecer Redação Final**; deve propor reabertura (art. 250, §2º RI).
+→ A providência regimental indicada é a **reabertura da discussão** (art. 250, §2º RI).
 → DOCX e relatório TXT orientam expressamente a **reabertura** com fundamento no §2º — nunca correção por ofício do §1º.
 
 > **REGRA CRÍTICA:** Tanto 🚨 quanto 🔴 invocam o **§2º** — reabertura, não ofício. O §1º cobre apenas impropriedades de linguagem (⚠️).
+
+### Sistema de dois modos para exportação com §2º
+O sistema distingue dois cenários ao exportar com alertas de §2º:
+
+| Modo | Condição | Título do DOCX | Sufixo -A | Cabeçalho |
+|---|---|---|---|---|
+| **RASCUNHO** (padrão) | §2º presente, sem confirmação | "RASCUNHO DE TRABALHO — NÃO É REDAÇÃO FINAL" | Não | Aviso em vermelho: "existem alertas de §2º" |
+| **REDAÇÃO FINAL** | §2º presente, relator confirmou ciência | "REDAÇÃO FINAL" | Sim | "ALERTA CRÍTICO PENDENTE — ART. 250, §2º RI" + log de OVERRIDE-HUMANO |
+
+A confirmação é feita na aba 5 da interface (checkbox explícito). O log do DOCX registra o OVERRIDE-HUMANO com data.
 
 ---
 
@@ -93,10 +104,10 @@ Para cada correção: LOG → `E1 / Art. Xº: [original] → [corrigido]` e AVIS
 - Observações sobre mérito, política urbanística ou consistência de parâmetros (CA, gabaritos, valores numéricos aprovados pelo Plenário) — esses são assuntos de mérito, fora da competência da CCJ na Redação Final.
 
 ### E2 — Erros Críticos (§2º RI)
-Contradição entre emendas aprovadas → sinaliza para reabertura. **Nunca resolve.**
+Contradição entre emendas aprovadas → a providência regimental indicada é a reabertura da discussão. **Nunca resolve.**
 
 ### E3 — Absurdo Manifesto (§2º RI)
-Ininteligibilidade formal de um dispositivo → sinaliza para reabertura. **Nunca resolve.**
+Ininteligibilidade formal de um dispositivo → a providência regimental indicada é a reabertura da discussão. **Nunca resolve.**
 Quatro casos obrigatórios: (1) autoreferência circular; (2) condição remetendo a § suprimido; (3) "artigo anterior" materialmente incompatível; (4) referência exclusiva a dispositivo suprimido.
 
 ### P1 — Pós-processamento Python (camada independente do modelo)
@@ -105,7 +116,7 @@ Após o modelo responder, `harmonizer.py` executa detectores estruturais sobre o
 - **Caso 2:** §N com `§N deste artigo` no corpo → condição normativa inoperante (regex sobre parágrafos)
 - **Caso 3:** Varredura semântica nos textos dos avisos por padrões como `artigo anterior.*incompatível`, `condição.*suprimida`, etc.
 
-Qualquer item escalado move-se de `avisos` para `alertas_absurdos`, forçando o DOCX como "RASCUNHO DE TRABALHO".
+Qualquer item escalado move-se de `avisos` para `alertas_absurdos`, ativando o modo RASCUNHO por padrão na exportação.
 
 **Riscos conhecidos e monitorados (não bloqueadores):**
 - O detector do Caso 1 exige preposição antes do número (`no Art. N`, `do Art. N` etc.) para reduzir falsos positivos, mas autorreferências intencionais raramente existem — monitorar no PLC real.
@@ -131,6 +142,8 @@ Qualquer item escalado move-se de `avisos` para `alertas_absurdos`, forçando o 
 | 25/05/2026 | A1 não explicitava a exceção E1 — tensão aparente entre preservação literal e auto-correção | Documentação | ✅ AUDITORIA.md rev.4 |
 | 25/05/2026 | `texto_bruto` de emenda supressiva ficava vazio (recebia `novo_texto` que é null) | Rastreabilidade | ✅ harmonizer.py rev.4 |
 | 25/05/2026 | `offset += len(todas_emendas)` acumulava lotes anteriores — numeração errada em múltiplos lotes | Funcional (lotes extensos) | ✅ harmonizer.py rev.4 |
+| 25/05/2026 | Bloqueio de exportação do DOCX com §2º era perigoso — reabertura é politicamente inviável; sistema deve permitir o relator decidir com ciência dos alertas | Regimental/Usabilidade | ✅ sistema dois modos (utils.py + app.py rev.6) |
+| 25/05/2026 | Linguagem "CCJ NÃO deve oferecer Redação Final" em E2/E3/P1 era excessivamente absoluta | Jurídico | ✅ harmonizer.py rev.6 — "providência regimental indicada é a reabertura" |
 
 ---
 
@@ -174,7 +187,8 @@ Usar `TAB_1_PLC_17_2026_TEXTO_ORIGINAL.txt` (19 artigos + 4 Anexos) com `TAB_2_P
 | 7 | Emenda 10 — "artigo anterior" preservado | "nos termos do artigo anterior" no §4º; 🔴 Absurdo sinalizado |
 | 8 | Emendas 1, 5 e 10 — ≥3 Absurdos §2º | ALERTAS_ABSURDOS com ≥3 itens |
 | 9 | Emenda 10 — A2 aglutinação | Referências ao conteúdo do Art. 12 original → Art. 11 final |
-| 10 | DOCX — título correto | Com 🔴 ou 🚨: "RASCUNHO DE TRABALHO"; sem: "REDAÇÃO FINAL" |
+| 10 | DOCX — modo RASCUNHO (padrão com §2º) | Sem confirmação → "RASCUNHO DE TRABALHO"; sufixo -A ausente |
+| 10b | DOCX — modo REDAÇÃO FINAL (com confirmação) | Com confirmação → "REDAÇÃO FINAL"; "ALERTA CRÍTICO PENDENTE" no cabeçalho; "OVERRIDE-HUMANO" no log |
 | 11 | DOCX — sem marcadores | Nenhum `[[⚠️ CCJ:...]]` no arquivo .docx |
 | 12 | Estrutura final | 18 artigos e 5 Anexos |
 | 13 | DOCX — texto de absurdo cita §2º e reabertura | Seção de absurdos menciona "§2º" e "reabertura" — nunca "ofício" ou "§1º" |
@@ -189,7 +203,7 @@ Usar `TAB_1_PLC_17_2026_TEXTO_ORIGINAL.txt` (19 artigos + 4 Anexos) com `TAB_2_P
 | Alterar sujeito, objeto ou verbo obrigacional/proibitivo | Crítica — alteração de teor |
 | Corrigir linguagem SEM registrar em LOG e AVISOS | Grave — falta de transparência |
 | Classificar absurdo manifesto como art. 250, §1º | Jurídica crítica |
-| Exportar DOCX como "REDAÇÃO FINAL" quando há §2º | Regimental crítica |
+| Exportar DOCX como "REDAÇÃO FINAL" quando há §2º **sem confirmação do relator** | Regimental crítica |
 | Deixar marcadores `[[⚠️ CCJ:...]]` no DOCX exportado | Grave |
 | Texto do DOCX orientar correção de absurdo por ofício do §1º | Jurídica crítica |
 | Incluir análise de mérito urbanístico (CA, gabaritos) em AVISOS | Grave — fora da competência |
@@ -202,7 +216,7 @@ Usar `TAB_1_PLC_17_2026_TEXTO_ORIGINAL.txt` (19 artigos + 4 Anexos) com `TAB_2_P
 ```
 cd C:\Users\Admin\Documents\Claude\CCJ\sistema_redacoes && python verificar.py
 ```
-Testa (36 verificações locais): importações, sufixo -A, detectores estruturais P1 (casos 1 e 2), padrões semânticos P1 (caso 3), escalador integrado, exportação DOCX (título, sufixo, marcadores, fundamentação §2º nos absurdos, texto da seção de avisos), parsing de emendas supressivas e offset em múltiplos lotes, análise estrutural, disponibilidade de API e arquivos de teste.
+Testa (42 verificações locais): importações, sufixo -A, detectores estruturais P1 (casos 1 e 2), padrões semânticos P1 (caso 3), escalador integrado, exportação DOCX em dois modos (§2º sem confirmação → RASCUNHO; §2º com confirmação → REDAÇÃO FINAL + ALERTA CRÍTICO + log OVERRIDE-HUMANO; sem §2º → REDAÇÃO FINAL normal), fundamentação §2º nos absurdos, texto da seção de avisos, parsing de emendas supressivas e offset em múltiplos lotes, análise estrutural, disponibilidade de API e arquivos de teste.
 
 ### Verificação completa (com harmonização real — custo ~$0,50)
 ```
@@ -233,4 +247,4 @@ Executa adicionalmente: harmonização completa do PLC 17/2026 com as 10 emendas
 
 ---
 
-*Versão rev.5 — 25/05/2026 — Sistema de Redações CCJ CMRJ*
+*Versão rev.6 — 25/05/2026 — Sistema de Redações CCJ CMRJ*

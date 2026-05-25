@@ -198,6 +198,7 @@ def exportar_redacao_final_docx(
     mapa: dict = None,
     log: list[str] = None,
     tipo_redacao: str = "Redação Final",
+    prosseguir_com_alerta_sec_2: bool = False,
 ) -> bytes:
     """
     Gera arquivo .docx formatado com o texto harmonizado.
@@ -219,27 +220,54 @@ def exportar_redacao_final_docx(
 
     doc.add_paragraph()
 
-    # Verifica presença de alertas §2º (para aviso — não bloqueia mais o documento)
+    # Verifica presença de alertas §2º
     _alertas_norm = alertas_absurdos or []
     _erros_norm   = erros or []
     tem_sec_2     = bool(_erros_norm or _alertas_norm)
 
-    # Título: sempre Redação Final / Redação do Vencido — sem bloqueio
-    titulo_doc = tipo_redacao.upper()
+    # ── Modo de exportação ──────────────────────────────────────────────────────
+    # Se há alertas §2º e o relator NÃO confirmou ciência:
+    #   → documento é RASCUNHO DE TRABALHO (título explícito, sem sufixo -A)
+    # Se há alertas §2º e o relator CONFIRMOU ciência (prosseguir_com_alerta_sec_2=True):
+    #   → documento é REDAÇÃO FINAL com ALERTA CRÍTICO proeminente + entrada no log
+    # Se não há alertas §2º: REDAÇÃO FINAL normal
+    eh_rascunho = tem_sec_2 and not prosseguir_com_alerta_sec_2
+
+    if eh_rascunho:
+        titulo_doc = "RASCUNHO DE TRABALHO — NÃO É REDAÇÃO FINAL"
+    else:
+        titulo_doc = tipo_redacao.upper()
 
     tipo_rdz_p = doc.add_paragraph()
     tipo_rdz_p.alignment = WD_ALIGN_PARAGRAPH.CENTER
     run_titulo = tipo_rdz_p.add_run(titulo_doc)
     run_titulo.bold = True
     run_titulo.font.size = Pt(14)
+    if eh_rascunho:
+        run_titulo.font.color.rgb = RGBColor(0xC0, 0x00, 0x00)
 
-    # Aviso destacado quando há alertas §2º (não bloqueia, mas alerta com força)
-    if tem_sec_2:
+    if eh_rascunho:
+        # Aviso explicativo no modo rascunho
         p_alerta = doc.add_paragraph()
         p_alerta.alignment = WD_ALIGN_PARAGRAPH.CENTER
         r_alerta = p_alerta.add_run(
-            "⚠ ATENÇÃO — foram detectados absurdos manifestos ou erros críticos "
-            "(art. 250, §2º RI). Ver Anexo de Avisos antes de publicar."
+            "⚠ RASCUNHO — existem alertas de §2º (absurdo manifesto ou erro crítico) "
+            "que exigem avaliação antes da publicação da Redação Final. "
+            "Confirme ciência na aba 5 do sistema para exportar como Redação Final."
+        )
+        r_alerta.bold = True
+        r_alerta.italic = True
+        r_alerta.font.size = Pt(10)
+        r_alerta.font.color.rgb = RGBColor(0xC0, 0x00, 0x00)
+    elif tem_sec_2:
+        # Relator confirmou ciência — documento é Redação Final com alerta proeminente
+        p_alerta = doc.add_paragraph()
+        p_alerta.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        r_alerta = p_alerta.add_run(
+            "⚠ ALERTA CRÍTICO PENDENTE — ART. 250, §2º RI — "
+            "O relator tomou ciência dos alertas de absurdo manifesto/erro crítico "
+            "e optou por prosseguir com a Redação Final. "
+            "Ver Anexo de Avisos — a providência regimental indicada é a reabertura da discussão."
         )
         r_alerta.bold = True
         r_alerta.italic = True
@@ -247,8 +275,8 @@ def exportar_redacao_final_docx(
         r_alerta.font.color.rgb = RGBColor(0xC0, 0x00, 0x00)
 
     if nome_projeto:
-        # Sufixo -A sempre aplicado (documento é sempre formal)
-        nome_doc = _aplicar_sufixo_a(nome_projeto)
+        # Sufixo -A apenas no documento formal (não no rascunho de trabalho)
+        nome_doc = nome_projeto if eh_rascunho else _aplicar_sufixo_a(nome_projeto)
         p_proj = doc.add_paragraph()
         p_proj.alignment = WD_ALIGN_PARAGRAPH.CENTER
         p_proj.add_run(nome_doc).bold = True
@@ -320,10 +348,17 @@ def exportar_redacao_final_docx(
             doc.add_paragraph(f"{orig}  →  {novo}", style='List Bullet')
 
     # ── Log de alterações ──
-    if log:
+    log_final = list(log or [])
+    if tem_sec_2 and prosseguir_com_alerta_sec_2:
+        log_final.append(
+            f"OVERRIDE-HUMANO / Art. 250, §2º RI — Relator tomou ciência dos alertas "
+            f"({len(_erros_norm)} erro(s) crítico(s), {len(_alertas_norm)} absurdo(s) manifesto(s)) "
+            f"e optou por prosseguir com a Redação Final em {datetime.date.today().strftime('%d/%m/%Y')}."
+        )
+    if log_final:
         doc.add_paragraph()
         doc.add_heading('Log de Alterações Aplicadas', level=3)
-        for item in log:
+        for item in log_final:
             doc.add_paragraph(f"• {item}")
 
     buf = BytesIO()

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-verificar.py — Verificação do Sistema de Redações CCJ CMRJ (rev.3)
+verificar.py — Verificação do Sistema de Redações CCJ CMRJ (rev.4)
 Testa todos os comportamentos críticos do AUDITORIA.md sem custo de API.
 
 Uso:
@@ -32,7 +32,7 @@ def chk(nome: str, ok: bool, detalhe: str = "") -> None:
 
 print()
 print("=" * 65)
-print("  VERIFICAÇÃO DO SISTEMA — CCJ CMRJ — rev.3")
+print("  VERIFICAÇÃO DO SISTEMA — CCJ CMRJ — rev.4")
 print("=" * 65)
 
 # ────────────────────────────────────────────────────────────────────────────
@@ -172,25 +172,49 @@ if _DOCX_OK:
         "Art. 3º Conclusão."
     )
 
-    # 7a — Com §2º → REDAÇÃO FINAL com -A + aviso em vermelho (sem bloqueio)
+    # 7a — Com §2º, SEM confirmação → RASCUNHO (padrão seguro)
     try:
         docx_a = exportar_redacao_final_docx(
             texto=TEXTO_MARCADOR, nome_projeto="PLC 17/2026",
             avisos=[], erros=[],
             alertas_absurdos=["🔴 Art. 2: absurdo manifesto"],
+            prosseguir_com_alerta_sec_2=False,   # padrão
         )
         doc_a  = Document(BytesIO(docx_a))
         txts_a = [p.text for p in doc_a.paragraphs]
-        chk("Com §2º → título é REDAÇÃO FINAL (sem bloqueio)",
-            any("REDAÇÃO FINAL" in t for t in txts_a))
-        chk("Com §2º → sufixo -A aplicado mesmo com alertas",
-            any("17-A/2026" in t for t in txts_a))
-        chk("Com §2º → aviso de atenção presente no cabeçalho",
-            any("ATENÇÃO" in t for t in txts_a))
+        chk("§2º sem confirmação → título 'RASCUNHO DE TRABALHO'",
+            any("RASCUNHO DE TRABALHO" in t for t in txts_a))
+        chk("§2º sem confirmação → NÃO contém 'REDAÇÃO FINAL' no título",
+            not any(t.strip() == "REDAÇÃO FINAL" for t in txts_a))
+        chk("§2º sem confirmação → sufixo -A NÃO aplicado no rascunho",
+            not any("17-A/2026" in t for t in txts_a))
+        chk("§2º sem confirmação → aviso de rascunho presente no cabeçalho",
+            any("RASCUNHO" in t for t in txts_a))
         chk("Marcadores [[⚠️ CCJ:...]] removidos do DOCX",
             not any("[[" in t for t in txts_a))
     except Exception as e:
-        chk("DOCX com §2º", False, str(e))
+        chk("DOCX §2º sem confirmação", False, str(e))
+
+    # 7a2 — Com §2º, COM confirmação → REDAÇÃO FINAL + ALERTA CRÍTICO + log override
+    try:
+        docx_a2 = exportar_redacao_final_docx(
+            texto=TEXTO_MARCADOR, nome_projeto="PLC 17/2026",
+            avisos=[], erros=[],
+            alertas_absurdos=["🔴 Art. 2: absurdo manifesto"],
+            prosseguir_com_alerta_sec_2=True,    # relator confirmou
+        )
+        doc_a2  = Document(BytesIO(docx_a2))
+        txts_a2 = [p.text for p in doc_a2.paragraphs]
+        chk("§2º com confirmação → título contém 'REDAÇÃO FINAL'",
+            any("REDAÇÃO FINAL" in t for t in txts_a2))
+        chk("§2º com confirmação → sufixo -A aplicado ('17-A/2026')",
+            any("17-A/2026" in t for t in txts_a2))
+        chk("§2º com confirmação → 'ALERTA CRÍTICO PENDENTE' no cabeçalho",
+            any("ALERTA CRÍTICO PENDENTE" in t for t in txts_a2))
+        chk("§2º com confirmação → log contém 'OVERRIDE-HUMANO'",
+            any("OVERRIDE-HUMANO" in t for t in txts_a2))
+    except Exception as e:
+        chk("DOCX §2º com confirmação", False, str(e))
 
     # 7b — Sem §2º → REDAÇÃO FINAL com sufixo -A, sem aviso
     try:
@@ -205,6 +229,8 @@ if _DOCX_OK:
             any("REDAÇÃO FINAL" in t for t in txts_b))
         chk("Sem §2º → sufixo -A aplicado ('17-A/2026')",
             any("17-A/2026" in t for t in txts_b))
+        chk("Sem §2º → NÃO contém 'RASCUNHO'",
+            not any("RASCUNHO" in t for t in txts_b))
     except Exception as e:
         chk("DOCX sem §2º", False, str(e))
 

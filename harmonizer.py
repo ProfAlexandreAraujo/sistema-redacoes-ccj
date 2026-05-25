@@ -128,7 +128,7 @@ def _detectar_absurdos_estruturais(texto: str) -> list[str]:
             alertas.append(
                 f"🔴 Art. {num_art}: o dispositivo referencia o próprio Art. {num_art} "
                 f"(autoreferência circular) — absurdo manifesto detectado em pós-processamento "
-                f"(Caso 1 — art. 250, §2º RI). A CCJ não deve oferecer Redação Final; propor reabertura."
+                f"(Caso 1 — art. 250, §2º RI). A providência regimental indicada é a reabertura da discussão."
             )
 
     # ── Caso 2: Condição normativa inoperante ─────────────────────────────────
@@ -147,7 +147,7 @@ def _detectar_absurdos_estruturais(texto: str) -> list[str]:
                 alertas.append(
                     f"🔴 §{par_num}º: o parágrafo remete ao próprio §{par_num}º deste artigo "
                     f"(condição normativa inoperante) — absurdo manifesto detectado em pós-processamento "
-                    f"(Caso 2 — art. 250, §2º RI). A CCJ não deve oferecer Redação Final; propor reabertura."
+                    f"(Caso 2 — art. 250, §2º RI). A providência regimental indicada é a reabertura da discussão."
                 )
                 break
 
@@ -187,8 +187,10 @@ def _escalar_avisos_para_absurdos(
 ) -> tuple[list[str], list[str]]:
     """
     Pós-processamento: eleva avisos (§1º) que descrevem absurdos manifestos
-    para alertas_absurdos (§2º), garantindo que o DOCX seja gerado como
-    "RASCUNHO DE TRABALHO" e a CCJ saiba que não deve oferecer Redação Final.
+    para alertas_absurdos (§2º), sinalizando que a providência regimental
+    indicada é a reabertura da discussão (art. 250, §2º RI).
+    O DOCX será exportado como RASCUNHO DE TRABALHO a menos que o relator
+    confirme ciência explicitamente na interface.
 
     Estratégia dupla:
     · Detecção estrutural no texto harmonizado (Casos 1 e 2 — independe do modelo)
@@ -544,13 +546,13 @@ E1.5. PROIBIÇÃO ABSOLUTA — ANÁLISES DE MÉRITO NOS AVISOS:
     competência da CCJ na Redação Final. Colocá-los em AVISOS contamina o documento.
     Se perceber algo desse tipo, OMITA. Não registre. Não "avise com ressalva".
 
-E2. ERROS CRÍTICOS — não tente resolver, sinalize para reabertura (art. 250, §2º RI):
+E2. ERROS CRÍTICOS — não tente resolver; a providência regimental indicada é a reabertura da discussão (art. 250, §2º RI):
     — Duas emendas aprovadas que se contradizem diretamente sobre o mesmo dispositivo
     — Emenda que ao ser aplicada torna outro dispositivo aprovado de cumprimento impossível
     — Supressão e modificação simultânea do mesmo artigo por emendas distintas
     — Resultado que gera absurdo jurídico manifesto insanável sem alterar teor
 
-E3. ALERTA DE ABSURDO MANIFESTO (art. 250, §2º RI — CCJ NÃO oferece Redação Final):
+E3. ALERTA DE ABSURDO MANIFESTO (art. 250, §2º RI — providência regimental indicada é a reabertura):
     QUATRO SITUAÇÕES QUE OBRIGATORIAMENTE geram 🔴 — NÃO downgrade para ⚠ AVISO:
 
     CASO 1 — AUTOREFERÊNCIA CIRCULAR:
@@ -636,7 +638,7 @@ O texto do dispositivo permanece exatamente como aprovado — apenas acrescente 
 <ALERTAS_ABSURDOS>
 [Use SOMENTE para absurdo manifesto ou ininteligibilidade formal — casos muito raros.]
 [Formato: "🔴 Emenda N / Art. Xº: descrição precisa do absurdo"]
-[A CCJ NÃO DEVE oferecer Redação Final; deve propor reabertura da discussão (art. 250, §2º RI).]
+[A providência regimental indicada é a reabertura da discussão (art. 250, §2º RI).]
 [Na dúvida, classifique como AVISO. Escreva "Nenhum." se não houver.]
 </ALERTAS_ABSURDOS>
 
