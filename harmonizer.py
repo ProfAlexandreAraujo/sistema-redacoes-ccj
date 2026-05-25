@@ -95,6 +95,154 @@ def _chunk_text(text: str, max_chars: int = 40_000) -> list[str]:
     return chunks
 
 
+# ─────────────────────────────────────────────────────────────────────────────
+# PÓS-PROCESSAMENTO: ESCALADA PARA ABSURDO MANIFESTO (§2º RI)
+# ─────────────────────────────────────────────────────────────────────────────
+
+def _detectar_absurdos_estruturais(texto: str) -> list[str]:
+    """
+    Detecta absurdos manifestos diretamente no texto harmonizado, sem depender
+    da classificação do modelo de IA.
+
+    Caso 1 — Autoreferência circular:
+        Art. N cujo corpo contém referência explícita ao próprio Art. N.
+    Caso 2 — Condição normativa inoperante:
+        §N cujo corpo contém "§N deste artigo" (parágrafo que remete a si mesmo).
+    """
+    alertas: list[str] = []
+
+    # ── Caso 1: Autoreferência circular ──────────────────────────────────────
+    art_matches = list(re.finditer(r'(?m)^Art\.\s*(\d+)', texto))
+    for idx, m in enumerate(art_matches):
+        num_art = m.group(1)
+        # Corpo: do fim do cabeçalho "Art. N" até o início do próximo artigo
+        corpo_ini = m.end()
+        corpo_fim = art_matches[idx + 1].start() if idx + 1 < len(art_matches) else len(texto)
+        corpo = texto[corpo_ini:corpo_fim]
+        # Referências explícitas ao mesmo artigo: "no Art. N", "do Art. N", etc.
+        refs_art = re.findall(
+            r'\b(?:n[oa]s?|d[oa]s?|ao?|conform[ae]?|observad[oa])\s+[Aa]rt\.?\s*(\d+)',
+            corpo
+        )
+        if any(r == num_art for r in refs_art):
+            alertas.append(
+                f"🔴 Art. {num_art}: o dispositivo referencia o próprio Art. {num_art} "
+                f"(autoreferência circular) — absurdo manifesto detectado em pós-processamento "
+                f"(Caso 1 — art. 250, §2º RI). A CCJ não deve oferecer Redação Final; propor reabertura."
+            )
+
+    # ── Caso 2: Condição normativa inoperante ─────────────────────────────────
+    # §N que contém "§N deste artigo" (parágrafo remete a si mesmo)
+    for par_m in re.finditer(
+        r'(?m)^\s*§\s*(\d+)[ºo°]?\s(.+?)(?=\n\s*§\s*\d|\n\s*Art\.\s*\d|\Z)',
+        texto, re.DOTALL
+    ):
+        par_num  = par_m.group(1)
+        par_body = par_m.group(2)
+        for ref_m in re.finditer(
+            r'§\s*(\d+)[ºo°]?\s+deste\s+artigo',
+            par_body, re.IGNORECASE
+        ):
+            if ref_m.group(1) == par_num:
+                alertas.append(
+                    f"🔴 §{par_num}º: o parágrafo remete ao próprio §{par_num}º deste artigo "
+                    f"(condição normativa inoperante) — absurdo manifesto detectado em pós-processamento "
+                    f"(Caso 2 — art. 250, §2º RI). A CCJ não deve oferecer Redação Final; propor reabertura."
+                )
+                break
+
+    return alertas
+
+
+# Padrões semânticos nos avisos que indicam absurdo manifesto (§2º RI)
+_PADROES_ABSURDO_AVISO = re.compile(
+    r'referência circular'
+    r'|aponta para o próprio artigo'
+    r'|autoref(?:erência)?'
+    r'|artigo.*referencia.*a si mesmo'
+    # Condição inoperante (§ suprimido)
+    r'|condição.*suprimid'
+    r'|suprimid.*condição'
+    r'|§\s*\d+.*suprimid'
+    r'|§.*não existe mais'
+    r'|§.*foi suprimid'
+    # "artigo anterior" incompatível após renumeração
+    r'|artigo anterior.*incompatível'
+    r'|incompatível.*artigo anterior'
+    r'|artigo anterior.*trata\b'
+    r'|artigo anterior.*após.*renumer'
+    r'|artigo anterior.*monitoramento'
+    r'|artigo anterior.*fiscaliz'
+    r'|artigo anterior.*diferente'
+    r'|artigo anterior.*passou a ser'
+    r'|artigo anterior.*versa\b',
+    re.IGNORECASE | re.DOTALL
+)
+
+
+def _escalar_avisos_para_absurdos(
+    avisos: list[str],
+    texto_harm: str,
+    alertas_existentes: list[str],
+) -> tuple[list[str], list[str]]:
+    """
+    Pós-processamento: eleva avisos (§1º) que descrevem absurdos manifestos
+    para alertas_absurdos (§2º), garantindo que o DOCX seja gerado como
+    "RASCUNHO DE TRABALHO" e a CCJ saiba que não deve oferecer Redação Final.
+
+    Estratégia dupla:
+    · Detecção estrutural no texto harmonizado (Casos 1 e 2 — independe do modelo)
+    · Padrões semânticos nos avisos (Caso 3 e qualquer caso não coberto estruturalmente)
+
+    Retorna (avisos_restantes, alertas_absurdos_atualizados).
+    """
+    def _nums(s: str) -> set[str]:
+        """
+        Extrai identificadores de dispositivos (Art. N ou § N) do texto,
+        ignorando referências ao regimento e sufixos de reclassificação
+        para evitar falsos positivos na deduplicação.
+        """
+        # Remove blocos entre colchetes (ex: "[Reclassificado: ...]", "(Caso 1 — ...)")
+        s_clean = re.sub(r'\[.*?\]', '', s, flags=re.DOTALL)
+        s_clean = re.sub(r'\(.*?\)', '', s_clean, flags=re.DOTALL)
+        # Remove referências ao artigo do RI (ex: "art. 250, §2º RI")
+        s_clean = re.sub(r'\bart\.?\s*250\b[^\n.;]*', '', s_clean, flags=re.IGNORECASE)
+        return set(re.findall(r'(?:Art\.\s*\d+|§\s*\d+)', s_clean, re.IGNORECASE))
+
+    def _ja_cobre(candidato: str, lista: list[str]) -> bool:
+        ns = _nums(candidato)
+        return bool(ns) and any(bool(ns & _nums(e)) for e in lista)
+
+    alertas_estruturais = _detectar_absurdos_estruturais(texto_harm)
+    nums_est: set[str] = set().union(*(_nums(a) for a in alertas_estruturais)) if alertas_estruturais else set()
+
+    avisos_restantes: list[str] = []
+    alertas_de_avisos: list[str] = []
+
+    for aviso in avisos:
+        nums_av = _nums(aviso)
+        # Escala se: (a) keywords indicam absurdo, ou (b) dispositivo já detectado estruturalmente
+        if _PADROES_ABSURDO_AVISO.search(aviso) or (nums_av & nums_est):
+            texto_limpo = re.sub(r'^⚠\s*', '', aviso.strip())
+            alertas_de_avisos.append(
+                f"🔴 {texto_limpo}  "
+                f"[Reclassificado: absurdo manifesto — art. 250, §2º RI]"
+            )
+        else:
+            avisos_restantes.append(aviso)
+
+    # Consolida sem duplicatas: existentes → estruturais → de avisos
+    todos: list[str] = list(alertas_existentes)
+    for a in alertas_estruturais:
+        if not _ja_cobre(a, todos):
+            todos.append(a)
+    for a in alertas_de_avisos:
+        if not _ja_cobre(a, todos):
+            todos.append(a)
+
+    return avisos_restantes, todos
+
+
 def parsear_emendas_com_ia(texto_emendas: str, api_key: str) -> list[Emenda]:
     """
     Usa Claude para identificar e estruturar emendas a partir de um texto bruto.
@@ -478,11 +626,21 @@ O texto do dispositivo permanece exatamente como aprovado — apenas acrescente 
             items = [l.strip() for l in raw.splitlines() if l.strip()]
         return [i for i in items if i and i not in skip]
 
+    avisos_list  = parse_linhas(avisos_raw,  modo='paragrafo')
+    erros_list   = parse_linhas(erros_raw,   modo='paragrafo')
+    alertas_list = parse_linhas(alertas_raw, modo='paragrafo')
+    log_list     = parse_linhas(log_raw,     modo='linha')
+
+    # Pós-processamento: eleva absurdos manifestos classificados erroneamente como §1º avisos
+    avisos_list, alertas_list = _escalar_avisos_para_absurdos(
+        avisos_list, texto_harm, alertas_list
+    )
+
     return ResultadoHarmonizacao(
         texto_harmonizado = texto_harm,
-        avisos            = parse_linhas(avisos_raw,  modo='paragrafo'),
-        erros_criticos    = parse_linhas(erros_raw,   modo='paragrafo'),
-        alertas_absurdos  = parse_linhas(alertas_raw, modo='paragrafo'),
+        avisos            = avisos_list,
+        erros_criticos    = erros_list,
+        alertas_absurdos  = alertas_list,
         mapa_renumeracao  = mapa,
-        log_alteracoes    = parse_linhas(log_raw,     modo='linha'),
+        log_alteracoes    = log_list,
     )
