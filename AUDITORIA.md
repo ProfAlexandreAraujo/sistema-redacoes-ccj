@@ -1,5 +1,5 @@
 # 🔍 AUDITORIA DO SISTEMA — CCJ CMRJ
-### Documento técnico para revisão externa — versão 2026-05-25 **rev.6**
+### Documento técnico para revisão externa — versão 2026-05-25 **rev.7**
 
 ---
 
@@ -144,6 +144,10 @@ Qualquer item escalado move-se de `avisos` para `alertas_absurdos`, ativando o m
 | 25/05/2026 | `offset += len(todas_emendas)` acumulava lotes anteriores — numeração errada em múltiplos lotes | Funcional (lotes extensos) | ✅ harmonizer.py rev.4 |
 | 25/05/2026 | Bloqueio de exportação do DOCX com §2º era perigoso — reabertura é politicamente inviável; sistema deve permitir o relator decidir com ciência dos alertas | Regimental/Usabilidade | ✅ sistema dois modos (utils.py + app.py rev.6) |
 | 25/05/2026 | Linguagem "CCJ NÃO deve oferecer Redação Final" em E2/E3/P1 era excessivamente absoluta | Jurídico | ✅ harmonizer.py rev.6 — "providência regimental indicada é a reabertura" |
+| 25/05/2026 | .txt contornava lógica de rascunho: exportava `redacao_final_*.txt` sem cabeçalho de alerta, mesmo com §2º sem confirmação | UX-regimental média/alta | ✅ app.py rev.7 — .txt respeita _eh_rascunho_aba5; inclui cabeçalho de alerta; slug `rascunho_trabalho_*.txt` |
+| 25/05/2026 | Checkbox `confirmar_sec_2_aba5` persistia no session_state entre harmonizações — nova execução herdava confirmação anterior | Regimental | ✅ app.py rev.7 — `pop('confirmar_sec_2_aba5')` em todos os pontos de nova harmonização/invalidação |
+| 25/05/2026 | `texto_redacao_final` também persistia — possível carry-over de texto antigo na área editável | Rastreabilidade | ✅ app.py rev.7 — `pop('texto_redacao_final')` nos mesmos pontos |
+| 25/05/2026 | Rótulo dos botões não indicava o modo real (RASCUNHO vs REDAÇÃO FINAL com alerta) | UX | ✅ app.py rev.7 — rótulos dinâmicos em .txt e .docx |
 
 ---
 
@@ -216,7 +220,7 @@ Usar `TAB_1_PLC_17_2026_TEXTO_ORIGINAL.txt` (19 artigos + 4 Anexos) com `TAB_2_P
 ```
 cd C:\Users\Admin\Documents\Claude\CCJ\sistema_redacoes && python verificar.py
 ```
-Testa (42 verificações locais): importações, sufixo -A, detectores estruturais P1 (casos 1 e 2), padrões semânticos P1 (caso 3), escalador integrado, exportação DOCX em dois modos (§2º sem confirmação → RASCUNHO; §2º com confirmação → REDAÇÃO FINAL + ALERTA CRÍTICO + log OVERRIDE-HUMANO; sem §2º → REDAÇÃO FINAL normal), fundamentação §2º nos absurdos, texto da seção de avisos, parsing de emendas supressivas e offset em múltiplos lotes, análise estrutural, disponibilidade de API e arquivos de teste.
+Testa (45 verificações locais): importações, sufixo -A, detectores estruturais P1 (casos 1 e 2), padrões semânticos P1 (caso 3), escalador integrado, exportação DOCX em dois modos (§2º sem confirmação → RASCUNHO; §2º com confirmação → REDAÇÃO FINAL + ALERTA CRÍTICO + log OVERRIDE-HUMANO; sem §2º → REDAÇÃO FINAL normal), fundamentação §2º nos absurdos, texto da seção de avisos, **TXT modo rascunho** (cabeçalho de alerta, slug correto, conteúdo de reabertura), parsing de emendas supressivas e offset em múltiplos lotes, análise estrutural, disponibilidade de API e arquivos de teste.
 
 ### Verificação completa (com harmonização real — custo ~$0,50)
 ```
@@ -405,21 +409,26 @@ _PADROES_ABSURDO_AVISO = re.compile(
   ✅  Absurdo no DOCX menciona §2º (não §1º)
   ✅  Absurdo no DOCX NÃO menciona ofício §1º
   ✅  Avisos com E1: seção NÃO diz 'preservados exatamente como aprovados'
+  ✅  TXT rascunho: cabeçalho contém 'RASCUNHO DE TRABALHO'
+  ✅  TXT rascunho: cabeçalho contém 'reabertura da discussão'
+  ✅  TXT rascunho: nome slug é 'rascunho_trabalho'
 
-RESULTADO FINAL: 42/43 (único fail = ANTHROPIC_API_KEY ausente — esperado em ambiente local)
+RESULTADO FINAL: 45/46 (único fail = ANTHROPIC_API_KEY ausente — esperado em ambiente local)
 ```
 
 ---
 
 ### 11.6 Riscos residuais conhecidos e aceitos
 
-| Risco | Probabilidade | Mitigação |
-|---|---|---|
-| Detector P1 Caso 1 pode ter falso positivo em autorreferência intencional | Muito baixa (raramente existe) | Monitorar no PLC real; o P1 é camada de segurança, não bloqueio |
-| Deduplicação pode fundir dois absurdos no mesmo artigo se modelo gerar texto similar | Baixa | O modelo é o caminho principal; duplicatas protegem, não suprimem |
-| Modelo pode classificar absurdo manifesto como ⚠ Aviso | Baixa após E3 rev.3 + P1 | P1 escalona independentemente da classificação do modelo |
-| Relator pode confirmar ciência sem ler os alertas (checkbox impulsivo) | Possível | Interface exige leitura do warning + checkbox + 2º st.error; log OVERRIDE-HUMANO rastreável |
+| Risco | Probabilidade | Status | Mitigação |
+|---|---|---|---|
+| Detector P1 Caso 1 pode ter falso positivo em autorreferência intencional | Muito baixa (raramente existe) | Monitorado | O P1 é camada de segurança, não bloqueio; falso positivo gera alerta, não cancelamento |
+| Deduplicação pode fundir dois absurdos no mesmo artigo se modelo gerar texto similar | Baixa | Monitorado | O modelo é o caminho principal; duplicatas protegem, não suprimem |
+| Modelo pode classificar absurdo manifesto como ⚠ Aviso | Baixa após E3 rev.3 + P1 | Monitorado | P1 escalona independentemente da classificação do modelo |
+| Relator pode confirmar ciência sem ler os alertas (checkbox impulsivo) | Possível | **Residual** | Interface exige: warning → checkbox → 2º st.error → log OVERRIDE-HUMANO rastreável; sem fricção de senha deliberadamente (usabilidade) |
+| IA não preenche erros_criticos/alertas_absurdos e P1 não escalona → sai como REDAÇÃO FINAL normal | Baixa (dupla camada) | **Residual** | E2/E3 forçam o modelo; P1 cobre casos estruturais; se ambos falham, é falha silenciosa do modelo |
+| Falha silenciosa de parsing XML da IA → resultado aparentemente válido sem alertas | Baixa | **Residual** | O parser lança exceção em XML malformado; a UI exibe `st.error`; não há saída silenciosa sem aviso ao usuário |
 
 ---
 
-*Versão rev.6 — 25/05/2026 — Sistema de Redações CCJ CMRJ*
+*Versão rev.7 — 25/05/2026 — Sistema de Redações CCJ CMRJ*

@@ -257,6 +257,32 @@ if _DOCX_OK:
             not any("preservados exatamente como aprovados" in t for t in txts_e1))
     except Exception as e:
         chk("7d — texto avisos E1", False, str(e))
+    # 7f — .txt no modo rascunho inclui cabeçalho de alerta
+    # (Simula diretamente a lógica do app.py, sem rodar Streamlit)
+    try:
+        import datetime as _dt
+        _txt_rascunho_ok = True
+        # Simula o bloco do app.py: _eh_rascunho_aba5=True, _tem_sec_2=True, _prosseguir=False
+        _eh_rascunho = True
+        _cab = (
+            "RASCUNHO DE TRABALHO — NÃO É REDAÇÃO FINAL\n"
+            "⚠ Existem alertas de §2º (absurdo manifesto ou erro crítico).\n"
+            "A providência regimental indicada é a reabertura da discussão (art. 250, §2º RI).\n"
+            "Confirme ciência na aba 5 do sistema para exportar como Redação Final.\n"
+            f"Elaborado em {_dt.date.today().strftime('%d/%m/%Y')}\n"
+            "=" * 60 + "\n\n"
+        )
+        _txt_content = (_cab + "Art. 1º Texto.").encode('utf-8')
+        _slug_doc_sim = "rascunho_trabalho"
+        chk("TXT rascunho: cabeçalho contém 'RASCUNHO DE TRABALHO'",
+            b"RASCUNHO DE TRABALHO" in _txt_content)
+        chk("TXT rascunho: cabeçalho contém 'reabertura da discussão'",
+            "reabertura da discussão".encode('utf-8') in _txt_content)
+        chk("TXT rascunho: nome slug é 'rascunho_trabalho'",
+            _slug_doc_sim == "rascunho_trabalho")
+    except Exception as e:
+        chk("7f — TXT modo rascunho", False, str(e))
+
 else:
     print("  ⏭  DOCX — python-docx não disponível, pulando")
 

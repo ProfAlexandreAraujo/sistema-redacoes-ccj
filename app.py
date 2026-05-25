@@ -286,6 +286,8 @@ with aba1:
     if texto_edit != st.session_state.texto_original:
         st.session_state.texto_original = texto_edit
         st.session_state.resultado_harm = None   # invalida harmonização anterior
+        st.session_state.pop('confirmar_sec_2_aba5', None)
+        st.session_state.pop('texto_redacao_final', None)
 
     if st.session_state.texto_original:
         struct = analisar_estrutura(st.session_state.texto_original)
@@ -353,6 +355,8 @@ with aba2:
                         novas = parsear_emendas_com_ia(texto_emendas_input, api_key)
                         st.session_state.emendas = novas
                         st.session_state.resultado_harm = None
+                        st.session_state.pop('confirmar_sec_2_aba5', None)
+                        st.session_state.pop('texto_redacao_final', None)
                         st.success(f"✅ {len(novas)} emendas identificadas!")
                         st.rerun()
                     except Exception as ex:
@@ -423,6 +427,8 @@ with aba2:
         if c1.button("🗑️ Remover todas", use_container_width=True):
             st.session_state.emendas = []
             st.session_state.resultado_harm = None
+            st.session_state.pop('confirmar_sec_2_aba5', None)
+            st.session_state.pop('texto_redacao_final', None)
             st.rerun()
         if c2.button("🔄 Limpar status (tudo pendente)", use_container_width=True):
             for e in st.session_state.emendas:
@@ -627,6 +633,9 @@ with aba4:
                             nome_projeto,
                         )
                         st.session_state.resultado_harm = resultado
+                        # Reset explícito: nova harmonização invalida qualquer confirmação anterior
+                        st.session_state.pop('confirmar_sec_2_aba5', None)
+                        st.session_state.pop('texto_redacao_final', None)
 
                         # ── Salvar sessão automaticamente para não perder o trabalho ──
                         try:
@@ -770,21 +779,38 @@ with aba5:
         _slug_tipo  = "redacao_final" if _tipo_rdz_aba5 == "Redação Final" else "redacao_vencido"
         _slug_proj  = re.sub(r'[^\w]', '_', nome_projeto or 'projeto')
 
-        # TXT simples
+        # Modo rascunho: se há §2º sem confirmação
+        _eh_rascunho_aba5 = _tem_sec_2 and not _prosseguir_sec_2
+        _slug_doc = "rascunho_trabalho" if _eh_rascunho_aba5 else _slug_tipo
+
+        # TXT simples — respeita o mesmo modo do DOCX
+        if _eh_rascunho_aba5:
+            _cabecalho_rascunho = (
+                "RASCUNHO DE TRABALHO — NÃO É REDAÇÃO FINAL\n"
+                "⚠ Existem alertas de §2º (absurdo manifesto ou erro crítico).\n"
+                "A providência regimental indicada é a reabertura da discussão (art. 250, §2º RI).\n"
+                "Confirme ciência na aba 5 do sistema para exportar como Redação Final.\n"
+                f"Elaborado em {datetime.date.today().strftime('%d/%m/%Y')}\n"
+                "=" * 60 + "\n\n"
+            )
+            _txt_content = (_cabecalho_rascunho + texto_editavel).encode('utf-8')
+        else:
+            _txt_content = texto_editavel.encode('utf-8')
+
+        _label_txt = "📄 Baixar RASCUNHO .txt" if _eh_rascunho_aba5 else "📄 Baixar .txt"
         ec1.download_button(
-            label="📄 Baixar .txt",
-            data=texto_editavel.encode('utf-8'),
-            file_name=f"{_slug_tipo}_{_slug_proj}.txt",
+            label=_label_txt,
+            data=_txt_content,
+            file_name=f"{_slug_doc}_{_slug_proj}.txt",
             mime="text/plain",
             use_container_width=True,
         )
 
         # DOCX formatado
-        # O slug do arquivo reflete o modo: rascunho vs. redação final
-        _slug_doc = (
-            "rascunho_trabalho"
-            if (_tem_sec_2 and not _prosseguir_sec_2)
-            else _slug_tipo
+        _label_docx = (
+            "📝 Baixar RASCUNHO .docx" if _eh_rascunho_aba5 else
+            "📝 Baixar REDAÇÃO FINAL .docx (com alerta)" if _tem_sec_2 else
+            "📝 Baixar .docx"
         )
         docx_bytes = exportar_redacao_final_docx(
             texto=texto_editavel,
@@ -798,7 +824,7 @@ with aba5:
             prosseguir_com_alerta_sec_2=_prosseguir_sec_2,
         )
         ec2.download_button(
-            label="📝 Baixar .docx",
+            label=_label_docx,
             data=docx_bytes,
             file_name=f"{_slug_doc}_{_slug_proj}.docx",
             mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
