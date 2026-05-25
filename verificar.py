@@ -383,24 +383,43 @@ print("\n[11] VALIDAÇÃO XML (harmonizer.py)")
 try:
     from harmonizer import harmonizar_texto as _harm_func
     import inspect
+    import re as _re
     src = inspect.getsource(_harm_func)
 
-    # 11a — Verificação estrutural: o código deve conter a guarda TEXTO_HARMONIZADO
-    chk("harmonizer.py levanta ValueError se <TEXTO_HARMONIZADO> ausente",
-        "TEXTO_HARMONIZADO" in src and "ValueError" in src and
-        "não contém a tag" in src)
+    # 11a — Par completo exigido (não só tag de abertura)
+    chk("Guarda exige par completo </TEXTO_HARMONIZADO> (não só abertura)",
+        "</TEXTO_HARMONIZADO>" in src and "m_texto_harm" in src)
 
-    # 11b — Verificação comportamental: resposta sem tags levanta exceção
-    import re as _re
+    # 11b — Conteúdo vazio também levanta erro
+    chk("Guarda rejeita conteúdo vazio (truncamento sem fechamento)",
+        "conteúdo vazio" in src or "conteúdo" in src and "strip()" in src)
+
+    # 11c — Tags de alertas obrigatórias verificadas
+    chk("Tags de alertas obrigatórias verificadas (AVISOS, ERROS_CRITICOS, etc.)",
+        "_tags_obrigatorias" in src and "AVISOS" in src and
+        "ERROS_CRITICOS" in src and "ALERTAS_ABSURDOS" in src)
+
+    # 11d — Resposta sem tags → detectada como ausente (comportamental)
     _resp_sem_tags = "Resposta malformada sem nenhuma tag XML esperada."
-    _encontrou_tag = bool(_re.search(r'<TEXTO_HARMONIZADO>', _resp_sem_tags))
-    chk("Resposta sem <TEXTO_HARMONIZADO> → detectada como ausente",
-        not _encontrou_tag)
+    _m = _re.search(r'<TEXTO_HARMONIZADO>(.*?)</TEXTO_HARMONIZADO>', _resp_sem_tags, _re.DOTALL)
+    chk("Resposta sem par completo → m_texto_harm é None",
+        _m is None)
 
-    # 11c — O default do extrair("TEXTO_HARMONIZADO") foi alterado para "" (não texto_original)
-    chk("extrair('TEXTO_HARMONIZADO') usa default '' (não texto_original)",
-        'extrair("TEXTO_HARMONIZADO", "")' in src or
-        "extrair('TEXTO_HARMONIZADO', '')" in src)
+    # 11e — Resposta truncada (só abertura, sem fechamento) → detectada
+    _resp_truncada = "<TEXTO_HARMONIZADO>\nArt. 1º Texto sem fechamento..."
+    _m2 = _re.search(r'<TEXTO_HARMONIZADO>(.*?)</TEXTO_HARMONIZADO>', _resp_truncada, _re.DOTALL)
+    chk("Resposta truncada (sem </TEXTO_HARMONIZADO>) → m_texto_harm é None",
+        _m2 is None)
+
+    # 11f — Resposta válida → extraída corretamente
+    _resp_ok = "<TEXTO_HARMONIZADO>\nArt. 1º Texto.\nArt. 2º Outro.\n</TEXTO_HARMONIZADO>"
+    _m3 = _re.search(r'<TEXTO_HARMONIZADO>(.*?)</TEXTO_HARMONIZADO>', _resp_ok, _re.DOTALL)
+    chk("Resposta válida → texto extraído corretamente",
+        _m3 is not None and "Art. 1º" in _m3.group(1))
+
+    # 11g — texto_harm não usa mais extrair() com fallback para texto_original
+    chk("texto_harm usa m_texto_harm.group(1) (não extrair com fallback)",
+        "m_texto_harm.group(1).strip()" in src)
 
 except Exception as e:
     chk("11 — validação XML", False, str(e))

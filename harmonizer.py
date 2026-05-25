@@ -657,17 +657,37 @@ O texto do dispositivo permanece exatamente como aprovado — apenas acrescente 
         m = re.search(rf'<{tag}>(.*?)</{tag}>', resp_text, re.DOTALL)
         return m.group(1).strip() if m else default
 
-    # Validação obrigatória: <TEXTO_HARMONIZADO> deve estar presente.
-    # Se ausente, a resposta da IA está malformada — jamais usar o original silenciosamente,
-    # pois isso omitiria todos os alertas e entregaria o texto sem harmonização como válido.
-    if not re.search(r'<TEXTO_HARMONIZADO>', resp_text):
+    # ── Validação obrigatória do par completo <TAG>...</TAG> ─────────────────
+    # A guarda exige: (a) par completo de abertura+fechamento; (b) conteúdo não vazio.
+    # Verificar só a tag de abertura não protege contra truncamento — resposta cortada
+    # após <TEXTO_HARMONIZADO> faria extrair() devolver "" silenciosamente.
+    m_texto_harm = re.search(
+        r'<TEXTO_HARMONIZADO>(.*?)</TEXTO_HARMONIZADO>', resp_text, re.DOTALL
+    )
+    if not m_texto_harm or not m_texto_harm.group(1).strip():
+        _motivo = (
+            "par completo <TEXTO_HARMONIZADO>...</TEXTO_HARMONIZADO> não encontrado"
+            if not m_texto_harm else
+            "tag <TEXTO_HARMONIZADO> presente mas conteúdo vazio (resposta truncada?)"
+        )
         raise ValueError(
-            "A resposta da IA não contém a tag <TEXTO_HARMONIZADO>. "
-            "O formato XML esperado não foi recebido (resposta possivelmente truncada ou recusada). "
+            f"Resposta da IA inválida — {_motivo}. "
+            "O formato XML esperado não foi recebido corretamente. "
             "Tente novamente; se o erro persistir, reduza o número de emendas por lote."
         )
 
-    texto_harm    = extrair("TEXTO_HARMONIZADO", "")
+    # Tags de alertas são obrigatórias (ausência pode zerar alertas silenciosamente)
+    _tags_obrigatorias = ["AVISOS", "ERROS_CRITICOS", "ALERTAS_ABSURDOS", "LOG_ALTERACOES"]
+    _tags_ausentes = [t for t in _tags_obrigatorias
+                      if not re.search(rf'<{t}>', resp_text)]
+    if _tags_ausentes:
+        raise ValueError(
+            f"Resposta da IA truncada — tags ausentes: {', '.join(_tags_ausentes)}. "
+            "Alertas e erros críticos podem ter sido perdidos. "
+            "Tente novamente; se o erro persistir, reduza o número de emendas por lote."
+        )
+
+    texto_harm    = m_texto_harm.group(1).strip()   # já extraído pela guarda acima
     mapa_raw      = extrair("MAPA_RENUMERACAO", "")
     avisos_raw    = extrair("AVISOS", "")
     erros_raw     = extrair("ERROS_CRITICOS", "")
