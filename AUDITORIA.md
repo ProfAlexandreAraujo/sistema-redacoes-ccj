@@ -114,6 +114,8 @@ Qualquer item escalado move-se de `avisos` para `alertas_absurdos`, forçando o 
 | 25/05/2026 | IA persistia em classificar absurdos como §1º (E3 rev.2 insuficiente) | Crítico | ✅ P1 pós-processamento Python |
 | 25/05/2026 | E1 "flag-only" → "auto-corrigir + log" (decisão do usuário) | Funcional | ✅ E1 rev.3 |
 | 25/05/2026 | A2 não atualizava referências ao conteúdo migrado por aglutinação | Funcional | ✅ A2 aglutinação |
+| 25/05/2026 | "; e" auto-corrigido (LC 48/2000 apenas, não LC 95/1998 — prática ignora) | Funcional | ✅ E1 aviso-only |
+| 25/05/2026 | IA incluía análises de mérito/CA urbanístico em AVISOS §1º (fora da competência CCJ) | Crítico | ✅ bloqueio prompt |
 
 ---
 
