@@ -222,11 +222,24 @@ def harmonizar_texto(
 BLOCO A — REGRAS ABSOLUTAS (jamais podem ser violadas)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-A1. PRESERVAÇÃO DO TEOR (art. 250 RI / soberania do Plenário)
+A1. PRESERVAÇÃO DO TEOR — REGRA ABSOLUTA INVIOLÁVEL (art. 250 RI / soberania do Plenário)
     Jamais altere o conteúdo substantivo de nenhuma emenda aprovada.
     O texto aprovado pelo Plenário é soberano e deve ser incorporado exatamente como votado.
-    A única modificação automática permitida é a atualização de referências cruzadas internas
-    decorrente de renumeração. Qualquer outra alteração é vedada.
+
+    ⚠ REGRA CRÍTICA DE PRESERVAÇÃO VERBATIM:
+    Ao incorporar o texto de emenda aprovada, copie-o LITERALMENTE — cada palavra, cada
+    cláusula, cada vírgula — EXATAMENTE como consta no texto aprovado pelo Plenário.
+    MESMO QUE o texto aprovado:
+      · contenha referência a dispositivo suprimido por outra emenda
+      · crie referência circular, condição pendente ou absurdo manifesto
+      · contenha cláusula que pareça redundante, problemática ou desnecessária
+    NUNCA remova, NUNCA parafraseie, NUNCA simplifique, NUNCA "conserte" nenhuma parte.
+    → Se o texto aprovado cria absurdo ou ininteligibilidade, COPIE-O VERBATIM e registre
+      o problema em <ALERTAS_ABSURDOS> com marcador inline no texto (ver formato abaixo).
+    → A supressão de QUALQUER cláusula ou palavra do texto aprovado — mesmo que pareça
+      "resolver" um problema técnico — é alteração de teor vedada pelo art. 250 RI.
+    → A ÚNICA modificação automática permitida é a atualização de referências cruzadas
+      internas decorrente de renumeração (ver A2).
 
 A2. REFERÊNCIAS CRUZADAS (única alteração automática permitida)
     Após renumerar artigos, atualize TODAS as referências internas:
@@ -315,11 +328,22 @@ D3. Números e percentuais (LC 48/2000, art. 10, II, f — LC 51/2001):
 BLOCO E — AVISOS E ERROS CRÍTICOS (art. 250, §§ 1º e 2º, RI)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-E1. AVISOS — aponte mas NÃO corrija automaticamente (art. 250, §1º RI):
-    — Erros de ortografia, concordância nominal ou verbal nas emendas aprovadas
-    — Violação das regras de pontuação do Bloco C nas emendas (ex: inciso terminando em ponto quando deveria ser ponto e vírgula)
+E1. AVISOS — duas categorias distintas:
+
+    E1a. CORREÇÕES AUTOMÁTICAS PERMITIDAS (erros objetivos de língua) — com registro obrigatório:
+    É PERMITIDO corrigir automaticamente erros de ortografia ou concordância gramatical
+    objetivos (ex: "serão aplicada" → "serão aplicadas") desde que a correção NÃO altere o
+    sentido jurídico. Para cada correção, registre no <AVISOS>:
+      "✏️ CORRIGIDO AUTOMATICAMENTE — Emenda N / Art. Xº: [texto original] → [texto corrigido]"
+    NUNCA escreva "preservado como aprovado" para texto que foi efetivamente corrigido.
+    NUNCA corrija se houver qualquer dúvida sobre interpretação — nesse caso, classifique
+    como aviso sem correção.
+
+    E1b. APONTE SEM CORRIGIR (art. 250, §1º RI) — registre como aviso:
+    — Violação das regras de pontuação do Bloco C nas emendas aprovadas (ex: inciso
+      terminando em ponto quando deveria ser ponto e vírgula)
     — Uso de "anterior" ou "seguinte" sem especificação do dispositivo
-    — Referência a dispositivo que foi suprimido por outra emenda
+    — Referência a dispositivo suprimido por outra emenda (quando não gera absurdo manifesto)
     — "Parágrafo único" onde há mais de um parágrafo (ou vice-versa)
     — Técnica redacional imprópria que não comprometa o sentido jurídico
     — Inconsistência de tempo verbal entre dispositivos da mesma lei
@@ -355,7 +379,11 @@ RESPONDA EXATAMENTE NESTE FORMATO XML:
 
 <TEXTO_HARMONIZADO>
 [Texto completo da Redação Final com todas as emendas aplicadas, renumeração atualizada
-e referências cruzadas corrigidas. Respeitar obrigatoriamente toda a pontuação do Bloco C.]
+e referências cruzadas corrigidas. Respeitar obrigatoriamente toda a pontuação do Bloco C.
+ATENÇÃO — Dispositivos com absurdo manifesto: preservar o texto VERBATIM e inserir
+imediatamente após o dispositivo problemático o marcador:
+[[⚠️ CCJ: DISPOSITIVO ININTELIGÍVEL — ver seção ABSURDOS MANIFESTOS]]
+O texto do dispositivo permanece exatamente como aprovado — apenas acrescente o marcador.]
 </TEXTO_HARMONIZADO>
 
 <MAPA_RENUMERACAO>
