@@ -397,6 +397,36 @@ texto_harm = re.search(
 
 ---
 
+### 11.3b `harmonizer.py` — `parsear_emendas_com_ia`: fallback sem perda silenciosa — rev.11
+
+```python
+# Extrai JSON da resposta
+match = re.search(r'\{.*\}', resp_text, re.DOTALL)
+if not match:
+    raise ValueError(
+        "IA não retornou JSON válido neste lote — "
+        "emendas serão criadas como brutas para revisão manual."
+    )
+data = json.loads(match.group())
+
+# ...processamento normal...
+
+except (json.JSONDecodeError, KeyError, IndexError, ValueError):
+    # Se parsing falhar (JSON malformado OU sem JSON), cria emendas brutas
+    partes = re.split(r'\n(?=EMENDA\s)', chunk, flags=re.IGNORECASE)
+    for parte in partes:
+        if parte.strip():
+            num = offset + len(todas_emendas) + 1
+            todas_emendas.append(Emenda(
+                numero=num, texto_bruto=parte.strip(), parseada=False,
+                notas_parse="Parsing automático falhou — revisar manualmente"
+            ))
+```
+
+**Fluxo de erro:** `not match` → `raise ValueError` → capturado pelo `except (ValueError)` → fallback bruto → emendas marcadas `parseada=False` com `notas_parse` de alerta. Nenhuma emenda é descartada silenciosamente.
+
+---
+
 ### 11.4 `harmonizer.py` — regras do prompt (E1.5, E2, E3) — trecho literal
 
 ```
