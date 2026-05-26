@@ -217,8 +217,8 @@ with st.sidebar:
 <div style="font-size: 0.78rem; color: #6c757d; line-height: 1.8;">
 ⚖️ <strong>Sistema de Redações CCJR</strong><br>
 Ferramenta de apoio à elaboração de redações legislativas.<br><br>
-Concepção e desenvolvimento:<br>
-<span style="font-size: 0.95rem; font-weight: 700; color: #1a3a5c; letter-spacing: 0.03em;">Alexandre Araujo</span>
+Concepção e Desenvolvimento:<br>
+<span style="font-size: 1.05rem; font-weight: 800; color: #1a3a5c; letter-spacing: 0.04em; background: linear-gradient(90deg, #1a3a5c 0%, #2e6da4 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; display: inline-block;">Alexandre Araujo</span>
 </div>
 """, unsafe_allow_html=True)
 
