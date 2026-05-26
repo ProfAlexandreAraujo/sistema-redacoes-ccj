@@ -154,6 +154,8 @@ Qualquer item escalado move-se de `avisos` para `alertas_absurdos`, ativando o m
 | 25/05/2026 | Rev.9 exigia par completo apenas para `TEXTO_HARMONIZADO`; as demais 5 tags ainda checavam só a abertura — truncamento em qualquer delas (ex.: `<AVISOS>` sem `</AVISOS>`) faria `extrair()` devolver `""` silenciosamente, zerando alertas | Falha silenciosa generalizada | ✅ harmonizer.py rev.10 — guarda unificada: `_TODAS_TAGS` (6 tags) exige par completo via regex `<TAG>(.*?)</TAG>`; `_TAGS_NAO_VAZIAS` = {`TEXTO_HARMONIZADO`, `LOG_ALTERACOES`} exige conteúdo não vazio; verificar.py rev.6 — bloco [11] expandido: 14 verificações, truncamento testado tag a tag |
 | 25/05/2026 | `parsear_emendas_com_ia`: quando IA não retornava JSON, `continue` pulava o lote silenciosamente — emendas perdidas sem nenhuma indicação de falha | Falha silenciosa (apontada por auditor externo) | ✅ harmonizer.py rev.11 — `raise ValueError` (mensagem explícita) + `except` ampliado para `ValueError`; fallback bruto continua ativo; verificar.py rev.7 — bloco [7e] expandido: 2 verificações de source-code |
 | 26/05/2026 | Regra E2 era genérica demais: listava situações de conflito mas não instruía o modelo a realizar varredura prévia, não especificava qual emenda aplicar como cautela nem gerava sugestão orientativa | Funcional/Regimental | ✅ harmonizer.py rev.12 — E2 reformulada com varredura prévia obrigatória, cautela por menor número, marcador inline `[[CCJ: CONFLITO DE EMENDAS]]`, ERROS_CRITICOS estruturado e nova tag SUGESTOES_NORMATIVAS; app.py — expander amarelo expandido com sugestões (não exportadas); verificar.py rev.9 — seção [14] com 12 testes; resultado: 91/92 |
+| 26/05/2026 | TXT exportado sem limpeza de marcadores inline `[[⚠️ CCJ:...]]` (DOCX limpava, TXT não) | Qualidade do produto | ✅ app.py — `_marker_re_txt` aplicado antes de codificar TXT; verificar.py rev.10 — 2 testes na seção [7f] |
+| 26/05/2026 | Sistema não suportava subemendas (emenda que substitui o texto de outra emenda antes de votá-la) | Funcional — lacuna legislativa | ✅ harmonizer.py rev.13 — campo `subemenda_de` no dataclass; `_resolver_subemendas()` pré-processa substituições antes da chamada à IA; parser IA reconhece subemenda; app.py — painel de subemendas na aba 4, badges nas abas 2/3, campo de edição; verificar.py rev.10 — seção [15] com 12 testes; resultado: 105/106 |
 
 ---
 
@@ -481,7 +483,7 @@ _PADROES_ABSURDO_AVISO = re.compile(
 
 ---
 
-### 11.6 Resultado dos testes automatizados (verificar.py rev.9 — 91/92)
+### 11.6 Resultado dos testes automatizados (verificar.py rev.10 — 105/106)
 
 ```
 [1]  IMPORTAÇÕES               ✅ 3/3
@@ -533,8 +535,15 @@ _PADROES_ABSURDO_AVISO = re.compile(
   ✅  Cautela menor número; marcador CONFLITO DE EMENDAS; formato 'CONFLITO / Emendas'
   ✅  SUGESTOES_NORMATIVAS em _TODAS_TAGS; sugestão normativa gerada
   ✅  'Nenhuma sugestão.' no skip set; campo no dataclass; app.py exibe mas não exporta
+[15] SUBEMENDAS — pré-processamento (12 verificações)
+  ✅  subemenda_de no dataclass Emenda
+  ✅  SubEmenda aprovada + pai aprovado → texto substituído; subemenda retirada da lista; log
+  ✅  SubEmenda aprovada + pai rejeitado → aviso inoperante; subemenda não vai à IA
+  ✅  SubEmenda rejeitada → pai mantém texto original; log registra
+  ✅  Conflito de subemendas → aviso crítico; nenhuma substituição automática
+  ✅  parsear_emendas_com_ia reconhece subemenda_de; app.py exibe painel de subemendas
 
-RESULTADO: 91/92 (único fail = API key ausente — esperado)
+RESULTADO: 105/106 (único fail = API key ausente — esperado)
 ```
 
 ---
@@ -555,4 +564,4 @@ RESULTADO: 91/92 (único fail = API key ausente — esperado)
 
 ---
 
-*Versão rev.12 — 26/05/2026 — Sistema de Redações CCJ CMRJ*
+*Versão rev.13 — 26/05/2026 — Sistema de Redações CCJ CMRJ*

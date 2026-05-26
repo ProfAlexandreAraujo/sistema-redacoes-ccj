@@ -419,6 +419,11 @@ with aba2:
             alvo_em = col3.text_input("Alvo", placeholder="Art. 5º, §2º")
             autor_em = st.text_input("Autor", placeholder="Nome do vereador")
             texto_em = st.text_area("Texto da emenda", height=150)
+            sub_de_form = st.number_input(
+                "↳ SubEmenda da Emenda Nº (0 = não é subemenda):",
+                min_value=0, value=0,
+                help="Se este texto substitui o texto de outra emenda, informe o número da emenda-pai.",
+            )
             sub = st.form_submit_button("➕ Adicionar", type="primary")
             if sub and texto_em.strip():
                 tipo_map = {t.value: t for t in TipoEmenda}
@@ -430,6 +435,7 @@ with aba2:
                     novo_texto=texto_em.strip(),
                     autor=autor_em.strip() or None,
                     parseada=True,
+                    subemenda_de=int(sub_de_form) if sub_de_form > 0 else None,
                 ))
                 st.session_state.emendas.sort(key=lambda e: e.numero)
                 _invalidar_resultado()
@@ -483,14 +489,15 @@ with aba2:
                 StatusEmenda.PREJUDICADA: "card-prejudicada",
             }.get(em.status, "card-pendente")
 
-            tipo_label = em.tipo.value if em.tipo else "?"
-            badge_cls  = badge_map.get(em.tipo, "badge-out")
-            alvo_str   = f" | {em.alvo}" if em.alvo else ""
-            autor_str  = f" | {em.autor}" if em.autor else ""
+            tipo_label  = em.tipo.value if em.tipo else "?"
+            badge_cls   = badge_map.get(em.tipo, "badge-out")
+            alvo_str    = f" | {em.alvo}" if em.alvo else ""
+            autor_str   = f" | {em.autor}" if em.autor else ""
+            sub_label   = f" ↳ SubEm.E{em.subemenda_de}" if em.subemenda_de else ""
             status_icon = {"Aprovada":"✅","Rejeitada":"❌","Pendente":"⬜","Prejudicada":"⚠️"}.get(em.status.value,"")
 
             with st.expander(
-                f"{status_icon} Emenda {em.numero} · {tipo_label}{alvo_str}{autor_str}",
+                f"{status_icon} Emenda {em.numero}{sub_label} · {tipo_label}{alvo_str}{autor_str}",
                 expanded=not em.parseada,
             ):
                 st.markdown(f'<span class="badge {badge_cls}">{tipo_label}</span>', unsafe_allow_html=True)
@@ -522,6 +529,18 @@ with aba2:
                     if novo_alvo != (em.alvo or ""):
                         _invalidar_resultado()
                     st.session_state.emendas[i].alvo = novo_alvo or None
+
+                    novo_sub_de = st.number_input(
+                        "↳ SubEmenda da Emenda Nº:",
+                        min_value=0,
+                        value=int(em.subemenda_de) if em.subemenda_de else 0,
+                        key=f"sub_de_{i}",
+                        help="0 = não é subemenda; N = substitui Emenda N",
+                    )
+                    _novo_sub_val = int(novo_sub_de) if novo_sub_de > 0 else None
+                    if _novo_sub_val != em.subemenda_de:
+                        _invalidar_resultado()
+                    st.session_state.emendas[i].subemenda_de = _novo_sub_val
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -568,11 +587,12 @@ with aba3:
                     continue
 
             status_icon = {"Aprovada":"✅","Rejeitada":"❌","Pendente":"⬜","Prejudicada":"⚠️"}.get(em.status.value,"")
-            tipo_str = em.tipo.value if em.tipo else "?"
-            alvo_str = em.alvo or "—"
+            tipo_str    = em.tipo.value if em.tipo else "?"
+            alvo_str    = em.alvo or "—"
+            sub_tag     = f" ↳E{em.subemenda_de}" if em.subemenda_de else ""
 
             c1, c2, c3, c4, c5 = st.columns([0.8, 1.5, 2.5, 1, 1])
-            c1.markdown(f"**{status_icon} {em.numero}**")
+            c1.markdown(f"**{status_icon} {em.numero}**{sub_tag}")
             c2.caption(tipo_str)
             c3.caption(alvo_str)
 
@@ -630,6 +650,37 @@ with aba4:
                 f"Pronto para harmonizar **{aprovadas_count} emendas aprovadas** "
                 f"sobre o projeto **{nome_projeto or 'sem nome'}**."
             )
+
+            # ── Painel de subemendas detectadas ──
+            _subs_aba4 = [e for e in emendas if e.subemenda_de is not None]
+            if _subs_aba4:
+                with st.expander(
+                    f"↳ {len(_subs_aba4)} subemenda(s) detectada(s) — processamento automático",
+                    expanded=True,
+                ):
+                    st.caption(
+                        "Subemendas substituem o texto da emenda-pai **antes** da harmonização. "
+                        "A subemenda aprovada prevalece sobre o texto original da emenda. "
+                        "Subemendas rejeitadas/prejudicadas não afetam o texto da emenda-pai."
+                    )
+                    for _s in _subs_aba4:
+                        _pai = next((e for e in emendas if e.numero == _s.subemenda_de), None)
+                        _pai_status = _pai.status.value if _pai else "não encontrada"
+                        if _s.status == StatusEmenda.APROVADA and _pai and _pai.status == StatusEmenda.APROVADA:
+                            st.success(
+                                f"✅ **SubEmenda {_s.numero}** → substituirá o texto da "
+                                f"**Emenda {_s.subemenda_de}** na harmonização."
+                            )
+                        elif _s.status == StatusEmenda.APROVADA:
+                            st.warning(
+                                f"⚠ **SubEmenda {_s.numero}** aprovada, mas **Emenda "
+                                f"{_s.subemenda_de}** foi {_pai_status} — subemenda inoperante."
+                            )
+                        else:
+                            st.info(
+                                f"ℹ **SubEmenda {_s.numero}** {_s.status.value.lower()} → "
+                                f"**Emenda {_s.subemenda_de}** mantém texto original."
+                            )
 
             # Estimativa de tempo
             if aprovadas_count <= 30:

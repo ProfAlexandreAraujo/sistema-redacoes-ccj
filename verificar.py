@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-verificar.py — Verificação do Sistema de Redações CCJ CMRJ (rev.9)
+verificar.py — Verificação do Sistema de Redações CCJ CMRJ (rev.10)
 Testa todos os comportamentos críticos do AUDITORIA.md sem custo de API.
 
 Uso:
@@ -32,7 +32,7 @@ def chk(nome: str, ok: bool, detalhe: str = "") -> None:
 
 print()
 print("=" * 65)
-print("  VERIFICAÇÃO DO SISTEMA — CCJ CMRJ — rev.9")
+print("  VERIFICAÇÃO DO SISTEMA — CCJ CMRJ — rev.10")
 print("=" * 65)
 
 # ────────────────────────────────────────────────────────────────────────────
@@ -641,6 +641,111 @@ try:
 
 except Exception as e:
     chk("14 — regra E2 estrutural", False, str(e))
+
+# ────────────────────────────────────────────────────────────────────────────
+# 15. SUBEMENDAS — pré-processamento e dataclass
+# ────────────────────────────────────────────────────────────────────────────
+print("\n[15] SUBEMENDAS — processamento pré-harmonização (estrutural)")
+
+try:
+    from harmonizer import _resolver_subemendas
+
+    # Campo subemenda_de no dataclass
+    chk("subemenda_de presente no dataclass Emenda",
+        "subemenda_de" in Emenda.__dataclass_fields__)
+
+    # _resolver_subemendas: caso normal — aprovada + pai aprovado → substitui
+    _e_pai = Emenda(numero=3, texto_bruto="Texto original da Emenda 3.",
+                    tipo=TipoEmenda.MODIFICATIVA, alvo="Art. 5º",
+                    novo_texto="Texto original da Emenda 3.",
+                    status=StatusEmenda.APROVADA, parseada=True)
+    _e_sub = Emenda(numero=7, texto_bruto="SubEmenda à Emenda nº 3 — novo texto.",
+                    tipo=TipoEmenda.MODIFICATIVA, alvo="Art. 5º",
+                    novo_texto="Novo texto aprovado pela subemenda.",
+                    status=StatusEmenda.APROVADA, parseada=True,
+                    subemenda_de=3)
+    _lista, _log_s, _av_s = _resolver_subemendas([_e_pai, _e_sub], [_e_pai, _e_sub])
+
+    chk("SubEmenda aprovada + pai aprovado → substitui texto do pai",
+        len(_lista) == 1 and _lista[0].numero == 3 and
+        "novo texto" in (_lista[0].novo_texto or "").lower(),
+        f"lista={[e.numero for e in _lista]}, novo_texto={_lista[0].novo_texto if _lista else '?'}")
+
+    chk("SubEmenda aprovada + pai aprovado → subemenda retirada da lista (não vai à IA)",
+        all(e.numero != 7 for e in _lista),
+        f"lista={[e.numero for e in _lista]}")
+
+    chk("SubEmenda aprovada + pai aprovado → log registra substituição",
+        any("SubEmenda 7" in l and "Emenda 3" in l for l in _log_s),
+        f"log={_log_s}")
+
+    # SubEmenda aprovada + pai NÃO aprovado → inoperante
+    _e_pai_rej = Emenda(numero=3, texto_bruto="Texto original.",
+                        status=StatusEmenda.REJEITADA, parseada=True)
+    _e_sub2 = Emenda(numero=7, texto_bruto="SubEmenda.",
+                     novo_texto="Sub texto.",
+                     status=StatusEmenda.APROVADA, parseada=True, subemenda_de=3)
+    _lista2, _log2, _av2 = _resolver_subemendas([_e_pai_rej, _e_sub2], [_e_sub2])
+
+    chk("SubEmenda aprovada + pai rejeitado → aviso de inoperante",
+        any("inoperante" in a for a in _av2),
+        f"avisos={_av2}")
+
+    chk("SubEmenda aprovada + pai rejeitado → subemenda não vai à IA",
+        len(_lista2) == 0 or all(e.subemenda_de is None for e in _lista2),
+        f"lista={[e.numero for e in _lista2]}")
+
+    # SubEmenda rejeitada → pai mantém texto original
+    _e_sub3 = Emenda(numero=8, texto_bruto="Sub rejeitada.",
+                     novo_texto="Texto sub.",
+                     status=StatusEmenda.REJEITADA, parseada=True, subemenda_de=3)
+    _e_pai3 = Emenda(numero=3, texto_bruto="Texto original mantido.",
+                     novo_texto="Texto original mantido.",
+                     status=StatusEmenda.APROVADA, parseada=True)
+    _lista3, _log3, _av3 = _resolver_subemendas([_e_pai3, _e_sub3], [_e_pai3])
+
+    chk("SubEmenda rejeitada → pai mantém texto original (log registra)",
+        any("SubEmenda 8" in l and "mantém texto original" in l for l in _log3),
+        f"log={_log3}")
+
+    chk("SubEmenda rejeitada → texto do pai não alterado",
+        len(_lista3) == 1 and "original" in (_lista3[0].novo_texto or "").lower(),
+        f"novo_texto={_lista3[0].novo_texto if _lista3 else '?'}")
+
+    # Conflito: duas subemendas aprovadas para o mesmo pai
+    _sub_a = Emenda(numero=5, status=StatusEmenda.APROVADA, texto_bruto="Sub A",
+                    novo_texto="Texto A", parseada=True, subemenda_de=3)
+    _sub_b = Emenda(numero=6, status=StatusEmenda.APROVADA, texto_bruto="Sub B",
+                    novo_texto="Texto B", parseada=True, subemenda_de=3)
+    _e_pai4 = Emenda(numero=3, status=StatusEmenda.APROVADA, texto_bruto="Original",
+                     novo_texto="Original", parseada=True)
+    _lista4, _log4, _av4 = _resolver_subemendas(
+        [_e_pai4, _sub_a, _sub_b], [_e_pai4, _sub_a, _sub_b]
+    )
+    chk("Conflito de subemendas → aviso crítico gerado",
+        any("CONFLITO DE SUBEMENDAS" in a for a in _av4),
+        f"avisos={_av4}")
+
+    chk("Conflito de subemendas → nenhuma substituição automática (texto pai preservado)",
+        len(_lista4) == 1 and _lista4[0].novo_texto == "Original",
+        f"lista={[e.numero for e in _lista4]}")
+
+    # Verifica presença de subemenda_de no parser
+    import inspect as _insp15
+    from harmonizer import parsear_emendas_com_ia as _parse_fn15
+    _src_parse15 = _insp15.getsource(_parse_fn15)
+    chk("parsear_emendas_com_ia reconhece subemenda_de no JSON",
+        "subemenda_de" in _src_parse15,
+        "'subemenda_de' não encontrado no prompt de parsing")
+
+    # app.py exibe painel de subemendas na aba 4
+    _app15 = pathlib.Path(r"C:\Users\Admin\Documents\Claude\CCJ\sistema_redacoes\app.py").read_text(encoding='utf-8')
+    chk("app.py exibe painel de subemendas na aba 4",
+        "_subs_aba4" in _app15 and "subemenda" in _app15.lower(),
+        "Painel de subemendas não encontrado em app.py")
+
+except Exception as e:
+    chk("15 — subemendas estrutural", False, str(e))
 
 # ────────────────────────────────────────────────────────────────────────────
 # RESUMO

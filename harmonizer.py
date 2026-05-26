@@ -5,7 +5,9 @@ Sistema de Redações — CCJ CMRJ
 
 import re
 import json
+import copy
 import anthropic
+from collections import defaultdict
 from dataclasses import dataclass, field, asdict
 from typing import Optional
 from enum import Enum
@@ -38,6 +40,7 @@ class Emenda:
     status: StatusEmenda = StatusEmenda.PENDENTE
     parseada: bool = False
     notas_parse: Optional[str] = None   # Observações do parsing automático
+    subemenda_de: Optional[int] = None  # Nº da emenda-pai se for subemenda
 
     def to_dict(self) -> dict:
         d = asdict(self)
@@ -50,15 +53,16 @@ class Emenda:
         tipo_map   = {t.value: t for t in TipoEmenda}
         status_map = {s.value: s for s in StatusEmenda}
         e = cls(
-            numero     = d['numero'],
+            numero      = d['numero'],
             texto_bruto = d['texto_bruto'],
-            tipo       = tipo_map.get(d.get('tipo') or ''),
-            alvo       = d.get('alvo'),
-            novo_texto = d.get('novo_texto'),
-            autor      = d.get('autor'),
-            status     = status_map.get(d.get('status') or 'Pendente', StatusEmenda.PENDENTE),
-            parseada   = d.get('parseada', False),
+            tipo        = tipo_map.get(d.get('tipo') or ''),
+            alvo        = d.get('alvo'),
+            novo_texto  = d.get('novo_texto'),
+            autor       = d.get('autor'),
+            status      = status_map.get(d.get('status') or 'Pendente', StatusEmenda.PENDENTE),
+            parseada    = d.get('parseada', False),
             notas_parse = d.get('notas_parse'),
+            subemenda_de = d.get('subemenda_de'),
         )
         return e
 
@@ -95,6 +99,121 @@ def _chunk_text(text: str, max_chars: int = 40_000) -> list[str]:
     if current:
         chunks.append('\n'.join(current))
     return chunks
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# PRÉ-PROCESSAMENTO: SUBEMENDAS
+# ─────────────────────────────────────────────────────────────────────────────
+
+def _resolver_subemendas(
+    todas_emendas: list["Emenda"],
+    aprovadas: list["Emenda"],
+) -> tuple[list["Emenda"], list[str], list[str]]:
+    """
+    Pré-processa subemendas antes da harmonização.
+
+    Uma subemenda é uma emenda que substitui o texto de outra emenda (emenda-pai)
+    antes de votá-la. Se a subemenda foi aprovada, prevalece seu texto; se rejeitada,
+    a emenda-pai mantém o texto original.
+
+    Regras:
+    - SubEmenda aprovada + Emenda-pai aprovada  → texto da emenda-pai substituído
+      pelo texto da subemenda; subemenda retirada do bloco enviado à IA.
+    - SubEmenda aprovada + Emenda-pai NÃO aprovada → inoperante; registra aviso.
+    - SubEmenda rejeitada/prejudicada → emenda-pai mantém texto original; registra log.
+    - Duas subemendas aprovadas para a mesma emenda-pai → conflito; registra aviso crítico.
+
+    Parâmetros:
+    - todas_emendas: lista completa (para verificar status da emenda-pai)
+    - aprovadas: emendas com status APROVADA (base da harmonização)
+
+    Retorna (lista_processada, log_entries, avisos).
+    """
+    # Mapa de todas as emendas por número (para buscar status do pai)
+    todas_por_num: dict[int, "Emenda"] = {e.numero: e for e in todas_emendas}
+
+    # Cópia rasa das aprovadas para não mutar o session_state
+    aprovadas_copia: list["Emenda"] = [copy.copy(e) for e in aprovadas]
+    por_num_apr: dict[int, int] = {e.numero: i for i, e in enumerate(aprovadas_copia)}
+
+    # Mapear subemendas APROVADAS por emenda-pai
+    subs_apr_por_pai: dict[int, list[int]] = defaultdict(list)
+    for i, e in enumerate(aprovadas_copia):
+        if e.subemenda_de is not None:
+            subs_apr_por_pai[e.subemenda_de].append(i)
+
+    log: list[str] = []
+    avisos: list[str] = []
+    excluir: set[int] = set()   # índices de subemendas a retirar da lista final
+
+    for pai_num, sub_idxs in subs_apr_por_pai.items():
+        pai_em_todas = todas_por_num.get(pai_num)
+        pai_apr_idx  = por_num_apr.get(pai_num)
+
+        # Subemenda referencia emenda inexistente
+        if pai_em_todas is None:
+            for si in sub_idxs:
+                s = aprovadas_copia[si]
+                avisos.append(
+                    f"⚠ SubEmenda {s.numero}: referencia Emenda {pai_num} que não "
+                    "consta na lista — verifique a numeração."
+                )
+                excluir.add(si)
+            continue
+
+        # Conflito: mais de uma subemenda aprovada para o mesmo pai
+        if len(sub_idxs) > 1:
+            nums = [aprovadas_copia[si].numero for si in sub_idxs]
+            avisos.append(
+                f"🚨 CONFLITO DE SUBEMENDAS — Emenda {pai_num}: "
+                f"SubEmendas {nums} foram todas aprovadas — somente uma deveria prevalecer. "
+                "Decisão do relator obrigatória antes da harmonização. "
+                "Nenhuma substituição automática foi realizada."
+            )
+            excluir.update(sub_idxs)
+            continue
+
+        # Caso normal: uma única subemenda aprovada
+        si  = sub_idxs[0]
+        sub = aprovadas_copia[si]
+        excluir.add(si)
+
+        if pai_apr_idx is not None:
+            # Pai também aprovado → substituição efetiva
+            novo_txt = sub.novo_texto or sub.texto_bruto
+            aprovadas_copia[pai_apr_idx].novo_texto  = novo_txt
+            aprovadas_copia[pai_apr_idx].notas_parse = (
+                f"Texto substituído pela SubEmenda {sub.numero} (aprovada). "
+                "O texto aplicado é o da subemenda, não o original da emenda."
+            )
+            log.append(
+                f"SubEmenda {sub.numero} → Emenda {pai_num}: texto substituído pelo Plenário. "
+                f"Prevalece o texto da SubEmenda {sub.numero}."
+            )
+        else:
+            # Subemenda aprovada mas emenda-pai não aprovada → inoperante
+            status_pai = pai_em_todas.status.value
+            avisos.append(
+                f"⚠ SubEmenda {sub.numero} aprovada, mas Emenda {pai_num} não foi aprovada "
+                f"({status_pai}) — subemenda é inoperante "
+                "(não há emenda-pai ativa para substituir)."
+            )
+            log.append(
+                f"SubEmenda {sub.numero}: inoperante — Emenda {pai_num} "
+                f"não aprovada ({status_pai})."
+            )
+
+    # Registra no log subemendas rejeitadas/prejudicadas que afetam emendas aprovadas
+    for e in todas_emendas:
+        if e.subemenda_de is not None and e.status != StatusEmenda.APROVADA:
+            if por_num_apr.get(e.subemenda_de) is not None:
+                log.append(
+                    f"SubEmenda {e.numero} {e.status.value.lower()} → "
+                    f"Emenda {e.subemenda_de} mantém texto original."
+                )
+
+    lista_final = [e for i, e in enumerate(aprovadas_copia) if i not in excluir]
+    return lista_final, log, avisos
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -270,12 +389,16 @@ Para cada emenda, identifique:
 - novo_texto: para Modificativa/Aditiva/Substitutiva, o texto novo a ser inserido; null para Supressiva
 - texto_bruto: texto integral original da emenda EXATAMENTE como aparece no documento, sem omissão
 - autor: nome do vereador autor, se mencionado; null caso contrário
+- subemenda_de: se for SUBEMENDA, informe o número inteiro da emenda-pai que substitui (ex: 3 para
+  "Subemenda à Emenda nº 3"); null se não for subemenda. Textos como "SUBEMENDA", "Subemenda à
+  Emenda nº X", "SubEmenda Modificativa à Emenda X" indicam subemenda.
 - notas: observações relevantes (ex: emenda está incompleta, referência ambígua, etc.) ou null
 
 Responda SOMENTE com JSON válido no formato:
 {{"emendas": [
-  {{"numero": 1, "tipo": "Modificativa", "alvo": "Art. 5º", "novo_texto": "...", "texto_bruto": "Emenda nº 1 — ...", "autor": "Fulano", "notas": null}},
-  {{"numero": 2, "tipo": "Supressiva",   "alvo": "Art. 4º", "novo_texto": null,  "texto_bruto": "Emenda nº 2 — Suprima-se o Art. 4º", "autor": null, "notas": null}},
+  {{"numero": 1, "tipo": "Modificativa", "alvo": "Art. 5º", "novo_texto": "...", "texto_bruto": "Emenda nº 1 — ...", "autor": "Fulano", "subemenda_de": null, "notas": null}},
+  {{"numero": 2, "tipo": "Supressiva",   "alvo": "Art. 4º", "novo_texto": null,  "texto_bruto": "Emenda nº 2 — Suprima-se o Art. 4º", "autor": null, "subemenda_de": null, "notas": null}},
+  {{"numero": 3, "tipo": "Modificativa", "alvo": "Art. 5º", "novo_texto": "Novo texto...", "texto_bruto": "Subemenda à Emenda nº 1 — ...", "autor": "Sicrano", "subemenda_de": 1, "notas": "Substitui o texto da Emenda 1"}},
   ...
 ]}}
 
@@ -313,15 +436,17 @@ TEXTO DAS EMENDAS:
                 numero = item.get("numero")
                 if numero is None:
                     numero = offset + idx_item   # posição no lote, não acumulativo
+                _sub_de_raw = item.get("subemenda_de")
                 e = Emenda(
-                    numero      = numero,
-                    texto_bruto = texto_bruto,
-                    tipo        = tipo_map.get(item.get("tipo") or "", TipoEmenda.OUTRO),
-                    alvo        = item.get("alvo"),
-                    novo_texto  = item.get("novo_texto"),
-                    autor       = item.get("autor"),
-                    parseada    = True,
-                    notas_parse = item.get("notas"),
+                    numero       = numero,
+                    texto_bruto  = texto_bruto,
+                    tipo         = tipo_map.get(item.get("tipo") or "", TipoEmenda.OUTRO),
+                    alvo         = item.get("alvo"),
+                    novo_texto   = item.get("novo_texto"),
+                    autor        = item.get("autor"),
+                    parseada     = True,
+                    notas_parse  = item.get("notas"),
+                    subemenda_de = int(_sub_de_raw) if _sub_de_raw is not None else None,
                 )
                 todas_emendas.append(e)
 
@@ -366,9 +491,20 @@ def harmonizar_texto(
             log_alteracoes=["Nenhuma emenda aprovada. Texto original mantido."]
         )
 
-    # Monta o sumário das emendas aprovadas
+    # Pré-processa subemendas: substitui textos e retira subemendas da lista enviada à IA
+    emendas_para_ia, log_subemendas, avisos_subemendas = _resolver_subemendas(emendas, aprovadas)
+
+    if not emendas_para_ia:
+        return ResultadoHarmonizacao(
+            texto_harmonizado=texto_original,
+            log_alteracoes=["Nenhuma emenda restante após resolução de subemendas. Texto original mantido."]
+                           + log_subemendas,
+            avisos=avisos_subemendas,
+        )
+
+    # Monta o sumário das emendas aprovadas (já com textos de subemendas substituídos)
     linhas_emendas = []
-    for e in aprovadas:
+    for e in emendas_para_ia:
         tipo_str = e.tipo.value if e.tipo else "Tipo não informado"
         alvo_str = e.alvo or "alvo não especificado"
         autor_str = f" | Autor: {e.autor}" if e.autor else ""
@@ -841,6 +977,12 @@ O texto do dispositivo permanece exatamente como aprovado — apenas acrescente 
     avisos_list, alertas_list = _escalar_avisos_para_absurdos(
         avisos_list, texto_harm, alertas_list
     )
+
+    # Injeta log e avisos de subemendas no início (pré-processamento visível no resultado)
+    if log_subemendas:
+        log_list = log_subemendas + log_list
+    if avisos_subemendas:
+        avisos_list = avisos_subemendas + avisos_list
 
     return ResultadoHarmonizacao(
         texto_harmonizado    = texto_harm,

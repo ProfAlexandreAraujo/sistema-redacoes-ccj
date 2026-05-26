@@ -91,6 +91,7 @@ Quando uma **emenda modificativa ou substitutiva** chega sem alvo identificável
 | Preservação de anexos (A3) | Prompt | Conteúdo de anexos nunca alterado sem emenda expressa |
 | A4.1 — aditiva sem alvo | Prompt | Posicionamento temático com AVISO + LOG obrigatórios |
 | A4.2 — modificativa sem alvo | Prompt | Não aplica; gera ERRO CRÍTICO (§2º) + LOG |
+| Subemendas | Python (pré-IA) | Substitui texto da emenda-pai; conflito detectado; inoperante registrado |
 | Renumeração (B1–B5) | Prompt | LC 95/98 + LC 48/2000 |
 | E1 — correções linguísticas | Prompt | Concordância, caixa, pontuação — registradas no LOG |
 | E1.5 — sem mérito em AVISOS | Prompt | Mérito vai para NOTAS_TECNICAS |
@@ -112,7 +113,7 @@ sistema_redacoes/
 ├── harmonizer.py                 # Motor de harmonização (IA) + regras A1–A4, B, C, D, E
 ├── utils.py                      # Leitura de docx/txt/pdf, exportação, save/load
 ├── auditoria.py                  # Diagnóstico rápido do ambiente (dependências, API, módulos)
-├── verificar.py                  # Suite de testes estruturais (91/92 sem API)
+├── verificar.py                  # Suite de testes estruturais (105/106 sem API)
 ├── teste_real.py                 # Teste com PLC 92/2025 real (sem custo de API)
 ├── PROMPT_AUDITORIA_EXTERNA.md   # Prompt para auditoria por LLM externa
 ├── iniciar.bat                   # Atalho para iniciar localmente

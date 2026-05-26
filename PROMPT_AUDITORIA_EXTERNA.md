@@ -191,12 +191,37 @@ E2. CONFLITOS ENTRE EMENDAS APROVADAS — DETECÇÃO OBRIGATÓRIA E SUGESTÃO NO
 
 ---
 
-### 5. verificar.py — estado atual (rev.9)
+### 5. Subemendas — campo `subemenda_de` + `_resolver_subemendas()` (harmonizer.py + app.py)
+
+**Problema identificado:** O sistema não suportava subemendas — o texto de emendas que haviam sido
+alteradas por subemendas aprovadas era aplicado na sua versão original, ignorando a decisão do Plenário.
+
+**Solução implementada:**
+
+- Campo `subemenda_de: Optional[int]` adicionado ao dataclass `Emenda`.
+- Função `_resolver_subemendas(todas_emendas, aprovadas)` executa **antes** da chamada à IA:
+  - SubEmenda aprovada + emenda-pai aprovada → substitui `novo_texto` do pai pelo texto da subemenda;
+    subemenda é retirada do bloco enviado à IA.
+  - SubEmenda aprovada + emenda-pai NÃO aprovada → aviso de subemenda inoperante.
+  - SubEmenda rejeitada/prejudicada → emenda-pai mantém texto original; log registra.
+  - Duas subemendas aprovadas para a mesma emenda-pai → aviso crítico de conflito; nenhuma
+    substituição automática realizada.
+- `parsear_emendas_com_ia` atualizado: reconhece texto como subemenda e extrai `subemenda_de`.
+- Interface (app.py):
+  - **Aba 2:** badge `↳ SubEm.E{N}` no cabeçalho do card; campo `subemenda_de` editável.
+  - **Aba 3:** indicador `↳E{N}` na linha de votação.
+  - **Aba 4:** painel expandido com status de cada subemenda antes de harmonizar.
+  - **Formulário manual:** campo para informar `subemenda_de`.
+
+---
+
+### 6. verificar.py — estado atual (rev.10)
 
 - **Seção 11:** valida 8 tags XML (inclui `NOTAS_TECNICAS` e `SUGESTOES_NORMATIVAS`)
 - **Seção 13:** 11 testes estruturais (sem API) para A4.1 e A4.2
 - **Seção 14:** 12 testes estruturais (sem API) para E2 + SUGESTOES_NORMATIVAS
-- **Resultado: 91/92** (1 falha esperada: chave API não configurada localmente)
+- **Seção 15:** 12 testes estruturais (sem API) para subemendas
+- **Resultado: 105/106** (1 falha esperada: chave API não configurada localmente)
 
 ---
 
@@ -213,6 +238,7 @@ E2. CONFLITOS ENTRE EMENDAS APROVADAS — DETECÇÃO OBRIGATÓRIA E SUGESTÃO NO
 | E1 — correções linguísticas | Prompt | Concordância, caixa, pontuação — registradas no LOG |
 | E1.5 — sem mérito em AVISOS | Prompt | Mérito vai para NOTAS_TECNICAS |
 | E2 — conflito entre emendas | Prompt | Varredura prévia; cautela por menor número; ERROS_CRITICOS + SUGESTOES_NORMATIVAS |
+| Subemendas | Python (pré-IA) | Substitui texto da emenda-pai; conflito detectado; inoperante registrado |
 | Detecção estrutural absurdos | Python | Circular, inoperante — independe do modelo |
 | Escalada de §1º para §2º | Python | Padrões semânticos nos avisos |
 | Validação XML | Python | Par completo de 8 tags ou ValueError |
