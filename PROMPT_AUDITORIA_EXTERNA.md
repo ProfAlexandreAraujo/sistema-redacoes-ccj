@@ -88,17 +88,19 @@ A4. EMENDAS SEM ALVO DEFINIDO — "acrescente-se onde couber"
     e o alvo não puder ser inferido com segurança a partir do texto da emenda:
 
     a) NÃO aplique a substituição — não invente qual dispositivo está sendo modificado.
-    b) OBRIGATÓRIO — gerar aviso em AVISOS:
-       "⚠ Emenda N (modificativa/substitutiva): alvo não identificável — emenda não aplicada.
-        Revisão manual obrigatória antes da publicação."
+    b) OBRIGATÓRIO — registrar em ERROS_CRITICOS (não em AVISOS):
+       "🚨 Emenda N (modificativa/substitutiva): alvo não identificável — emenda NÃO aplicada.
+        A Redação Final está materialmente incompleta. Revisão e decisão do relator obrigatórias
+        antes da publicação (art. 250, §2º RI)."
     c) OBRIGATÓRIO — registrar no LOG_ALTERACOES:
        "A4.2 / Emenda N: NÃO aplicada — alvo não identificável (modificativa/substitutiva sem alvo definido)"
 ```
 
 **Decisão de projeto:** A4.1 e A4.2 tratam casos fundamentalmente diferentes.
-Para aditivas, o sistema pode e deve posicionar — é responsabilidade da CCJ.
-Para modificativas/substitutivas, inventar o alvo seria risco inaceitável de alterar
-conteúdo aprovado pelo Plenário — daí a recusa com AVISO.
+- Aditivas sem alvo: o sistema posiciona — responsabilidade da CCJ, rastro obrigatório.
+- Modificativas/substitutivas sem alvo: não aplica e lança **ERROS_CRITICOS** — a Redação
+  Final fica materialmente incompleta, o que dispara o fluxo §2º (rascunho por padrão,
+  confirmação explícita do relator para exportar como Redação Final).
 
 ---
 
@@ -157,7 +159,7 @@ skip = {"Nenhum aviso.", "Nenhum erro crítico.", "Nenhum.",
 | Referências cruzadas (A2) | Prompt | Única alteração automática de conteúdo permitida |
 | Preservação de anexos (A3) | Prompt | Conteúdo de anexos nunca alterado sem emenda expressa |
 | A4.1 — aditiva sem alvo | Prompt | Posicionamento temático com AVISO + LOG obrigatórios |
-| A4.2 — modificativa sem alvo | Prompt | Não aplica; gera AVISO + LOG de emenda não aplicada |
+| A4.2 — modificativa sem alvo | Prompt | Não aplica; gera ERRO CRÍTICO (§2º) + LOG de emenda não aplicada |
 | Renumeração (B1–B5) | Prompt | LC 95/98 + LC 48/2000 |
 | E1 — correções linguísticas | Prompt | Concordância, caixa, pontuação — registradas no LOG |
 | E1.5 — sem mérito em AVISOS | Prompt | Mérito vai para NOTAS_TECNICAS |

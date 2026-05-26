@@ -550,9 +550,9 @@ try:
         "NÃO aplique a substituição" in _src_harm,
         "Proibição de substituição inferida não encontrada")
 
-    chk("A4.2 gera AVISO de 'alvo não identificável'",
-        "alvo não identificável" in _src_harm,
-        "Aviso 'alvo não identificável' não encontrado")
+    chk("A4.2 gera ERRO CRÍTICO (não AVISO) de 'alvo não identificável'",
+        "alvo não identificável" in _src_harm and "ERROS_CRITICOS" in _src_harm,
+        "Erro crítico 'alvo não identificável' em ERROS_CRITICOS não encontrado")
 
     chk("A4.2 registra no LOG que emenda NÃO foi aplicada",
         "NÃO aplicada" in _src_harm and "A4.2 / Emenda" in _src_harm,

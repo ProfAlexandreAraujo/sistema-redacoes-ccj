@@ -472,9 +472,10 @@ A4. EMENDAS SEM ALVO DEFINIDO — "acrescente-se onde couber"
     e o alvo não puder ser inferido com segurança a partir do texto da emenda:
 
     a) NÃO aplique a substituição — não invente qual dispositivo está sendo modificado.
-    b) OBRIGATÓRIO — gerar aviso em AVISOS:
-       "⚠ Emenda N (modificativa/substitutiva): alvo não identificável — emenda não aplicada.
-        Revisão manual obrigatória antes da publicação."
+    b) OBRIGATÓRIO — registrar em ERROS_CRITICOS (não em AVISOS):
+       "🚨 Emenda N (modificativa/substitutiva): alvo não identificável — emenda NÃO aplicada.
+        A Redação Final está materialmente incompleta. Revisão e decisão do relator obrigatórias
+        antes da publicação (art. 250, §2º RI)."
     c) OBRIGATÓRIO — registrar no LOG_ALTERACOES:
        "A4.2 / Emenda N: NÃO aplicada — alvo não identificável (modificativa/substitutiva sem alvo definido)"
 
