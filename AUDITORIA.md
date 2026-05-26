@@ -262,20 +262,19 @@ Esta seção contém os trechos mais críticos do código atual para facilitar a
 
 ---
 
-### 11.1 `utils.py` — lógica de dois modos (`exportar_redacao_final_docx`)
+### 11.1 `utils.py` — lógica de dois modos (`exportar_redacao_final_docx`) — rev.6
 
 ```python
 def exportar_redacao_final_docx(
     texto, nome_projeto, avisos, erros,
     alertas_absurdos=None, mapa=None, log=None,
     tipo_redacao="Redação Final",
-    prosseguir_com_alerta_sec_2: bool = False,   # ← NOVO (rev.6)
+    prosseguir_com_alerta_sec_2: bool = False,
 ) -> bytes:
     _alertas_norm = alertas_absurdos or []
     _erros_norm   = erros or []
     tem_sec_2     = bool(_erros_norm or _alertas_norm)
 
-    # MODO: rascunho (padrão) vs redação final (confirmação explícita)
     eh_rascunho = tem_sec_2 and not prosseguir_com_alerta_sec_2
 
     if eh_rascunho:
@@ -283,65 +282,106 @@ def exportar_redacao_final_docx(
     else:
         titulo_doc = tipo_redacao.upper()
 
-    run_titulo.bold = True
-    run_titulo.font.size = Pt(14)
     if eh_rascunho:
         run_titulo.font.color.rgb = RGBColor(0xC0, 0x00, 0x00)   # vermelho
-
-    if eh_rascunho:
         r_alerta.add_run("⚠ RASCUNHO — existem alertas de §2º ... Confirme ciência na aba 5.")
     elif tem_sec_2:
-        r_alerta.add_run("⚠ ALERTA CRÍTICO PENDENTE — ART. 250, §2º RI — "
-                         "O relator tomou ciência ... reabertura da discussão.")
+        r_alerta.add_run("⚠ ALERTA CRÍTICO PENDENTE — ART. 250, §2º RI — ...")
 
-    # Sufixo -A: apenas no documento formal
+    # Sufixo -A: apenas no documento formal (não no rascunho)
     nome_doc = nome_projeto if eh_rascunho else _aplicar_sufixo_a(nome_projeto)
+
+    # TXT também respeita o modo (cabeçalho de alerta + slug rascunho_trabalho_*.txt)
+    # — feito em app.py antes de chamar esta função
 
     # Log do DOCX: registra o override humano com data
     log_final = list(log or [])
     if tem_sec_2 and prosseguir_com_alerta_sec_2:
         log_final.append(
             f"OVERRIDE-HUMANO / Art. 250, §2º RI — Relator tomou ciência dos alertas "
-            f"({len(_erros_norm)} erro(s) crítico(s), {len(_alertas_norm)} absurdo(s) manifesto(s)) "
-            f"e optou por prosseguir com a Redação Final em {datetime.date.today():%d/%m/%Y}."
+            f"({len(_erros_norm)} erro(s), {len(_alertas_norm)} absurdo(s)) "
+            f"e optou por prosseguir em {datetime.date.today():%d/%m/%Y}."
         )
 ```
 
 ---
 
-### 11.2 `app.py` — aba 5, confirmação do relator
+### 11.2 `app.py` — aba 5: confirmação do relator + invalidação de estado — rev.8
 
 ```python
+# ── Helper: qualquer mutação invalida o resultado anterior ──
+def _invalidar_resultado() -> None:
+    """Limpa resultado harmonizado e todo estado derivado da aba 5.
+    Chamado em: nova harmonização, texto alterado, emendas re-parseadas,
+    importar texto bruto, adicionar emenda manual, editar tipo/alvo,
+    votação individual (Aprov./Rejeit./Aprovada/Prejudicada),
+    votação em lote (Todas Aprovadas/Rejeitadas/Limpar), remover todas,
+    limpar status, carregar sessão.
+    """
+    st.session_state.resultado_harm = None
+    st.session_state.pop('confirmar_sec_2_aba5', None)
+    st.session_state.pop('texto_redacao_final', None)
+
+# ── Aba 5: confirmação ──
 _alertas_aba5     = getattr(res, 'alertas_absurdos', [])
 _tem_sec_2        = bool(res.erros_criticos or _alertas_aba5)
 _prosseguir_sec_2 = False   # default conservador
 
 if _tem_sec_2:
-    st.warning(
-        f"⚠️ {n_sec2} alerta(s) de §2º ... A providência regimental indicada é a reabertura.\n"
-        "O documento será exportado como RASCUNHO DE TRABALHO por padrão.\n"
-        "Se o relator tomou ciência e deseja prosseguir, marque a opção abaixo."
-    )
+    st.warning("⚠️ ... RASCUNHO DE TRABALHO por padrão ...")
     _prosseguir_sec_2 = st.checkbox(
         "✅ Confirmo ciência dos alertas críticos (§2º RI) e desejo exportar como Redação Final",
         value=False,
-        key="confirmar_sec_2_aba5",
+        key="confirmar_sec_2_aba5",   # resetado por _invalidar_resultado() em nova harm.
     )
     if _prosseguir_sec_2:
-        st.error("🔴 Este documento será exportado como Redação Final com ALERTA CRÍTICO PENDENTE...")
+        st.error("🔴 ALERTA CRÍTICO PENDENTE inscrito no cabeçalho e no log.")
 
-# Nome do arquivo reflete o modo
-_slug_doc = "rascunho_trabalho" if (_tem_sec_2 and not _prosseguir_sec_2) else _slug_tipo
+_eh_rascunho_aba5 = _tem_sec_2 and not _prosseguir_sec_2
+_slug_doc = "rascunho_trabalho" if _eh_rascunho_aba5 else _slug_tipo
 
+# TXT: cabeçalho de alerta no modo rascunho
+if _eh_rascunho_aba5:
+    _txt_content = (CABECALHO_RASCUNHO + texto_editavel).encode('utf-8')
+else:
+    _txt_content = texto_editavel.encode('utf-8')
+
+# DOCX: passa o modo para utils.py
 docx_bytes = exportar_redacao_final_docx(
-    ...,
-    prosseguir_com_alerta_sec_2=_prosseguir_sec_2,
+    ..., prosseguir_com_alerta_sec_2=_prosseguir_sec_2,
 )
 ```
 
 ---
 
-### 11.3 `harmonizer.py` — regras do prompt (E1.5, E2, E3) — trecho literal
+### 11.3 `harmonizer.py` — validação XML obrigatória — rev.9
+
+```python
+# Exige par completo <TEXTO_HARMONIZADO>...</TEXTO_HARMONIZADO> com conteúdo não vazio.
+# Verificar só a tag de abertura não protege contra truncamento:
+# resposta cortada após <TEXTO_HARMONIZADO> passaria na guarda mas extrair() devolveria "".
+m_texto_harm = re.search(
+    r'<TEXTO_HARMONIZADO>(.*?)</TEXTO_HARMONIZADO>', resp_text, re.DOTALL
+)
+if not m_texto_harm or not m_texto_harm.group(1).strip():
+    _motivo = (
+        "par completo não encontrado" if not m_texto_harm else
+        "tag presente mas conteúdo vazio (resposta truncada?)"
+    )
+    raise ValueError(f"Resposta da IA inválida — {_motivo}. Tente novamente.")
+
+# Tags de alertas também obrigatórias — truncamento após o texto não zera alertas
+_tags_obrigatorias = ["AVISOS", "ERROS_CRITICOS", "ALERTAS_ABSURDOS", "LOG_ALTERACOES"]
+_tags_ausentes = [t for t in _tags_obrigatorias if not re.search(rf'<{t}>', resp_text)]
+if _tags_ausentes:
+    raise ValueError(f"Resposta truncada — tags ausentes: {', '.join(_tags_ausentes)}.")
+
+texto_harm = m_texto_harm.group(1).strip()   # extraído direto, sem fallback silencioso
+```
+
+---
+
+### 11.4 `harmonizer.py` — regras do prompt (E1.5, E2, E3) — trecho literal
 
 ```
 E1.5. PROIBIÇÃO ABSOLUTA — ANÁLISES DE MÉRITO NOS AVISOS:
@@ -367,7 +407,7 @@ E3. ALERTA DE ABSURDO MANIFESTO (art. 250, §2º RI — providência regimental
 
 ---
 
-### 11.4 `harmonizer.py` — pós-processador P1 (camada Python independente do modelo)
+### 11.5 `harmonizer.py` — pós-processador P1 (camada Python independente do modelo)
 
 ```python
 # Caso 1 — Autoreferência circular (regex estrutural sobre blocos de artigo)
@@ -393,46 +433,35 @@ _PADROES_ABSURDO_AVISO = re.compile(
 
 ---
 
-### 11.5 Resultado dos testes automatizados (verificar.py rev.4)
+### 11.6 Resultado dos testes automatizados (verificar.py rev.5 — 57/58)
 
 ```
-[7] EXPORTAÇÃO DOCX
-  ✅  §2º sem confirmação → título 'RASCUNHO DE TRABALHO'
-  ✅  §2º sem confirmação → NÃO contém 'REDAÇÃO FINAL' no título
-  ✅  §2º sem confirmação → sufixo -A NÃO aplicado no rascunho
-  ✅  §2º sem confirmação → aviso de rascunho presente no cabeçalho
-  ✅  Marcadores [[⚠️ CCJ:...]] removidos do DOCX
-  ✅  §2º com confirmação → título contém 'REDAÇÃO FINAL'
-  ✅  §2º com confirmação → sufixo -A aplicado ('17-A/2026')
-  ✅  §2º com confirmação → 'ALERTA CRÍTICO PENDENTE' no cabeçalho
-  ✅  §2º com confirmação → log contém 'OVERRIDE-HUMANO'
-  ✅  Sem §2º → título 'REDAÇÃO FINAL'
-  ✅  Sem §2º → sufixo -A aplicado ('17-A/2026')
-  ✅  Sem §2º → NÃO contém 'RASCUNHO'
-  ✅  Absurdo no DOCX menciona §2º (não §1º)
-  ✅  Absurdo no DOCX NÃO menciona ofício §1º
-  ✅  Avisos com E1: seção NÃO diz 'preservados exatamente como aprovados'
-  ✅  TXT rascunho: cabeçalho contém 'RASCUNHO DE TRABALHO'
-  ✅  TXT rascunho: cabeçalho contém 'reabertura da discussão'
-  ✅  TXT rascunho: nome slug é 'rascunho_trabalho'
+[1]  IMPORTAÇÕES               ✅ 3/3
+[2]  SUFIXO -A                 ✅ 4/4
+[3]  P1 CASO 1                 ✅ 2/2
+[4]  P1 CASO 2                 ✅ 1/1
+[5]  P1 PADRÕES SEMÂNTICOS     ✅ 5/5
+[6]  P1 INTEGRAÇÃO             ✅ 3/3
+[7]  EXPORTAÇÃO DOCX
+  ✅  §2º sem confirmação → RASCUNHO (título, sem sufixo-A, aviso)
+  ✅  §2º com confirmação → REDAÇÃO FINAL (sufixo-A, ALERTA CRÍTICO, OVERRIDE-HUMANO)
+  ✅  Sem §2º → REDAÇÃO FINAL normal
+  ✅  Absurdo cita §2º e reabertura (não §1º/ofício)
+  ✅  Seção avisos não diz 'preservados exatamente'
+  ✅  TXT rascunho: cabeçalho, reabertura, slug correto    (18 verificações)
+[7e] PARSING                   ✅ 4/4
+[8]  ANÁLISE ESTRUTURAL        ✅ 3/3
+[9]  API KEY                   ❌ 0/1  (esperado — chave ausente em ambiente local)
+[10] ARQUIVOS STRESS TEST      ✅ 2/2
+[11] VALIDAÇÃO XML
+  ✅  Par completo </TEXTO_HARMONIZADO> exigido (não só abertura)
+  ✅  Conteúdo vazio rejeitado (truncamento sem fechamento)
+  ✅  Tags de alertas obrigatórias verificadas
+  ✅  Sem par → None; Truncado → None; Válido → extrai; usa group(1) sem fallback  (7 verificações)
+[12] HELPER _invalidar_resultado()
+  ✅  Definido; ≥10 chamadas; v_apr; importar; adicionar manual               (5 verificações)
 
-[11] VALIDAÇÃO XML (harmonizer.py) — rev.9
-  ✅  Guarda exige par completo </TEXTO_HARMONIZADO> (não só abertura)
-  ✅  Guarda rejeita conteúdo vazio (truncamento sem fechamento)
-  ✅  Tags de alertas obrigatórias (AVISOS, ERROS_CRITICOS, ALERTAS_ABSURDOS)
-  ✅  Resposta sem par completo → m_texto_harm é None
-  ✅  Resposta truncada (só abertura) → m_texto_harm é None
-  ✅  Resposta válida → texto extraído corretamente
-  ✅  texto_harm usa m_texto_harm.group(1) (não fallback)
-
-[12] HELPER _invalidar_resultado() (app.py) — rev.8
-  ✅  _invalidar_resultado() definido em app.py
-  ✅  _invalidar_resultado() chamado ≥10 vezes (cobre todos os pontos críticos)
-  ✅  Votação individual (v_apr) invalida resultado
-  ✅  Importar texto bruto invalida resultado
-  ✅  Adicionar emenda manual invalida resultado
-
-RESULTADO FINAL: 57/58 (único fail = ANTHROPIC_API_KEY ausente — esperado em ambiente local)
+RESULTADO: 57/58 (único fail = API key ausente — esperado)
 ```
 
 ---
