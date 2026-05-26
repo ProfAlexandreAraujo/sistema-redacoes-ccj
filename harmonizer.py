@@ -435,27 +435,48 @@ A3. ANEXOS (preservação integral obrigatória)
     coordenadas UTM, tabelas de parâmetros e descrições de perímetros.
     Referências a Anexos nos artigos devem ser atualizadas se o Anexo for renumerado por emenda.
 
-A4. EMENDAS ADITIVAS SEM ALVO DEFINIDO — "acrescente-se onde couber"
-    Quando uma emenda aditiva, substitutiva ou de qualquer tipo não especificar o dispositivo
-    exato de destino (ex: "acrescente-se onde couber", "inclua-se no local adequado",
-    "onde cabível", ou quando o alvo estiver simplesmente omisso):
+A4. EMENDAS SEM ALVO DEFINIDO — "acrescente-se onde couber"
 
-    a) POSICIONAMENTO — identifique o lugar mais coerente tematicamente no texto:
-       — Afinidade de matéria: insira próximo a artigos que tratam do mesmo tema
+    A4.1 — EMENDAS ADITIVAS SEM ALVO (texto novo autônomo)
+    Quando uma emenda aditiva não especificar o dispositivo exato de destino
+    (ex: "acrescente-se onde couber", "inclua-se no local adequado", "onde cabível",
+    ou quando o alvo estiver simplesmente omisso):
+
+    a) IDENTIFIQUE a unidade normativa que está sendo inserida:
+       — Artigo novo → inserir após o artigo tematicamente mais próximo
+       — Parágrafo novo → inserir no artigo correspondente, após o parágrafo mais
+         relacionado ou ao final dos parágrafos do artigo
+       — Inciso novo → inserir no rol correspondente, respeitando sequência lógica;
+         renumerar os seguintes e ajustar pontuação (Bloco C)
+       — Alínea nova → inserir dentro do inciso correspondente, respeitando enumeração;
+         renumerar as seguintes e ajustar pontuação (Bloco C)
+       — Item novo → inserir dentro da alínea correspondente, respeitando enumeração
+
+    b) CRITÉRIOS DE POSICIONAMENTO (em ordem de prioridade):
+       — Afinidade de matéria: insira próximo a dispositivos que tratam do mesmo tema
        — Sequência lógica: respeite a progressão normativa do capítulo ou seção
-       — Nunca crie "ilhas" temáticas: não insira artigo sobre tema X no meio de tema Y
-       — Em caso de empate entre dois locais igualmente coerentes, prefira o final
-         do capítulo temático correspondente
+       — Nunca crie "ilhas" temáticas: não insira dispositivo sobre tema X no meio de tema Y
+       — Em caso de empate, prefira o final do capítulo temático correspondente
 
-    b) OBRIGATÓRIO — registrar no LOG_ALTERACOES:
-       "A4 / Emenda N: inserida após Art. Xº — [motivo breve da escolha] (alvo não especificado na emenda)"
+    c) OBRIGATÓRIO — registrar no LOG_ALTERACOES:
+       "A4 / Emenda N: inserida como [artigo/parágrafo/inciso/alínea/item] em [local exato] — [motivo breve] (alvo não especificado na emenda)"
 
-    c) OBRIGATÓRIO — gerar aviso em AVISOS:
-       "⚠ Emenda N / alvo não especificado: inserida após Art. Xº por coerência temática
-        com [tema]. Posicionamento definido pela CCJ — alvo não especificado na emenda original."
+    d) OBRIGATÓRIO — gerar aviso em AVISOS:
+       "⚠ Emenda N / alvo não especificado: inserida como [tipo] em [local exato] por coerência temática com [tema]. Posicionamento definido pela CCJ — alvo não especificado na emenda original."
 
     NUNCA insira silenciosamente sem AVISO e sem LOG.
     NUNCA recuse aplicar a emenda por ausência de alvo — posicionar é responsabilidade da CCJ.
+
+    A4.2 — EMENDAS MODIFICATIVAS OU SUBSTITUTIVAS SEM ALVO IDENTIFICÁVEL
+    Quando uma emenda modificativa ou substitutiva não especificar o dispositivo de destino
+    e o alvo não puder ser inferido com segurança a partir do texto da emenda:
+
+    a) NÃO aplique a substituição — não invente qual dispositivo está sendo modificado.
+    b) OBRIGATÓRIO — gerar aviso em AVISOS:
+       "⚠ Emenda N (modificativa/substitutiva): alvo não identificável — emenda não aplicada.
+        Revisão manual obrigatória antes da publicação."
+    c) OBRIGATÓRIO — registrar no LOG_ALTERACOES:
+       "A4.2 / Emenda N: NÃO aplicada — alvo não identificável (modificativa/substitutiva sem alvo definido)"
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 BLOCO B — RENUMERAÇÃO (LC 95/1998, art. 10; LC 48/2000, art. 9)

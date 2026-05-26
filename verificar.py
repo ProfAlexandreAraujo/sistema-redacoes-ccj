@@ -512,29 +512,51 @@ try:
     import inspect as _insp_a4
     _src_harm = _insp_a4.getsource(_harm_func)
 
-    chk("A4 presente no prompt de harmonização",
-        "A4." in _src_harm,
-        "Regra A4 não encontrada em harmonizar_texto")
+    # A4.1 — aditivas sem alvo
+    chk("A4.1 presente — aditivas sem alvo",
+        "A4.1" in _src_harm,
+        "Regra A4.1 não encontrada em harmonizar_texto")
 
-    chk("A4 cobre expressão 'onde couber'",
+    chk("A4.1 cobre expressão 'onde couber'",
         "onde couber" in _src_harm,
         "Expressão 'onde couber' não encontrada no prompt A4")
 
-    chk("A4 exige LOG com prefixo 'A4 /'",
-        "A4 / Emenda" in _src_harm,
-        "Formato de LOG 'A4 / Emenda N' não encontrado no prompt")
+    chk("A4.1 cobre unidades menores (parágrafo/inciso/alínea/item)",
+        "Parágrafo novo" in _src_harm and "Inciso novo" in _src_harm and "Alínea nova" in _src_harm,
+        "Cobertura de unidades menores (parágrafo/inciso/alínea) não encontrada")
 
-    chk("A4 exige AVISO com 'alvo não especificado'",
+    chk("A4.1 LOG inclui tipo de unidade normativa inserida",
+        "artigo/parágrafo/inciso/alínea/item" in _src_harm,
+        "Formato de LOG com tipo de unidade não encontrado")
+
+    chk("A4.1 exige AVISO com 'alvo não especificado'",
         "alvo não especificado" in _src_harm,
         "Frase 'alvo não especificado' não encontrada no prompt A4")
 
-    chk("A4 proíbe inserção silenciosa",
+    chk("A4.1 proíbe inserção silenciosa",
         "NUNCA insira silenciosamente" in _src_harm,
         "Proibição de inserção silenciosa não encontrada")
 
-    chk("A4 proíbe recusar aplicar emenda sem alvo",
+    chk("A4.1 proíbe recusar aplicar emenda sem alvo",
         "NUNCA recuse aplicar" in _src_harm,
         "Proibição de recusa não encontrada")
+
+    # A4.2 — modificativas/substitutivas sem alvo identificável
+    chk("A4.2 presente — modificativas/substitutivas sem alvo",
+        "A4.2" in _src_harm,
+        "Regra A4.2 não encontrada em harmonizar_texto")
+
+    chk("A4.2 proíbe aplicar substituição sem alvo identificável",
+        "NÃO aplique a substituição" in _src_harm,
+        "Proibição de substituição inferida não encontrada")
+
+    chk("A4.2 gera AVISO de 'alvo não identificável'",
+        "alvo não identificável" in _src_harm,
+        "Aviso 'alvo não identificável' não encontrado")
+
+    chk("A4.2 registra no LOG que emenda NÃO foi aplicada",
+        "NÃO aplicada" in _src_harm and "A4.2 / Emenda" in _src_harm,
+        "LOG de emenda não aplicada (A4.2) não encontrado")
 
 except Exception as e:
     chk("13 — regra A4 estrutural", False, str(e))
