@@ -1,5 +1,5 @@
 # Prompt de Auditoria Externa — Sistema de Redações CCJ CMRJ
-### Versão rev.18 — 26/05/2026
+### Versão rev.20 — 26/05/2026
 
 ---
 
@@ -280,7 +280,7 @@ alteradas por subemendas aprovadas era aplicado na versão original, ignorando a
   - parsear reconhece `subemenda_de`; app.py exibe painel
   - **2 novos testes em rev.17:** fallback multi-lote [1,2,3,4] e offset após fallback = 4
   - **5 novos testes em rev.19 (seção 7g):** Normal Arial 11pt, 1 tabela apenas, ementa como parágrafo, corpo Arial, heading fonts
-- **Resultado: 123/124** (1 falha esperada: chave API não configurada localmente)
+- **Resultado: 125/126** (1 falha esperada: chave API não configurada localmente)
 
 Novo teste adicionado em rev.16 (Seção 8):
 ```python
@@ -577,7 +577,7 @@ for parte in partes:
 ```
 
 **Novos testes em verificar.py:** 2 verificações do cenário multi-lote com fallback
-(118/119 após fix de B6; 123/124 após rev.19 com 5 novos testes B7; 1 falha esperada = API key ausente).
+(118/119 após fix de B6; 123/124 após rev.19 com 5 testes B7; 125/126 após rev.20 com 2 testes heading; 1 falha esperada = API key ausente).
 
 ---
 
@@ -721,3 +721,5 @@ for parte in partes:
   (seção 7g): Normal Arial 11pt, 1 tabela apenas, ementa como parágrafo, corpo Arial;
   Heading 1/2/3 unificados para Arial 11pt em utils.py; PROMPT_AUDITORIA_EXTERNA.md e
   AUDITORIA.md corrigidos: critérios B4 históricos marcados, contagens atualizadas (123/124).
+- **rev.20:** resposta à auditoria externa do rev.19 — 2 testes de heading adicionados
+  (Heading 2 Arial 11pt); PROMPT e AUDITORIA.md com versões e contagens sincronizadas (125/126).

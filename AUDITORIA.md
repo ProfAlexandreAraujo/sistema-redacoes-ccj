@@ -238,7 +238,7 @@ Usar `TAB_1_PLC_17_2026_TEXTO_ORIGINAL.txt` (19 artigos + 4 Anexos) com `TAB_2_P
 ```
 cd C:\Users\Admin\Documents\Claude\CCJ\sistema_redacoes && python verificar.py
 ```
-Testa (123/124 verificações locais — rev.19): importações, sufixo -A, detectores estruturais P1 (casos 1 e 2), padrões semânticos P1 (caso 3), escalador integrado, exportação DOCX em dois modos, fundamentação §2º, seção de avisos, TXT modo rascunho, parsing de emendas e offset, **análise estrutural incluindo Art sem ponto (B1)**, disponibilidade de API e arquivos de teste, validação XML, `_invalidar_resultado()`, A4, E2, subemendas (P1/P2/P3).
+Testa (125/126 verificações locais — rev.20): importações, sufixo -A, detectores estruturais P1 (casos 1 e 2), padrões semânticos P1 (caso 3), escalador integrado, exportação DOCX em dois modos, fundamentação §2º, seção de avisos, TXT modo rascunho, parsing de emendas e offset, **análise estrutural incluindo Art sem ponto (B1)**, disponibilidade de API e arquivos de teste, validação XML, `_invalidar_resultado()`, A4, E2, subemendas (P1/P2/P3).
 
 ### Verificação completa (com harmonização real — custo ~$0,50)
 ```
@@ -613,4 +613,4 @@ Os seguintes arquivos são rastreados no repositório como referência de format
 
 ---
 
-*Versão rev.18 — 26/05/2026 — Sistema de Redações CCJ CMRJ*
+*Versão rev.20 — 26/05/2026 — Sistema de Redações CCJ CMRJ*
