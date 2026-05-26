@@ -1,5 +1,5 @@
 # Prompt de Auditoria Externa — Sistema de Redações CCJ CMRJ
-### Versão rev.16.1 — 26/05/2026
+### Versão rev.17 — 26/05/2026
 
 ---
 
@@ -546,9 +546,38 @@ divergências de ambiente só aparecem em produção.
 no nível de módulo. Usar apenas a API pública no topo; APIs internas como imports lazy
 dentro das funções que as consomem.
 
+### B6 — `harmonizer.py`: fallback de parsing numerava errado em múltiplos lotes (rev.17)
+
+**Problema:** a função `parsear_emendas_com_ia()` processa emendas em lotes. O caminho
+de fallback (quando o JSON da IA é inválido) usava `offset + len(todas_emendas) + 1`
+para numerar cada emenda bruta. Com múltiplos lotes, `len(todas_emendas)` já inclui
+as emendas de lotes anteriores — o `offset` era somado duas vezes, produzindo buracos
+na numeração.
+
+```python
+# Cenário: lote 1 ok → [E1, E2], offset=2; lote 2 cai no fallback
+
+# Antes (bug — double-counting):
+num = offset + len(todas_emendas) + 1
+# Para parte 1: 2 + 2 + 1 = 5  (correto seria 3)
+# Para parte 2: 2 + 3 + 1 = 6  (correto seria 4)
+# Resultado: [1, 2, 5, 6] — afeta votação e subemenda_de
+
+# Depois (fix — idx relativo ao lote):
+idx_fb = 0
+for parte in partes:
+    if parte.strip():
+        num = offset + idx_fb + 1   # 2+0+1=3, 2+1+1=4 ✓
+        todas_emendas.append(...)
+        idx_fb += 1
+```
+
+**Novos testes em verificar.py:** 2 verificações do cenário multi-lote com fallback
+(118/119 após fix; 1 falha esperada = API key ausente).
+
 ---
 
-## Arquitetura de proteções (estado atual — rev.16.1)
+## Arquitetura de proteções (estado atual — rev.17)
 
 | Proteção | Onde | O que faz |
 |---|---|---|
@@ -578,7 +607,8 @@ dentro das funções que as consomem.
 | **B2 — Stop markers mínimo** | **Python (utils)** | **`min()` entre todas as posições; nunca `break` no primeiro encontrado** |
 | **B3 — URL regex linha inteira** | **Python (utils)** | **`[^\n]+` em vez de `\S+` elimina sufixos de paginação** |
 | **B4 — DOCX formato CMRJ** | **Python (utils)** | **Reescrita completa; ementa, autor, fecho e assinaturas presentes** |
-| **B5 — Imports lazy (API interna)** | **Python (utils)** | **`qn`/`OxmlElement` movidos para dentro de `_remover_bordas_tabela`; falha de import não derruba o módulo** |
+| **B5 — Imports lazy (API interna)** | **Python (utils)** | **`qn`/`OxmlElement` movidos para dentro de `_remover_bordas_tabela`; falha de import não derruba o módulo — ⚠ ABERTO: download DOCX no Cloud não testado** |
+| **B6 — Fallback numeração multi-lote** | **Python (harmonizer)** | **`offset + idx_fb + 1` relativo ao lote; elimina double-counting que gerava buracos [1,2,5,6]** |
 
 ---
 
@@ -675,3 +705,9 @@ dentro das funções que as consomem.
 - **rev.16.1 (hotfix):** B5 — imports lazy para `qn`/`OxmlElement`; o app ficou fora do ar
   após o deploy de rev.16 por ImportError no Streamlit Cloud (não reproduzível localmente).
   Gap confirmado: ausência de smoke test de carregamento de módulo em ambiente Linux.
+  ⚠ **ABERTO:** confirmar que o download de DOCX no Cloud também funciona (os mesmos
+  paths `qn`/`OxmlElement` ainda executam quando `_remover_bordas_tabela()` é chamada).
+- **rev.17:** B6 — fallback de parsing multi-lote corrigido (`offset + idx_fb + 1`);
+  2 novos testes em verificar.py (118/119). Arquivos de referência CMRJ (4 DOCX + 1 PDF)
+  agora rastreados no Git. Inconsistência de nome em `730-A_2026` documentada
+  (nome do arquivo = ano da Redação Final; conteúdo = ano do projeto — comportamento normal).

@@ -345,6 +345,34 @@ chk("Offset 2 lotes de 2: sequência é [1,2,3,4] (não [1,2,5,6])",
 chk("Offset após 2 lotes = 4 (não 6)",
     offset_sim == 4, f"offset={offset_sim}")
 
+# Fallback bruto com múltiplos lotes — apontado em auditoria externa
+# Cenário: lote 1 ok (E1, E2 com números explícitos),
+#          lote 2 cai no fallback (2 partes) → esperado [1, 2, 3, 4] não [1, 2, 5, 6]
+# Bug anterior: `offset + len(todas_emendas) + 1` incluía lotes passados → double-counting
+# Fix: `offset + idx_fb + 1` onde idx_fb é relativo ao lote atual
+todas_fb: list[Emenda] = []
+offset_fb = 0
+# Simula lote 1: JSON ok, emendas com número explícito
+for _n in (1, 2):
+    todas_fb.append(Emenda(numero=_n, texto_bruto=f"emenda {_n}"))
+offset_fb += 2   # len(todas_fb) - n_antes (n_antes era 0)
+
+# Simula lote 2: fallback — fórmula corrigida (idx relativo ao lote)
+_n_antes_fb = len(todas_fb)    # 2
+_partes_fb  = ["EMENDA 3 — texto A", "EMENDA 4 — texto B"]
+_idx_fb = 0
+for _parte in _partes_fb:
+    if _parte.strip():
+        todas_fb.append(Emenda(numero=offset_fb + _idx_fb + 1, texto_bruto=_parte))
+        _idx_fb += 1
+offset_fb += len(todas_fb) - _n_antes_fb
+
+chk("Fallback multi-lote: sequência é [1,2,3,4] (não [1,2,5,6])",
+    [e.numero for e in todas_fb] == [1, 2, 3, 4],
+    f"sequência: {[e.numero for e in todas_fb]}")
+chk("Offset após fallback multi-lote = 4",
+    offset_fb == 4, f"offset={offset_fb}")
+
 # P1: parsing sem JSON — raise ValueError (não continue silencioso)
 import inspect as _inspect_p
 from harmonizer import parsear_emendas_com_ia as _parse_fn

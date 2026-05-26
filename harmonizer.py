@@ -511,15 +511,20 @@ TEXTO DAS EMENDAS:
                 todas_emendas.append(e)
 
         except (json.JSONDecodeError, KeyError, IndexError, ValueError):
-            # Se parsing falhar, cria emendas brutas
+            # Se parsing falhar, cria emendas brutas.
+            # IMPORTANTE: usar idx_fb relativo ao lote — NÃO usar len(todas_emendas),
+            # pois isso incluiria emendas de lotes anteriores e causaria double-counting.
+            # Ex: offset=2, lote fallback com 2 partes → números 3, 4 (e não 5, 6).
             partes = re.split(r'\n(?=EMENDA\s)', chunk, flags=re.IGNORECASE)
+            idx_fb = 0
             for parte in partes:
                 if parte.strip():
-                    num = offset + len(todas_emendas) + 1
+                    num = offset + idx_fb + 1   # posição relativa ao lote, não ao total
                     todas_emendas.append(Emenda(
                         numero=num, texto_bruto=parte.strip(), parseada=False,
                         notas_parse="Parsing automático falhou — revisar manualmente"
                     ))
+                    idx_fb += 1
 
         offset += len(todas_emendas) - n_antes   # incrementa só o lote atual
 
