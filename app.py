@@ -212,6 +212,18 @@ with st.sidebar:
             _invalidar_resultado()
             st.rerun()
 
+    st.divider()
+    st.markdown("""
+<div style="font-size: 0.78rem; color: #6c757d; line-height: 1.6;">
+⚖️ <strong>Sistema de Redações CCJ</strong><br>
+Ferramenta de apoio à elaboração de redações legislativas.<br>
+Comissão de Constituição, Justiça e Redação —<br>
+Câmara Municipal do Rio de Janeiro<br><br>
+Concepção e desenvolvimento:<br>
+<strong>Alexandre Araujo</strong>
+</div>
+""", unsafe_allow_html=True)
+
 
 # ─────────────────────────────────────────────────────────────────────────────
 # ABAS PRINCIPAIS
