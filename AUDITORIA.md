@@ -1,5 +1,5 @@
 # 🔍 AUDITORIA DO SISTEMA — CCJ CMRJ
-### Documento técnico para revisão externa — versão 2026-05-25 **rev.10**
+### Documento técnico para revisão externa — versão 2026-05-25 **rev.11**
 
 ---
 
@@ -152,6 +152,7 @@ Qualquer item escalado move-se de `avisos` para `alertas_absurdos`, ativando o m
 | 25/05/2026 | `extrair("TEXTO_HARMONIZADO", texto_original)` — resposta da IA sem tags retornava silenciosamente o original sem alertas | Falha silenciosa crítica | ✅ harmonizer.py rev.8 — guarda obrigatória: ValueError se `<TEXTO_HARMONIZADO>` ausente; default alterado para `""` |
 | 25/05/2026 | Guarda rev.8 verificava só tag de abertura — resposta truncada (sem `</TEXTO_HARMONIZADO>`) passava na guarda mas `extrair()` devolvia `""` silenciosamente | Falha silenciosa crítica (apontada por auditor externo) | ✅ harmonizer.py rev.9 — guarda exige par completo + conteúdo não vazio; tags de alertas (`AVISOS`, `ERROS_CRITICOS`, `ALERTAS_ABSURDOS`, `LOG_ALTERACOES`) também obrigatórias |
 | 25/05/2026 | Rev.9 exigia par completo apenas para `TEXTO_HARMONIZADO`; as demais 5 tags ainda checavam só a abertura — truncamento em qualquer delas (ex.: `<AVISOS>` sem `</AVISOS>`) faria `extrair()` devolver `""` silenciosamente, zerando alertas | Falha silenciosa generalizada | ✅ harmonizer.py rev.10 — guarda unificada: `_TODAS_TAGS` (6 tags) exige par completo via regex `<TAG>(.*?)</TAG>`; `_TAGS_NAO_VAZIAS` = {`TEXTO_HARMONIZADO`, `LOG_ALTERACOES`} exige conteúdo não vazio; verificar.py rev.6 — bloco [11] expandido: 14 verificações, truncamento testado tag a tag |
+| 25/05/2026 | `parsear_emendas_com_ia`: quando IA não retornava JSON, `continue` pulava o lote silenciosamente — emendas perdidas sem nenhuma indicação de falha | Falha silenciosa (apontada por auditor externo) | ✅ harmonizer.py rev.11 — `raise ValueError` (mensagem explícita) + `except` ampliado para `ValueError`; fallback bruto continua ativo; verificar.py rev.7 — bloco [7e] expandido: 2 verificações de source-code |
 
 ---
 
@@ -224,7 +225,7 @@ Usar `TAB_1_PLC_17_2026_TEXTO_ORIGINAL.txt` (19 artigos + 4 Anexos) com `TAB_2_P
 ```
 cd C:\Users\Admin\Documents\Claude\CCJ\sistema_redacoes && python verificar.py
 ```
-Testa (57 verificações locais): importações, sufixo -A, detectores estruturais P1 (casos 1 e 2), padrões semânticos P1 (caso 3), escalador integrado, exportação DOCX em dois modos (§2º sem confirmação → RASCUNHO; §2º com confirmação → REDAÇÃO FINAL + ALERTA CRÍTICO + log OVERRIDE-HUMANO; sem §2º → REDAÇÃO FINAL normal), fundamentação §2º nos absurdos, texto da seção de avisos, **TXT modo rascunho** (cabeçalho de alerta, slug correto, conteúdo de reabertura), parsing de emendas supressivas e offset em múltiplos lotes, análise estrutural, disponibilidade de API e arquivos de teste.
+Testa (64 verificações locais): importações, sufixo -A, detectores estruturais P1 (casos 1 e 2), padrões semânticos P1 (caso 3), escalador integrado, exportação DOCX em dois modos (§2º sem confirmação → RASCUNHO; §2º com confirmação → REDAÇÃO FINAL + ALERTA CRÍTICO + log OVERRIDE-HUMANO; sem §2º → REDAÇÃO FINAL normal), fundamentação §2º nos absurdos, texto da seção de avisos, **TXT modo rascunho** (cabeçalho de alerta, slug correto, conteúdo de reabertura), parsing de emendas supressivas e offset em múltiplos lotes, análise estrutural, disponibilidade de API e arquivos de teste.
 
 ### Verificação completa (com harmonização real — custo ~$0,50)
 ```
@@ -448,7 +449,7 @@ _PADROES_ABSURDO_AVISO = re.compile(
 
 ---
 
-### 11.6 Resultado dos testes automatizados (verificar.py rev.6 — 64/65)
+### 11.6 Resultado dos testes automatizados (verificar.py rev.7 — 66/67)
 
 ```
 [1]  IMPORTAÇÕES               ✅ 3/3
@@ -464,7 +465,13 @@ _PADROES_ABSURDO_AVISO = re.compile(
   ✅  Absurdo cita §2º e reabertura (não §1º/ofício)
   ✅  Seção avisos não diz 'preservados exatamente'
   ✅  TXT rascunho: cabeçalho, reabertura, slug correto    (18 verificações)
-[7e] PARSING                   ✅ 4/4
+[7e] PARSING                   ✅ 6/6
+  ✅  Supressiva: texto_bruto não vazio após parsing
+  ✅  Modificativa: texto_bruto ≠ novo_texto
+  ✅  Offset 2 lotes de 2: sequência [1,2,3,4] (não [1,2,5,6])
+  ✅  Offset após 2 lotes = 4 (não 6)
+  ✅  Parsing sem JSON: raise ValueError com mensagem clara (não continue silencioso)
+  ✅  Except captura ValueError — fallback bruto ativado (emendas não perdidas)
 [8]  ANÁLISE ESTRUTURAL        ✅ 3/3
 [9]  API KEY                   ❌ 0/1  (esperado — chave ausente em ambiente local)
 [10] ARQUIVOS STRESS TEST      ✅ 2/2
@@ -484,7 +491,7 @@ _PADROES_ABSURDO_AVISO = re.compile(
 [12] HELPER _invalidar_resultado()
   ✅  Definido; ≥10 chamadas; v_apr; importar; adicionar manual               (5 verificações)
 
-RESULTADO: 64/65 (único fail = API key ausente — esperado)
+RESULTADO: 66/67 (único fail = API key ausente — esperado)
 ```
 
 ---
@@ -501,7 +508,8 @@ RESULTADO: 64/65 (único fail = API key ausente — esperado)
 | Resposta da IA truncada (sem `</TEXTO_HARMONIZADO>`) → passava na guarda rev.8 | Baixa | **✅ Corrigido (rev.9)** | Guarda exige par completo + conteúdo não vazio; tags de alertas obrigatórias também verificadas |
 | Truncamento em qualquer das outras 5 tags (`MAPA_RENUMERACAO`, `AVISOS`, `ERROS_CRITICOS`, `ALERTAS_ABSURDOS`, `LOG_ALTERACOES`) → `extrair()` devolveria `""` silenciosamente | Baixa | **✅ Corrigido (rev.10)** | `_TODAS_TAGS` + `_sem_par`: todas as 6 tags verificam par completo; `_TAGS_NAO_VAZIAS` exige conteúdo não vazio em TEXTO_HARMONIZADO e LOG_ALTERACOES |
 | Resultado harmonizado sobrevivia a mudanças pós-harmonização | Possível em sessão longa | **✅ Corrigido (rev.8)** | `_invalidar_resultado()` aplicado em todos os pontos: votação, importação, edição, remoção de emendas |
+| `parsear_emendas_com_ia`: IA não retorna JSON → `continue` silencioso descartava o lote inteiro sem erro | Baixa (lotes com texto muito formatado) | **✅ Corrigido (rev.11)** | `raise ValueError` com mensagem explícita; `except` ampliado para `ValueError`; fallback bruto cria emendas marcadas para revisão manual — nenhuma emenda é perdida silenciosamente |
 
 ---
 
-*Versão rev.10 — 25/05/2026 — Sistema de Redações CCJ CMRJ*
+*Versão rev.11 — 25/05/2026 — Sistema de Redações CCJ CMRJ*

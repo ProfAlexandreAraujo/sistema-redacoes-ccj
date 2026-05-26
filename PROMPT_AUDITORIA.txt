@@ -1,0 +1,910 @@
+Audite este sistema. O documento AUDITORIA.md descreve o projeto e lista riscos conhecidos. Os arquivos-fonte são o código real (rev.10). Verifique se: (1) o código implementa corretamente o que a documentação descreve, (2) há brechas não cobertas pelos testes em verificar.py, (3) há riscos residuais não listados na seção 11.6.
+
+════════════════════════════════════════════════════════════════
+ARQUIVO 1: AUDITORIA.md (rev.10)
+════════════════════════════════════════════════════════════════
+
+# 🔍 AUDITORIA DO SISTEMA — CCJ CMRJ
+### Documento técnico para revisão externa — versão 2026-05-25 rev.10
+
+---
+
+## 1. Contexto e propósito
+
+Este sistema auxilia a Comissão de Constituição, Justiça e Redação (CCJ) da Câmara Municipal do Rio de Janeiro a elaborar a Redação Final ou Redação do Vencido de projetos de lei aprovados com emendas (art. 250, Resolução nº 1.673/2025 — Regimento Interno).
+
+Constraint absoluta e inviolável:
+"Eu não posso mexer no teor da emenda. Não posso fazer isso."
+
+O texto aprovado pelo Plenário é soberano. O sistema nunca altera conteúdo substantivo. São permitidas automaticamente apenas: (a) atualização de referências cruzadas internas por renumeração (A2); (b) correções de linguagem que não afetem o significado jurídico (E1).
+
+---
+
+## 2. Normas legislativas
+
+LC 95/1998 (federal) — técnica de elaboração de normas
+Decreto 12.002/2024 — regulamenta LC 95/1998
+LC Municipal 48/2000 RJ — técnica legislativa específica da CMRJ
+LC Municipal 51/2001 RJ — complementa LC 48/2000
+Res. 1.673/2025 (RI), art. 250 — competência da CCJ, níveis de intervenção
+
+---
+
+## 3. Três níveis de alerta
+
+⚠️ Aviso Redacional — art. 250, §1º RI
+Incorreção de linguagem que não deturpa a vontade legislativa.
+→ Erros de ortografia, concordância, pontuação: corrigidos automaticamente + LOG.
+→ Problemas de técnica legislativa com julgamento: aponta, CCJ decide por ofício.
+
+🚨 Erro Crítico — art. 250, §2º RI
+Duas emendas aprovadas que se contradizem diretamente.
+→ Providência regimental indicada: reabertura da discussão.
+→ DOCX exportado como RASCUNHO DE TRABALHO por padrão.
+→ Relator pode confirmar ciência e exportar como Redação Final (ALERTA CRÍTICO no cabeçalho + OVERRIDE-HUMANO no log).
+
+🔴 Absurdo Manifesto — art. 250, §2º RI
+Texto ininteligível ou com dúvida inequívoca sobre a vontade legislativa.
+→ Texto preservado verbatim + marcador inline na tela.
+→ Marcador removido do DOCX exportado.
+→ Providência regimental indicada: reabertura da discussão (§2º RI).
+
+REGRA CRÍTICA: tanto 🚨 quanto 🔴 invocam o §2º — reabertura, não ofício.
+
+Sistema de dois modos para exportação com §2º:
+- RASCUNHO (padrão): §2º presente, sem confirmação → título "RASCUNHO DE TRABALHO", sem sufixo -A
+- REDAÇÃO FINAL: §2º presente, relator confirmou → "REDAÇÃO FINAL", sufixo -A, "ALERTA CRÍTICO PENDENTE" + OVERRIDE-HUMANO no log
+
+---
+
+## 4. Regras do sistema
+
+A1 — Preservação de teor (REGRA ABSOLUTA)
+Incorporar o texto de cada emenda aprovada LITERALMENTE. Nunca remover, parafrasear, simplificar ou "consertar". As correções E1 são a única exceção expressa.
+
+A2 — Referências cruzadas (única alteração automática de conteúdo)
+Atualizar todas as referências internas após renumeração.
+Regra especial aglutinativas: conteúdo migrado aponta para o artigo receptor, não para o que herdou o número por sequência.
+
+A3 — Anexos: preservação integral obrigatória.
+
+E1 — Correções automáticas de linguagem (art. 250, §1º RI)
+CORRIJA: concordância nominal/verbal, caixa incorreta, pontuação Bloco C (exceto "; e").
+NUNCA ALTERE: números, valores, prazos, percentuais, sujeito/objeto/verbo obrigacional, termos técnicos.
+APONTE mas não corrija: "anterior"/"seguinte" vago, "Parágrafo único" incorreto, técnica redacional imprópria.
+NUNCA inclua em AVISOS: mérito, CA urbanístico, gabaritos, parâmetros numéricos aprovados.
+
+E2 — Erros Críticos (§2º RI): contradição entre emendas → reabertura. Nunca resolve.
+
+E3 — Absurdo Manifesto (§2º RI): ininteligibilidade formal → reabertura. Nunca resolve.
+Quatro casos obrigatórios: (1) autoreferência circular; (2) condição remetendo a § suprimido;
+(3) "artigo anterior" materialmente incompatível; (4) referência exclusiva a dispositivo suprimido.
+
+P1 — Pós-processamento Python (camada independente do modelo)
+Após o modelo responder, harmonizer.py executa detectores estruturais:
+- Caso 1: Art. N com referência preposicionada ao próprio Art. N → autoreferência circular
+- Caso 2: §N com "§N deste artigo" → condição normativa inoperante
+- Caso 3: Varredura semântica nos avisos por padrões como "artigo anterior.*incompatível", etc.
+
+---
+
+## 5. Histórico de correções (seleção — entradas críticas)
+
+IA removia cláusula aprovada para "resolver" absurdo → A1 verbatim ✅
+DOCX exportado como Redação Final mesmo com §2º → utils.py ✅
+.txt contornava lógica de rascunho → app.py rev.7 ✅
+Checkbox confirmar_sec_2_aba5 persistia entre harmonizações → app.py rev.7 ✅
+Resultado antigo sobrevivia a mudanças em emendas/votação → app.py rev.8 _invalidar_resultado() ✅
+extrair("TEXTO_HARMONIZADO") retornava original silenciosamente se sem tags → harmonizer.py rev.8 ✅
+Guarda rev.8 verificava só abertura — truncamento passava silenciosamente → harmonizer.py rev.9 ✅
+Rev.9 exigia par completo apenas para TEXTO_HARMONIZADO; demais 5 tags ainda checavam só abertura — truncamento em qualquer delas zeraria alertas silenciosamente → harmonizer.py rev.10 — guarda unificada _TODAS_TAGS (6 tags), _sem_par, _TAGS_NAO_VAZIAS ✅
+
+---
+
+## 6. Stress test — PLC fictício nº 17/2026
+
+10 emendas sobre PLC com 19 artigos + 4 Anexos.
+Resultado esperado: 18 artigos, 5 Anexos, ≥3 absurdos manifestos §2º.
+Emendas incluem: supressiva (art. 4º), modificativa, aditiva, substitutiva (art. 16),
+aglutinativa (arts. 11+12), modificativa de Anexo III, aditiva de Anexo V.
+
+Absurdos esperados:
+- Emenda 1: Art. 4º novo referencia o próprio Art. 4º (autoreferência circular)
+- Emenda 5: §1º suprimido; §2º passa a §1º e remete ao próprio §1º (condição inoperante)
+- Emenda 10: §4º diz "nos termos do artigo anterior"; artigo anterior trata de monitoramento (remissão incompatível)
+
+Correções E1 esperadas: "serão aplicada"→"serão aplicadas" (Emenda 8), "Depósitos"→"depósitos" (Emenda 9), pontuação de incisos (Emendas 4 e 8).
+
+---
+
+## 7. Comportamentos obrigatórios / proibidos
+
+OBRIGATÓRIOS:
+- "Atendida a condição prevista no §1º deste artigo" preservado verbatim (Emenda 5)
+- ≥3 absurdos em ALERTAS_ABSURDOS
+- E1: correções no texto + LOG
+- DOCX sem marcadores [[⚠️ CCJ:...]]
+- Seção de absurdos menciona "§2º" e "reabertura" — nunca "§1º" ou "ofício"
+
+PROIBIDOS:
+- Alterar teor de emenda aprovada
+- Exportar DOCX como REDAÇÃO FINAL com §2º sem confirmação
+- Incluir análise de mérito urbanístico (CA, gabaritos) em AVISOS
+
+---
+
+## 8. Comandos de verificação
+
+python verificar.py              # 64 verificações locais (gratuito)
+python verificar.py --com-api    # + harmonização completa PLC 17/2026 (~$0,50)
+
+---
+
+## 9. URLs
+
+Streamlit Cloud: https://ccj-redacoes.streamlit.app
+GitHub: https://github.com/ProfAlexandreAraujo/sistema-redacoes-ccj
+
+---
+
+## 10. Parâmetros da IA
+
+Modelo: claude-sonnet-4-6
+max_tokens harmonização: 60.000 (teto 64k)
+max_tokens parsing: 20.000
+Modo: streaming obrigatório
+
+---
+
+## 11. Extratos de código para verificação (rev.10)
+
+### 11.1 utils.py — lógica de dois modos (exportar_redacao_final_docx) — rev.6
+
+```python
+def exportar_redacao_final_docx(
+    texto, nome_projeto, avisos, erros,
+    alertas_absurdos=None, mapa=None, log=None,
+    tipo_redacao="Redação Final",
+    prosseguir_com_alerta_sec_2: bool = False,
+) -> bytes:
+    _alertas_norm = alertas_absurdos or []
+    _erros_norm   = erros or []
+    tem_sec_2     = bool(_erros_norm or _alertas_norm)
+    eh_rascunho   = tem_sec_2 and not prosseguir_com_alerta_sec_2
+
+    if eh_rascunho:
+        titulo_doc = "RASCUNHO DE TRABALHO — NÃO É REDAÇÃO FINAL"
+    else:
+        titulo_doc = tipo_redacao.upper()
+
+    # Sufixo -A: apenas no documento formal (não no rascunho)
+    nome_doc = nome_projeto if eh_rascunho else _aplicar_sufixo_a(nome_projeto)
+
+    # Log: registra override humano com data
+    log_final = list(log or [])
+    if tem_sec_2 and prosseguir_com_alerta_sec_2:
+        log_final.append(
+            f"OVERRIDE-HUMANO / Art. 250, §2º RI — Relator tomou ciência dos alertas "
+            f"({len(_erros_norm)} erro(s) crítico(s), {len(_alertas_norm)} absurdo(s) manifesto(s)) "
+            f"e optou por prosseguir com a Redação Final em {datetime.date.today().strftime('%d/%m/%Y')}."
+        )
+```
+
+### 11.2 app.py — aba 5: confirmação do relator + invalidação de estado — rev.8
+
+```python
+def _invalidar_resultado() -> None:
+    """Limpa resultado harmonizado e todo estado derivado da aba 5."""
+    st.session_state.resultado_harm = None
+    st.session_state.pop('confirmar_sec_2_aba5', None)
+    st.session_state.pop('texto_redacao_final', None)
+
+# Pontos de chamada (16 ao total):
+# carregar sessão, texto alterado, parsear IA, importar bruto, adicionar manual,
+# editar tipo, editar alvo, remover todas, limpar status,
+# Todas Aprovadas, Todas Rejeitadas, Limpar tudo,
+# v_apr, v_rej (votação individual), vx_apr, vx_pre (expandido)
+
+# Aba 5:
+_alertas_aba5     = getattr(res, 'alertas_absurdos', [])
+_tem_sec_2        = bool(res.erros_criticos or _alertas_aba5)
+_prosseguir_sec_2 = False   # default conservador
+
+if _tem_sec_2:
+    _prosseguir_sec_2 = st.checkbox(
+        "✅ Confirmo ciência dos alertas críticos (§2º RI) e desejo exportar como Redação Final",
+        value=False, key="confirmar_sec_2_aba5",
+    )
+
+_eh_rascunho_aba5 = _tem_sec_2 and not _prosseguir_sec_2
+_slug_doc = "rascunho_trabalho" if _eh_rascunho_aba5 else _slug_tipo
+
+# TXT: cabeçalho de alerta no modo rascunho
+if _eh_rascunho_aba5:
+    _cabecalho_rascunho = (
+        "RASCUNHO DE TRABALHO — NÃO É REDAÇÃO FINAL\n"
+        "⚠ Existem alertas de §2º (absurdo manifesto ou erro crítico).\n"
+        "A providência regimental indicada é a reabertura da discussão (art. 250, §2º RI).\n"
+        "Confirme ciência na aba 5 do sistema para exportar como Redação Final.\n"
+        f"Elaborado em {datetime.date.today().strftime('%d/%m/%Y')}\n"
+        "=" * 60 + "\n\n"
+    )
+    _txt_content = (_cabecalho_rascunho + texto_editavel).encode('utf-8')
+else:
+    _txt_content = texto_editavel.encode('utf-8')
+
+docx_bytes = exportar_redacao_final_docx(
+    ..., prosseguir_com_alerta_sec_2=_prosseguir_sec_2,
+)
+```
+
+### 11.3 harmonizer.py — validação XML obrigatória — rev.10
+
+```python
+# Guarda unificada: todas as 6 tags esperadas devem ter par completo.
+# Verificar só a tag de abertura não protege contra truncamento:
+# resposta cortada após <TAG> faria extrair() devolver "" silenciosamente.
+# TEXTO_HARMONIZADO e LOG_ALTERACOES também exigem conteúdo não vazio.
+_TODAS_TAGS      = [
+    "TEXTO_HARMONIZADO", "MAPA_RENUMERACAO",
+    "AVISOS", "ERROS_CRITICOS", "ALERTAS_ABSURDOS", "LOG_ALTERACOES",
+]
+_TAGS_NAO_VAZIAS = {"TEXTO_HARMONIZADO", "LOG_ALTERACOES"}
+
+_sem_par:        list[str] = []
+_conteudo_vazio: list[str] = []
+
+for _tag in _TODAS_TAGS:
+    _m = re.search(rf'<{_tag}>(.*?)</{_tag}>', resp_text, re.DOTALL)
+    if not _m:
+        _sem_par.append(_tag)
+    elif _tag in _TAGS_NAO_VAZIAS and not _m.group(1).strip():
+        _conteudo_vazio.append(_tag)
+
+if _sem_par:
+    raise ValueError(
+        f"Resposta da IA truncada — par completo ausente: {', '.join(_sem_par)}. "
+        "Tente novamente; se o erro persistir, reduza o número de emendas por lote."
+    )
+if _conteudo_vazio:
+    raise ValueError(
+        f"Resposta da IA inválida — conteúdo obrigatório vazio em: "
+        f"{', '.join(_conteudo_vazio)}. Tente novamente."
+    )
+
+texto_harm = re.search(
+    r'<TEXTO_HARMONIZADO>(.*?)</TEXTO_HARMONIZADO>', resp_text, re.DOTALL
+).group(1).strip()   # par validado acima — .group(1) seguro
+```
+
+### 11.4 harmonizer.py — regras do prompt (E1.5, E2, E3) — trecho literal
+
+```
+E1.5. PROIBIÇÃO ABSOLUTA — ANÁLISES DE MÉRITO NOS AVISOS:
+    NUNCA inclua em AVISOS qualquer observação sobre:
+    — Coeficiente de aproveitamento (CA): comparações, proporções, relações entre setores
+    — Gabaritos, alturas, número de pavimentos: análises de adequação
+    — Consistência dos parâmetros urbanísticos aprovados pelo Plenário
+    — Qualquer julgamento sobre se os valores fazem sentido técnico ou urbanístico
+    Esses são assuntos de MÉRITO — soberania exclusiva do Plenário — totalmente fora da
+    competência da CCJ na Redação Final. Colocá-los em AVISOS contamina o documento.
+    Se perceber algo desse tipo, OMITA. Não registre. Não "avise com ressalva".
+
+E2. ERROS CRÍTICOS — não tente resolver; a providência regimental indicada
+    é a reabertura da discussão (art. 250, §2º RI).
+
+E3. ALERTA DE ABSURDO MANIFESTO (art. 250, §2º RI — reabertura):
+    Quatro casos obrigatórios: (1) autoreferência circular; (2) condição inoperante;
+    (3) remissão incompatível; (4) referência exclusiva a dispositivo suprimido.
+    Em AMBOS (E2 e E3): a providência regimental indicada é a reabertura (§2º RI).
+```
+
+### 11.5 harmonizer.py — pós-processador P1
+
+```python
+# Caso 1 — Autoreferência circular
+refs_art = re.findall(
+    r'\b(?:n[oa]s?|d[oa]s?|ao?|conform[ae]?|observad[oa])\s+[Aa]rt\.?\s*(\d+)',
+    corpo
+)
+if any(r == num_art for r in refs_art):
+    alertas.append(f"🔴 Art. {num_art}: autoreferência circular — reabertura (§2º RI)")
+
+# Caso 2 — Condição normativa inoperante
+if ref_m.group(1) == par_num:
+    alertas.append(f"🔴 §{par_num}º: condição normativa inoperante — reabertura (§2º RI)")
+
+# Caso 3 — Padrões semânticos nos avisos
+_PADROES_ABSURDO_AVISO = re.compile(
+    r'referência circular|autoref|artigo anterior.*incompatível'
+    r'|condição.*suprimid|§.*não existe mais|§.*foi suprimid'
+    r'|artigo anterior.*monitoramento|artigo anterior.*versa\b',
+    re.IGNORECASE | re.DOTALL
+)
+```
+
+### 11.6 Resultado dos testes (verificar.py rev.6 — 64/65)
+
+[1]  IMPORTAÇÕES               3/3
+[2]  SUFIXO -A                 4/4
+[3]  P1 CASO 1                 2/2
+[4]  P1 CASO 2                 1/1
+[5]  P1 PADRÕES SEMÂNTICOS     5/5
+[6]  P1 INTEGRAÇÃO             3/3
+[7]  EXPORTAÇÃO DOCX           18/18
+     §2º sem confirmação → RASCUNHO (título, sem sufixo-A, aviso)
+     §2º com confirmação → REDAÇÃO FINAL (sufixo-A, ALERTA CRÍTICO, OVERRIDE-HUMANO)
+     Sem §2º → REDAÇÃO FINAL normal
+     TXT rascunho: cabeçalho, reabertura, slug correto
+[7e] PARSING                   4/4
+[8]  ANÁLISE ESTRUTURAL        3/3
+[9]  API KEY                   0/1 (esperado — chave ausente em ambiente local)
+[10] ARQUIVOS STRESS TEST      2/2
+[11] VALIDAÇÃO XML GENERALIZADA (rev.10 — 14 verificações)
+     _TODAS_TAGS cobre 6 tags (incl. MAPA_RENUMERACAO e LOG_ALTERACOES)
+     Truncamento detectado por _sem_par (par abertura+fechamento)
+     _TAGS_NAO_VAZIAS + _conteudo_vazio (conteúdo obrigatório não vazio)
+     TEXTO_HARMONIZADO: sem par → None; truncada → None; válida → group(1)
+     .group(1).strip() sem fallback silencioso
+     MAPA_RENUMERACAO: truncada → None
+     AVISOS: truncada → None
+     ERROS_CRITICOS: truncada → None
+     ALERTAS_ABSURDOS: truncada → None
+     LOG_ALTERACOES: truncada → None
+     LOG_ALTERACOES em _TAGS_NAO_VAZIAS (conteúdo obrigatório)
+     Resposta completa válida — todos os 6 pares detectados
+[12] _invalidar_resultado()    5/5
+
+RESULTADO: 64/65 (único fail = API key ausente — esperado)
+
+### 11.6 Riscos residuais conhecidos e aceitos
+
+- P1 Caso 1: falso positivo em autorreferência intencional (muito rara) — Monitorado
+- Deduplicação pode fundir dois absurdos distintos no mesmo artigo — Monitorado
+- Modelo pode classificar absurdo manifesto como ⚠ Aviso — Monitorado (P1 cobre)
+- Relator confirma sem ler alertas (checkbox impulsivo) — Residual aceito (usabilidade)
+- IA gera resposta formalmente válida (todos os pares) mas sem alertas que deveriam existir — Residual aceito (indistinguível sem saber o PLC)
+
+---
+
+════════════════════════════════════════════════════════════════
+ARQUIVO 2: harmonizer.py (completo — rev.10)
+════════════════════════════════════════════════════════════════
+
+"""
+harmonizer.py — Motor de harmonização legislativa
+Sistema de Redações — CCJ CMRJ
+"""
+
+import re
+import json
+import anthropic
+from dataclasses import dataclass, field, asdict
+from typing import Optional
+from enum import Enum
+
+
+class TipoEmenda(Enum):
+    MODIFICATIVA  = "Modificativa"
+    SUPRESSIVA    = "Supressiva"
+    ADITIVA       = "Aditiva"
+    SUBSTITUTIVA  = "Substitutiva"
+    AGLUTINATIVA  = "Aglutinativa"
+    OUTRO         = "Outro"
+
+
+class StatusEmenda(Enum):
+    PENDENTE     = "Pendente"
+    APROVADA     = "Aprovada"
+    REJEITADA    = "Rejeitada"
+    PREJUDICADA  = "Prejudicada"
+
+
+@dataclass
+class Emenda:
+    numero: int
+    texto_bruto: str
+    tipo: Optional[TipoEmenda] = None
+    alvo: Optional[str] = None
+    novo_texto: Optional[str] = None
+    autor: Optional[str] = None
+    status: StatusEmenda = StatusEmenda.PENDENTE
+    parseada: bool = False
+    notas_parse: Optional[str] = None
+
+    def to_dict(self) -> dict:
+        d = asdict(self)
+        d['tipo']   = self.tipo.value if self.tipo else None
+        d['status'] = self.status.value
+        return d
+
+    @classmethod
+    def from_dict(cls, d: dict) -> "Emenda":
+        tipo_map   = {t.value: t for t in TipoEmenda}
+        status_map = {s.value: s for s in StatusEmenda}
+        e = cls(
+            numero      = d['numero'],
+            texto_bruto = d['texto_bruto'],
+            tipo        = tipo_map.get(d.get('tipo') or ''),
+            alvo        = d.get('alvo'),
+            novo_texto  = d.get('novo_texto'),
+            autor       = d.get('autor'),
+            status      = status_map.get(d.get('status') or 'Pendente', StatusEmenda.PENDENTE),
+            parseada    = d.get('parseada', False),
+            notas_parse = d.get('notas_parse'),
+        )
+        return e
+
+
+@dataclass
+class ResultadoHarmonizacao:
+    texto_harmonizado: str
+    avisos: list[str] = field(default_factory=list)
+    erros_criticos: list[str] = field(default_factory=list)
+    alertas_absurdos: list[str] = field(default_factory=list)
+    mapa_renumeracao: dict = field(default_factory=dict)
+    log_alteracoes: list[str] = field(default_factory=list)
+
+
+def _chunk_text(text: str, max_chars: int = 40_000) -> list[str]:
+    if len(text) <= max_chars:
+        return [text]
+    chunks, current = [], []
+    current_len = 0
+    for line in text.split('\n'):
+        if current_len + len(line) > max_chars and current:
+            chunks.append('\n'.join(current))
+            current, current_len = [], 0
+        current.append(line)
+        current_len += len(line) + 1
+    if current:
+        chunks.append('\n'.join(current))
+    return chunks
+
+
+def _detectar_absurdos_estruturais(texto: str) -> list[str]:
+    alertas: list[str] = []
+
+    # Caso 1: Autoreferência circular
+    art_matches = list(re.finditer(r'(?m)^Art\.\s*(\d+)', texto))
+    for idx, m in enumerate(art_matches):
+        num_art = m.group(1)
+        corpo_ini = m.end()
+        corpo_fim = art_matches[idx + 1].start() if idx + 1 < len(art_matches) else len(texto)
+        corpo = texto[corpo_ini:corpo_fim]
+        refs_art = re.findall(
+            r'\b(?:n[oa]s?|d[oa]s?|ao?|conform[ae]?|observad[oa])\s+[Aa]rt\.?\s*(\d+)',
+            corpo
+        )
+        if any(r == num_art for r in refs_art):
+            alertas.append(
+                f"🔴 Art. {num_art}: o dispositivo referencia o próprio Art. {num_art} "
+                f"(autoreferência circular) — absurdo manifesto detectado em pós-processamento "
+                f"(Caso 1 — art. 250, §2º RI). A providência regimental indicada é a reabertura da discussão."
+            )
+
+    # Caso 2: Condição normativa inoperante
+    for par_m in re.finditer(
+        r'(?m)^\s*§\s*(\d+)[ºo°]?\s(.+?)(?=\n\s*§\s*\d|\n\s*Art\.\s*\d|\Z)',
+        texto, re.DOTALL
+    ):
+        par_num  = par_m.group(1)
+        par_body = par_m.group(2)
+        for ref_m in re.finditer(
+            r'§\s*(\d+)[ºo°]?\s+deste\s+artigo',
+            par_body, re.IGNORECASE
+        ):
+            if ref_m.group(1) == par_num:
+                alertas.append(
+                    f"🔴 §{par_num}º: o parágrafo remete ao próprio §{par_num}º deste artigo "
+                    f"(condição normativa inoperante) — absurdo manifesto detectado em pós-processamento "
+                    f"(Caso 2 — art. 250, §2º RI). A providência regimental indicada é a reabertura da discussão."
+                )
+                break
+
+    return alertas
+
+
+_PADROES_ABSURDO_AVISO = re.compile(
+    r'referência circular'
+    r'|aponta para o próprio artigo'
+    r'|autoref(?:erência)?'
+    r'|artigo.*referencia.*a si mesmo'
+    r'|condição.*suprimid'
+    r'|suprimid.*condição'
+    r'|§\s*\d+.*suprimid'
+    r'|§.*não existe mais'
+    r'|§.*foi suprimid'
+    r'|artigo anterior.*incompatível'
+    r'|incompatível.*artigo anterior'
+    r'|artigo anterior.*trata\b'
+    r'|artigo anterior.*após.*renumer'
+    r'|artigo anterior.*monitoramento'
+    r'|artigo anterior.*fiscaliz'
+    r'|artigo anterior.*diferente'
+    r'|artigo anterior.*passou a ser'
+    r'|artigo anterior.*versa\b',
+    re.IGNORECASE | re.DOTALL
+)
+
+
+def _escalar_avisos_para_absurdos(
+    avisos: list[str],
+    texto_harm: str,
+    alertas_existentes: list[str],
+) -> tuple[list[str], list[str]]:
+    def _nums(s: str) -> set[str]:
+        s_clean = re.sub(r'\[.*?\]', '', s, flags=re.DOTALL)
+        s_clean = re.sub(r'\(.*?\)', '', s_clean, flags=re.DOTALL)
+        s_clean = re.sub(r'\bart\.?\s*250\b[^\n.;]*', '', s_clean, flags=re.IGNORECASE)
+        return set(re.findall(r'(?:Art\.\s*\d+|§\s*\d+)', s_clean, re.IGNORECASE))
+
+    def _ja_cobre(candidato: str, lista: list[str]) -> bool:
+        ns = _nums(candidato)
+        return bool(ns) and any(bool(ns & _nums(e)) for e in lista)
+
+    alertas_estruturais = _detectar_absurdos_estruturais(texto_harm)
+    nums_est: set[str] = set().union(*(_nums(a) for a in alertas_estruturais)) if alertas_estruturais else set()
+
+    avisos_restantes: list[str] = []
+    alertas_de_avisos: list[str] = []
+
+    for aviso in avisos:
+        nums_av = _nums(aviso)
+        if _PADROES_ABSURDO_AVISO.search(aviso) or (nums_av & nums_est):
+            texto_limpo = re.sub(r'^⚠\s*', '', aviso.strip())
+            alertas_de_avisos.append(
+                f"🔴 {texto_limpo}  "
+                f"[Reclassificado: absurdo manifesto — art. 250, §2º RI]"
+            )
+        else:
+            avisos_restantes.append(aviso)
+
+    todos: list[str] = list(alertas_existentes)
+    for a in alertas_estruturais:
+        if not _ja_cobre(a, todos):
+            todos.append(a)
+    for a in alertas_de_avisos:
+        if not _ja_cobre(a, todos):
+            todos.append(a)
+
+    return avisos_restantes, todos
+
+
+def parsear_emendas_com_ia(texto_emendas: str, api_key: str) -> list[Emenda]:
+    client = anthropic.Anthropic(api_key=api_key)
+    chunks = _chunk_text(texto_emendas, max_chars=60_000)
+    todas_emendas: list[Emenda] = []
+    offset = 0
+
+    for chunk in chunks:
+        prompt = f"""Você é especialista em técnica legislativa municipal brasileira.
+Extraia CADA emenda separadamente em formato JSON.
+Para cada emenda: numero, tipo, alvo, novo_texto, texto_bruto (EXATO), autor, notas.
+Responda SOMENTE com JSON válido.
+
+TEXTO DAS EMENDAS:
+{chunk}"""
+
+        n_antes = len(todas_emendas)
+
+        try:
+            with client.messages.stream(
+                model="claude-sonnet-4-6",
+                max_tokens=20000,
+                messages=[{"role": "user", "content": prompt}]
+            ) as stream:
+                resp_text = stream.get_final_text()
+
+            match = re.search(r'\{.*\}', resp_text, re.DOTALL)
+            if not match:
+                continue
+            data = json.loads(match.group())
+
+            for idx_item, item in enumerate(data.get("emendas", []), start=1):
+                tipo_map = {t.value: t for t in TipoEmenda}
+                texto_bruto = (
+                    item.get("texto_bruto")
+                    or item.get("novo_texto")
+                    or f"[Emenda {item.get('numero', '?')} — {item.get('tipo', '')} | {item.get('alvo', '')}]"
+                )
+                numero = item.get("numero")
+                if numero is None:
+                    numero = offset + idx_item
+                e = Emenda(
+                    numero      = numero,
+                    texto_bruto = texto_bruto,
+                    tipo        = tipo_map.get(item.get("tipo") or "", TipoEmenda.OUTRO),
+                    alvo        = item.get("alvo"),
+                    novo_texto  = item.get("novo_texto"),
+                    autor       = item.get("autor"),
+                    parseada    = True,
+                    notas_parse = item.get("notas"),
+                )
+                todas_emendas.append(e)
+
+        except (json.JSONDecodeError, KeyError, IndexError):
+            partes = re.split(r'\n(?=EMENDA\s)', chunk, flags=re.IGNORECASE)
+            for parte in partes:
+                if parte.strip():
+                    num = offset + len(todas_emendas) + 1
+                    todas_emendas.append(Emenda(
+                        numero=num, texto_bruto=parte.strip(), parseada=False,
+                        notas_parse="Parsing automático falhou — revisar manualmente"
+                    ))
+
+        offset += len(todas_emendas) - n_antes
+
+    todas_emendas.sort(key=lambda e: e.numero)
+    return todas_emendas
+
+
+def harmonizar_texto(
+    texto_original: str,
+    emendas: list[Emenda],
+    api_key: str,
+    nome_projeto: str = ""
+) -> ResultadoHarmonizacao:
+    client = anthropic.Anthropic(api_key=api_key)
+    aprovadas = [e for e in emendas if e.status == StatusEmenda.APROVADA]
+
+    if not aprovadas:
+        return ResultadoHarmonizacao(
+            texto_harmonizado=texto_original,
+            log_alteracoes=["Nenhuma emenda aprovada. Texto original mantido."]
+        )
+
+    linhas_emendas = []
+    for e in aprovadas:
+        tipo_str  = e.tipo.value if e.tipo else "Tipo não informado"
+        alvo_str  = e.alvo or "alvo não especificado"
+        autor_str = f" | Autor: {e.autor}" if e.autor else ""
+        linhas_emendas.append(
+            f"── EMENDA Nº {e.numero} ({tipo_str}) | Alvo: {alvo_str}{autor_str}\n"
+            f"{e.novo_texto or e.texto_bruto}"
+        )
+    bloco_emendas = "\n\n".join(linhas_emendas)
+
+    prompt = f"""Você é o assessor jurídico da CCJ da Câmara Municipal do Rio de Janeiro,
+responsável pela elaboração da REDAÇÃO FINAL (art. 250, Res. 1.673/2025 — RI).
+
+{"PROJETO: " + nome_projeto if nome_projeto else ""}
+
+A1. PRESERVAÇÃO DO TEOR — REGRA ABSOLUTA INVIOLÁVEL
+    Incorporar cada emenda LITERALMENTE. NUNCA remova, parafraseie ou "conserte".
+    Exceção única: correções E1 (linguagem, não teor) — obrigatoriamente registradas.
+
+A2. REFERÊNCIAS CRUZADAS (única alteração automática de conteúdo)
+    Atualizar todas as referências internas após renumeração.
+    Aglutinativas: conteúdo migrado aponta para o artigo receptor.
+
+E1. CORREÇÕES AUTOMÁTICAS DE LINGUAGEM (§1º RI):
+    CORRIJA: concordância, caixa incorreta, pontuação Bloco C (exceto "; e").
+    NUNCA ALTERE: números, valores, termos técnicos, sujeito/objeto/verbo obrigacional.
+    APONTE mas não corrija: "anterior"/"seguinte" vago, "Parágrafo único" incorreto.
+
+E1.5. PROIBIÇÃO ABSOLUTA — NUNCA inclua em AVISOS análises de mérito:
+    CA, gabaritos, parâmetros urbanísticos — assuntos de MÉRITO, soberania do Plenário.
+
+E2. ERROS CRÍTICOS — não resolve; providência regimental: reabertura (§2º RI).
+
+E3. ABSURDO MANIFESTO — não resolve; providência regimental: reabertura (§2º RI).
+    4 casos obrigatórios como 🔴: (1) autoreferência circular; (2) condição inoperante;
+    (3) remissão incompatível; (4) referência exclusiva a dispositivo suprimido.
+
+TEXTO ORIGINAL:
+{texto_original}
+
+EMENDAS APROVADAS:
+{bloco_emendas}
+
+RESPONDA NESTE FORMATO XML:
+<TEXTO_HARMONIZADO>
+[Texto completo. Dispositivos com absurdo: verbatim + marcador [[⚠️ CCJ: DISPOSITIVO ININTELIGÍVEL]]]
+</TEXTO_HARMONIZADO>
+<MAPA_RENUMERACAO>
+[Uma linha por mudança. "Sem renumeração necessária." se não houver.]
+</MAPA_RENUMERACAO>
+<AVISOS>
+[Formato: "⚠ Emenda N / Art. Xº: descrição" — SOMENTE problemas de forma/linguagem.]
+[Escreva "Nenhum aviso." se não houver.]
+</AVISOS>
+<ERROS_CRITICOS>
+[Formato: "🚨 Emendas N e M: descrição do conflito"]
+[Escreva "Nenhum erro crítico." se não houver.]
+</ERROS_CRITICOS>
+<ALERTAS_ABSURDOS>
+[Formato: "🔴 Emenda N / Art. Xº: descrição precisa do absurdo"]
+[Escreva "Nenhum." se não houver.]
+</ALERTAS_ABSURDOS>
+<LOG_ALTERACOES>
+[Um registro por linha: "Emenda N (Tipo): ação exata realizada"]
+</LOG_ALTERACOES>"""
+
+    with client.messages.stream(
+        model="claude-sonnet-4-6",
+        max_tokens=60000,
+        messages=[{"role": "user", "content": prompt}]
+    ) as stream:
+        resp_text = stream.get_final_text()
+
+    def extrair(tag: str, default: str = "") -> str:
+        m = re.search(rf'<{tag}>(.*?)</{tag}>', resp_text, re.DOTALL)
+        return m.group(1).strip() if m else default
+
+    # ── Validação: todas as tags esperadas devem ter par completo ───────────
+    # Verificar só a tag de abertura não protege contra truncamento:
+    # resposta cortada após <TAG> faria extrair() devolver "" silenciosamente.
+    # TEXTO_HARMONIZADO e LOG_ALTERACOES também exigem conteúdo não vazio.
+    _TODAS_TAGS      = [
+        "TEXTO_HARMONIZADO", "MAPA_RENUMERACAO",
+        "AVISOS", "ERROS_CRITICOS", "ALERTAS_ABSURDOS", "LOG_ALTERACOES",
+    ]
+    _TAGS_NAO_VAZIAS = {"TEXTO_HARMONIZADO", "LOG_ALTERACOES"}
+
+    _sem_par:        list[str] = []
+    _conteudo_vazio: list[str] = []
+
+    for _tag in _TODAS_TAGS:
+        _m = re.search(rf'<{_tag}>(.*?)</{_tag}>', resp_text, re.DOTALL)
+        if not _m:
+            _sem_par.append(_tag)
+        elif _tag in _TAGS_NAO_VAZIAS and not _m.group(1).strip():
+            _conteudo_vazio.append(_tag)
+
+    if _sem_par:
+        raise ValueError(
+            f"Resposta da IA truncada — par completo ausente: {', '.join(_sem_par)}. "
+            "Tente novamente; se o erro persistir, reduza o número de emendas por lote."
+        )
+    if _conteudo_vazio:
+        raise ValueError(
+            f"Resposta da IA inválida — conteúdo obrigatório vazio em: "
+            f"{', '.join(_conteudo_vazio)}. Tente novamente."
+        )
+
+    texto_harm = re.search(
+        r'<TEXTO_HARMONIZADO>(.*?)</TEXTO_HARMONIZADO>', resp_text, re.DOTALL
+    ).group(1).strip()   # par validado acima — .group(1) seguro
+
+    mapa_raw    = extrair("MAPA_RENUMERACAO", "")
+    avisos_raw  = extrair("AVISOS", "")
+    erros_raw   = extrair("ERROS_CRITICOS", "")
+    alertas_raw = extrair("ALERTAS_ABSURDOS", "")
+    log_raw     = extrair("LOG_ALTERACOES", "")
+
+    mapa = {}
+    for linha in mapa_raw.splitlines():
+        if '→' in linha or '->' in linha:
+            partes = linha.replace('->', '→').split('→')
+            if len(partes) == 2:
+                mapa[partes[0].strip()] = partes[1].strip()
+
+    def parse_linhas(raw: str, modo: str = 'paragrafo') -> list[str]:
+        skip = {"Nenhum aviso.", "Nenhum erro crítico.", "Nenhum.", "Sem renumeração necessária."}
+        if modo == 'paragrafo':
+            blocos = re.split(r'\n\s*\n', raw.strip())
+            items = [' '.join(l.strip() for l in b.splitlines() if l.strip()) for b in blocos]
+        else:
+            items = [l.strip() for l in raw.splitlines() if l.strip()]
+        return [i for i in items if i and i not in skip]
+
+    avisos_list  = parse_linhas(avisos_raw,  modo='paragrafo')
+    erros_list   = parse_linhas(erros_raw,   modo='paragrafo')
+    alertas_list = parse_linhas(alertas_raw, modo='paragrafo')
+    log_list     = parse_linhas(log_raw,     modo='linha')
+
+    avisos_list, alertas_list = _escalar_avisos_para_absurdos(
+        avisos_list, texto_harm, alertas_list
+    )
+
+    return ResultadoHarmonizacao(
+        texto_harmonizado = texto_harm,
+        avisos            = avisos_list,
+        erros_criticos    = erros_list,
+        alertas_absurdos  = alertas_list,
+        mapa_renumeracao  = mapa,
+        log_alteracoes    = log_list,
+    )
+
+
+════════════════════════════════════════════════════════════════
+ARQUIVO 3: utils.py (completo)
+════════════════════════════════════════════════════════════════
+
+[Conteúdo idêntico à rev.6 anterior — sem alterações em utils.py nesta revisão.
+As funções críticas são: exportar_redacao_final_docx (lógica de dois modos),
+_aplicar_sufixo_a, analisar_estrutura, salvar_sessao/carregar_sessao.]
+
+Resumo das funções:
+- ler_docx / ler_txt / ler_pdf: leitura de arquivos
+- analisar_estrutura: conta artigos, parágrafos, incisos, alíneas, anexos
+- salvar_sessao / listar_sessoes / carregar_sessao: persistência em JSON
+- _aplicar_sufixo_a: insere "-A" no número do projeto (ex: PLC 92/2025 → PLC 92-A/2025)
+- exportar_redacao_final_docx: gera DOCX com lógica de dois modos (ver 11.1)
+- exportar_relatorio_problemas_txt: relatório de problemas em texto simples
+
+Código completo disponível em:
+https://github.com/ProfAlexandreAraujo/sistema-redacoes-ccj/blob/main/utils.py
+
+
+════════════════════════════════════════════════════════════════
+ARQUIVO 4: app.py (trechos críticos — ver 11.2 para o essencial)
+════════════════════════════════════════════════════════════════
+
+[app.py tem ~870 linhas. Os trechos de maior risco estão na seção 11.2 acima.]
+
+Pontos adicionais relevantes:
+- init_state(): inicializa session_state com defaults seguros
+- _resolver_api_key(): Secrets > env > input manual
+- Aba 1: carrega projeto (DOCX/TXT/PDF), detecta estrutura
+- Aba 2: carrega emendas (IA ou bruto), lista com edição inline de tipo/alvo
+- Aba 3: votação plenária (individual e em lote)
+- Aba 4: harmonização (checklist pré-requisitos, spinner, auto-salva sessão)
+- Aba 5: confirmação §2º, exportação DOCX/TXT/relatório
+
+Código completo:
+https://github.com/ProfAlexandreAraujo/sistema-redacoes-ccj/blob/main/app.py
+
+
+════════════════════════════════════════════════════════════════
+ARQUIVO 5: verificar.py (completo — rev.6)
+════════════════════════════════════════════════════════════════
+
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+verificar.py — Verificação do Sistema de Redações CCJ CMRJ (rev.6)
+64 verificações locais + harmonização completa opcional (--com-api).
+"""
+
+import sys, os, re, pathlib
+from io import BytesIO
+sys.stdout.reconfigure(encoding="utf-8")
+
+PASS  = "✅ PASS"
+FAIL  = "❌ FAIL"
+resultados: list[tuple[str, bool]] = []
+
+def chk(nome: str, ok: bool, detalhe: str = "") -> None:
+    simbolo = PASS if ok else FAIL
+    print(f"  {simbolo}  {nome}")
+    if detalhe and not ok:
+        print(f"         ↳ {detalhe}")
+    resultados.append((nome, ok))
+
+# [1]  IMPORTAÇÕES — 3 testes
+# [2]  SUFIXO -A — 4 testes
+# [3]  P1 Caso 1 — 2 testes
+# [4]  P1 Caso 2 — 1 teste
+# [5]  P1 Padrões semânticos — 5 testes
+# [6]  P1 Integração — 3 testes
+# [7]  EXPORTAÇÃO DOCX — 18 testes:
+#      7a: §2º sem confirmação → RASCUNHO
+#      7a2: §2º com confirmação → REDAÇÃO FINAL + ALERTA CRÍTICO + OVERRIDE-HUMANO
+#      7b: Sem §2º → REDAÇÃO FINAL normal
+#      7c: Fundamentação §2º nos absurdos
+#      7d: Seção de avisos não diz "preservados exatamente"
+#      7f: TXT rascunho (cabeçalho, slug, reabertura)
+# [7e] PARSING — 4 testes
+# [8]  ANÁLISE ESTRUTURAL — 3 testes
+# [9]  API KEY — 1 teste (esperado FAIL)
+# [10] ARQUIVOS STRESS TEST — 2 testes
+# [11] VALIDAÇÃO XML GENERALIZADA (rev.10) — 14 testes:
+#      11a: _TODAS_TAGS cobre 6 tags
+#      11b: _sem_par detecta truncamento
+#      11c: _TAGS_NAO_VAZIAS + _conteudo_vazio
+#      11d: TEXTO_HARMONIZADO sem par → None
+#      11e: TEXTO_HARMONIZADO truncada → None
+#      11f: TEXTO_HARMONIZADO válida → extraída
+#      11g: .group(1).strip() sem fallback
+#      11h: MAPA_RENUMERACAO truncada → None
+#      11i: AVISOS truncada → None
+#      11j: ERROS_CRITICOS truncada → None
+#      11k: ALERTAS_ABSURDOS truncada → None
+#      11l: LOG_ALTERACOES truncada → None
+#      11m: LOG_ALTERACOES em _TAGS_NAO_VAZIAS
+#      11n: Resposta completa → 6 pares detectados
+# [12] _invalidar_resultado() — 5 testes
+
+# RESULTADO: 64/65 (único FAIL = API key ausente — esperado)

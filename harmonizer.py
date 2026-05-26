@@ -293,7 +293,10 @@ TEXTO DAS EMENDAS:
             # Extrai JSON da resposta
             match = re.search(r'\{.*\}', resp_text, re.DOTALL)
             if not match:
-                continue
+                raise ValueError(
+                    "IA não retornou JSON válido neste lote — "
+                    "emendas serão criadas como brutas para revisão manual."
+                )
             data = json.loads(match.group())
 
             for idx_item, item in enumerate(data.get("emendas", []), start=1):
@@ -320,7 +323,7 @@ TEXTO DAS EMENDAS:
                 )
                 todas_emendas.append(e)
 
-        except (json.JSONDecodeError, KeyError, IndexError):
+        except (json.JSONDecodeError, KeyError, IndexError, ValueError):
             # Se parsing falhar, cria emendas brutas
             partes = re.split(r'\n(?=EMENDA\s)', chunk, flags=re.IGNORECASE)
             for parte in partes:

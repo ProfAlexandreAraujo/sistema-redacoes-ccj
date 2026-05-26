@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-verificar.py — Verificação do Sistema de Redações CCJ CMRJ (rev.5)
+verificar.py — Verificação do Sistema de Redações CCJ CMRJ (rev.7)
 Testa todos os comportamentos críticos do AUDITORIA.md sem custo de API.
 
 Uso:
@@ -32,7 +32,7 @@ def chk(nome: str, ok: bool, detalhe: str = "") -> None:
 
 print()
 print("=" * 65)
-print("  VERIFICAÇÃO DO SISTEMA — CCJ CMRJ — rev.5")
+print("  VERIFICAÇÃO DO SISTEMA — CCJ CMRJ — rev.7")
 print("=" * 65)
 
 # ────────────────────────────────────────────────────────────────────────────
@@ -333,6 +333,17 @@ chk("Offset 2 lotes de 2: sequência é [1,2,3,4] (não [1,2,5,6])",
     f"sequência: {[e.numero for e in todas2]}")
 chk("Offset após 2 lotes = 4 (não 6)",
     offset_sim == 4, f"offset={offset_sim}")
+
+# P1: parsing sem JSON — raise ValueError (não continue silencioso)
+import inspect as _inspect_p
+from harmonizer import parsear_emendas_com_ia as _parse_fn
+_src_parse = _inspect_p.getsource(_parse_fn)
+
+chk("Parsing sem JSON: raise ValueError com mensagem clara (não continue silencioso)",
+    "raise ValueError" in _src_parse and "IA não retornou JSON" in _src_parse)
+
+chk("Except captura ValueError — fallback bruto ativado (emendas não perdidas)",
+    bool(re.search(r'except\s*\([^)]*ValueError', _src_parse)))
 
 # ────────────────────────────────────────────────────────────────────────────
 # 8. ANÁLISE ESTRUTURAL
