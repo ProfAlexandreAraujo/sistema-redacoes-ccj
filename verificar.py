@@ -332,6 +332,15 @@ if _DOCX_OK:
         chk("B7 — corpo do texto: run.font.name == 'Arial'",
             _corpo_font == 'Arial',
             f"encontrado: {_corpo_font!r}")
+        # Heading styles do anexo devem ser Arial 11pt (não herdar tamanhos maiores do Word)
+        _h2_font = _doc_b7.styles['Heading 2'].font.name if 'Heading 2' in _doc_b7.styles else None
+        _h2_size = _doc_b7.styles['Heading 2'].font.size if 'Heading 2' in _doc_b7.styles else None
+        chk("B7 — Heading 2 style: font.name == 'Arial'",
+            _h2_font == 'Arial',
+            f"encontrado: {_h2_font!r}")
+        chk("B7 — Heading 2 style: font.size == 11pt",
+            _h2_size == _Pt(11),
+            f"encontrado: {_h2_size}")
     except Exception as e:
         chk("7g — B7 formatação DOCX", False, str(e))
 

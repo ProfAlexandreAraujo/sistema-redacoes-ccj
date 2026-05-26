@@ -279,7 +279,8 @@ alteradas por subemendas aprovadas era aplicado na versão original, ignorando a
   - **P3 cadeia → `erros_criticos` §2º; excluída** (positivo + negativo + exclusão)
   - parsear reconhece `subemenda_de`; app.py exibe painel
   - **2 novos testes em rev.17:** fallback multi-lote [1,2,3,4] e offset após fallback = 4
-- **Resultado: 118/119** (1 falha esperada: chave API não configurada localmente)
+  - **5 novos testes em rev.19 (seção 7g):** Normal Arial 11pt, 1 tabela apenas, ementa como parágrafo, corpo Arial, heading fonts
+- **Resultado: 123/124** (1 falha esperada: chave API não configurada localmente)
 
 Novo teste adicionado em rev.16 (Seção 8):
 ```python
@@ -507,19 +508,19 @@ docx_bytes = exportar_redacao_final_docx(
 )
 ```
 
-**Comparação antes/depois (rev.15 → rev.16):**
+**Evolução histórica da formatação DOCX:**
 
-| Elemento | rev.15 (quebrado) | rev.16 (correto) |
-|---|---|---|
-| Fonte | 12pt | 10pt Times New Roman |
-| Margens | padrão Word | 2.5cm todos os lados |
-| Artigos | **negritados** | sem negrito |
-| "A CÂMARA MUNICIPAL" | sem negrito | **BOLD** |
-| "D E C R E T A" | sem negrito | **BOLD** + alinhado à direita |
-| EMENTA | ausente | tabela sem bordas |
-| Autor(es) | ausente | parágrafo BOLD + JUSTIFY |
-| Fecho | ausente | "Sala da Comissão, DD de mês de YYYY." |
-| Assinaturas | ausente | Átila Nunes + tabela Dr. Gilberto / Inaldo Silva |
+| Elemento | rev.15 (quebrado) | rev.16 B4 (modelo CMRJ) | **rev.18 B7 (atual)** |
+|---|---|---|---|
+| Fonte | 12pt | Times New Roman 10pt | **Arial 11pt** |
+| Margens | padrão Word | 2.5cm todos os lados | 2.5cm (inalterado) |
+| Artigos | **negritados** | sem negrito | sem negrito (inalterado) |
+| "A CÂMARA MUNICIPAL" | sem negrito | **BOLD** | **BOLD** (inalterado) |
+| "D E C R E T A" | sem negrito | **BOLD** + à direita | **BOLD** + à direita (inalterado) |
+| EMENTA | ausente | tabela sem bordas | **parágrafo simples** |
+| Autor(es) | ausente | parágrafo BOLD + JUSTIFY | parágrafo BOLD (inalterado) |
+| Fecho | ausente | "Sala da Comissão..." CENTER | "Sala da Comissão..." (inalterado) |
+| Assinaturas | ausente | Átila Nunes + tabela 2×2 | tabela 2×2 (inalterado) |
 
 ### B5 — `utils.py`: imports de API interna do python-docx no topo do módulo (hotfix rev.16.1, commit 39420c4)
 
@@ -576,11 +577,11 @@ for parte in partes:
 ```
 
 **Novos testes em verificar.py:** 2 verificações do cenário multi-lote com fallback
-(118/119 após fix; 1 falha esperada = API key ausente).
+(118/119 após fix de B6; 123/124 após rev.19 com 5 novos testes B7; 1 falha esperada = API key ausente).
 
 ---
 
-## Arquitetura de proteções (estado atual — rev.17)
+## Arquitetura de proteções (estado atual — rev.19)
 
 | Proteção | Onde | O que faz |
 |---|---|---|
@@ -711,9 +712,12 @@ for parte in partes:
   Gap confirmado: ausência de smoke test de carregamento de módulo em ambiente Linux.
 - **rev.17:** B5 ✅ **FECHADO** — download de DOCX confirmado funcionando no Cloud.
   B6 — fallback de parsing multi-lote corrigido (`offset + idx_fb + 1`);
-  2 novos testes em verificar.py (118/119). Arquivos de referência CMRJ (4 DOCX + 1 PDF)
+  2 novos testes em verificar.py (118/119 na época). Arquivos de referência CMRJ (4 DOCX + 1 PDF)
   agora rastreados no Git. Inconsistência de nome em `730-A_2026` documentada.
 - **rev.18:** B7 — formatação DOCX unificada: ementa movida para parágrafo simples (elimina
   tabela de ementa e reduz uso de `oxml`); corpo e assinaturas com Arial 11pt via constantes
   `_FONT`/`_FSIZE`; `size_pt=10` explícito removido de título, nº projeto, EMENTA:, Autor(es).
-  (nome do arquivo = ano da Redação Final; conteúdo = ano do projeto — comportamento normal).
+- **rev.19:** resposta à auditoria externa do rev.18 — 5 testes B7 adicionados em verificar.py
+  (seção 7g): Normal Arial 11pt, 1 tabela apenas, ementa como parágrafo, corpo Arial;
+  Heading 1/2/3 unificados para Arial 11pt em utils.py; PROMPT_AUDITORIA_EXTERNA.md e
+  AUDITORIA.md corrigidos: critérios B4 históricos marcados, contagens atualizadas (123/124).

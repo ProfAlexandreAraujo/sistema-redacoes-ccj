@@ -238,7 +238,7 @@ Usar `TAB_1_PLC_17_2026_TEXTO_ORIGINAL.txt` (19 artigos + 4 Anexos) com `TAB_2_P
 ```
 cd C:\Users\Admin\Documents\Claude\CCJ\sistema_redacoes && python verificar.py
 ```
-Testa (116 verificações locais — rev.16): importações, sufixo -A, detectores estruturais P1 (casos 1 e 2), padrões semânticos P1 (caso 3), escalador integrado, exportação DOCX em dois modos, fundamentação §2º, seção de avisos, TXT modo rascunho, parsing de emendas e offset, **análise estrutural incluindo Art sem ponto (B1)**, disponibilidade de API e arquivos de teste, validação XML, `_invalidar_resultado()`, A4, E2, subemendas (P1/P2/P3).
+Testa (123/124 verificações locais — rev.19): importações, sufixo -A, detectores estruturais P1 (casos 1 e 2), padrões semânticos P1 (caso 3), escalador integrado, exportação DOCX em dois modos, fundamentação §2º, seção de avisos, TXT modo rascunho, parsing de emendas e offset, **análise estrutural incluindo Art sem ponto (B1)**, disponibilidade de API e arquivos de teste, validação XML, `_invalidar_resultado()`, A4, E2, subemendas (P1/P2/P3).
 
 ### Verificação completa (com harmonização real — custo ~$0,50)
 ```
@@ -269,13 +269,13 @@ Executa adicionalmente: harmonização completa do PLC 17/2026 com as 10 emendas
 
 ---
 
-## 11. Extratos de código para verificação (rev.16)
+## 11. Extratos de código para verificação (rev.19)
 
 Esta seção contém os trechos mais críticos do código atual para facilitar a auditoria. O código completo está em https://github.com/ProfAlexandreAraujo/sistema-redacoes-ccj
 
 ---
 
-### 11.1 `utils.py` — exportação DOCX no formato oficial CMRJ — rev.16
+### 11.1 `utils.py` — exportação DOCX no formato oficial CMRJ — rev.19
 
 A função foi **completamente reescrita** para seguir os 4 modelos reais da CMRJ
 (`730-A_2026 -- REDAÇÃO FINAL.docx`, `279-A-2025 - REDAÇÃO DO VENCIDO.docx`,
@@ -298,22 +298,22 @@ def exportar_redacao_final_docx(
 ) -> bytes:
 ```
 
-**Diferenças entre rev.15 (incorreto) e rev.16 (modelo CMRJ):**
+**Evolução histórica da formatação DOCX (B4 rev.16 → B7 rev.18):**
 
-| Elemento | Antes rev.15 | Depois rev.16 (modelo oficial) |
-|---|---|---|
-| Fonte | Times New Roman **12pt** | Times New Roman **10pt** |
-| Página | Sem definição | A4 (21,0×29,7cm), margens **2,5cm** todos os lados |
-| Cabeçalho | Heading 1 "CÂMARA MUNICIPAL" + Heading 2 "CCJ" | **Removido** — não consta nos modelos reais |
-| Título | Bold 14pt, sem sublinhado | **Bold + Underline** 10pt CENTER |
-| Artigos | **Bold** (incorreto) | **Sem negrito** (conforme modelos) |
-| `A CÂMARA MUNICIPAL...` | Sem destaque | **Bold JUSTIFY** |
-| `DECRETA:` / `D E C R E T A:` | Sem destaque | **Bold RIGHT** (detectado por regex) |
-| Ementa | **Ausente** | EMENTA: bold + tabela sem bordas |
-| Autor(es) | **Ausente** | Bold JUSTIFY |
-| "Elaborada em DD/MM" | No corpo | **Removido** do corpo |
-| Fecho | **Ausente** | "Sala da Comissão, DD de mês de YYYY." CENTER sp6 |
-| Assinaturas | **Ausentes** | Átila Nunes (presidente) + tabela 2×2 sem bordas (Dr. Gilberto \| Inaldo Silva) |
+| Elemento | Antes rev.15 | Depois rev.16 B4 | **Estado atual rev.18 B7** |
+|---|---|---|---|
+| Fonte | Times New Roman **12pt** | Times New Roman **10pt** | **Arial 11pt** |
+| Página | Sem definição | A4 (21,0×29,7cm), margens **2,5cm** todos os lados | inalterado |
+| Cabeçalho | Heading 1 "CÂMARA MUNICIPAL" + Heading 2 "CCJ" | **Removido** | inalterado |
+| Título | Bold 14pt, sem sublinhado | **Bold + Underline** 10pt CENTER | Arial 11pt (size_pt explícito removido) |
+| Artigos | **Bold** (incorreto) | **Sem negrito** (conforme modelos) | inalterado |
+| `A CÂMARA MUNICIPAL...` | Sem destaque | **Bold JUSTIFY** | inalterado |
+| `DECRETA:` / `D E C R E T A:` | Sem destaque | **Bold RIGHT** (detectado por regex) | inalterado |
+| Ementa | **Ausente** | EMENTA: bold + tabela sem bordas | **parágrafo simples** (sem tabela) |
+| Autor(es) | **Ausente** | Bold JUSTIFY | inalterado |
+| "Elaborada em DD/MM" | No corpo | **Removido** do corpo | inalterado |
+| Fecho | **Ausente** | "Sala da Comissão, DD de mês de YYYY." CENTER sp6 | inalterado |
+| Assinaturas | **Ausentes** | Átila Nunes (presidente) + tabela 2×2 sem bordas | inalterado |
 
 **Trecho chave — configuração de página e ementa:**
 ```python
