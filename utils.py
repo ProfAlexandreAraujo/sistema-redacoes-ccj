@@ -12,8 +12,6 @@ from pathlib import Path
 from docx import Document
 from docx.shared import Pt, Cm, RGBColor
 from docx.enum.text import WD_ALIGN_PARAGRAPH
-from docx.oxml.ns import qn
-from docx.oxml import OxmlElement
 
 from harmonizer import Emenda, TipoEmenda, StatusEmenda, ResultadoHarmonizacao
 
@@ -239,17 +237,22 @@ def _aplicar_sufixo_a(nome: str) -> str:
 
 def _remover_bordas_tabela(tabela) -> None:
     """Remove todas as bordas visíveis de uma tabela python-docx."""
+    # Imports lazy: evita falha de importação no nível de módulo em ambientes
+    # onde as APIs internas do python-docx estão em caminhos diferentes.
+    from docx.oxml.ns import qn as _qn
+    from docx.oxml import OxmlElement as _OxmlElement
+
     for row in tabela.rows:
         for cell in row.cells:
             tc   = cell._tc
             tcPr = tc.get_or_add_tcPr()
-            tcBorders = OxmlElement('w:tcBorders')
+            tcBorders = _OxmlElement('w:tcBorders')
             for edge in ('top', 'left', 'bottom', 'right', 'insideH', 'insideV'):
-                tag = OxmlElement(f'w:{edge}')
-                tag.set(qn('w:val'),   'none')
-                tag.set(qn('w:sz'),    '0')
-                tag.set(qn('w:space'), '0')
-                tag.set(qn('w:color'), 'auto')
+                tag = _OxmlElement(f'w:{edge}')
+                tag.set(_qn('w:val'),   'none')
+                tag.set(_qn('w:sz'),    '0')
+                tag.set(_qn('w:space'), '0')
+                tag.set(_qn('w:color'), 'auto')
                 tcBorders.append(tag)
             tcPr.append(tcBorders)
 
