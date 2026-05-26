@@ -376,9 +376,9 @@ chk("TAB_1 (texto original) encontrado", TAB1.exists(), str(TAB1))
 chk("TAB_2 (emendas) encontrado",        TAB2.exists(), str(TAB2))
 
 # ────────────────────────────────────────────────────────────────────────────
-# 11. VALIDAÇÃO XML: TEXTO_HARMONIZADO obrigatório em harmonizer.py
+# 11. VALIDAÇÃO XML GENERALIZADA: par completo em todas as tags (rev.10)
 # ────────────────────────────────────────────────────────────────────────────
-print("\n[11] VALIDAÇÃO XML (harmonizer.py)")
+print("\n[11] VALIDAÇÃO XML GENERALIZADA (harmonizer.py — rev.10)")
 
 try:
     from harmonizer import harmonizar_texto as _harm_func
@@ -386,43 +386,75 @@ try:
     import re as _re
     src = inspect.getsource(_harm_func)
 
-    # 11a — Par completo exigido (não só tag de abertura)
-    chk("Guarda exige par completo </TEXTO_HARMONIZADO> (não só abertura)",
-        "</TEXTO_HARMONIZADO>" in src and "m_texto_harm" in src)
+    # 11a — Guarda usa _TODAS_TAGS cobrindo 6 tags (incl. MAPA_RENUMERACAO)
+    chk("Guarda generalizada: _TODAS_TAGS cobre 6 tags (incl. MAPA_RENUMERACAO)",
+        bool(_re.search(r'_TODAS_TAGS\s*=\s*\[', src)) and
+        "MAPA_RENUMERACAO" in src and "LOG_ALTERACOES" in src)
 
-    # 11b — Conteúdo vazio também levanta erro
-    chk("Guarda rejeita conteúdo vazio (truncamento sem fechamento)",
-        "conteúdo vazio" in src or "conteúdo" in src and "strip()" in src)
+    # 11b — Truncamento detectado por ausência de par completo (_sem_par)
+    chk("Truncamento detectado por _sem_par (par abertura+fechamento)",
+        "_sem_par" in src)
 
-    # 11c — Tags de alertas obrigatórias verificadas
-    chk("Tags de alertas obrigatórias verificadas (AVISOS, ERROS_CRITICOS, etc.)",
-        "_tags_obrigatorias" in src and "AVISOS" in src and
-        "ERROS_CRITICOS" in src and "ALERTAS_ABSURDOS" in src)
+    # 11c — Conteúdo vazio rejeitado via _TAGS_NAO_VAZIAS e _conteudo_vazio
+    chk("Conteúdo vazio rejeitado: _TAGS_NAO_VAZIAS + _conteudo_vazio",
+        "_TAGS_NAO_VAZIAS" in src and "_conteudo_vazio" in src)
 
-    # 11d — Resposta sem tags → detectada como ausente (comportamental)
-    _resp_sem_tags = "Resposta malformada sem nenhuma tag XML esperada."
-    _m = _re.search(r'<TEXTO_HARMONIZADO>(.*?)</TEXTO_HARMONIZADO>', _resp_sem_tags, _re.DOTALL)
-    chk("Resposta sem par completo → m_texto_harm é None",
-        _m is None)
+    # 11d — TEXTO_HARMONIZADO: resposta sem par completo → None
+    _resp_sem = "Resposta malformada sem nenhuma tag XML esperada."
+    _md = _re.search(r'<TEXTO_HARMONIZADO>(.*?)</TEXTO_HARMONIZADO>', _resp_sem, _re.DOTALL)
+    chk("TEXTO_HARMONIZADO: sem par completo → None",
+        _md is None)
 
-    # 11e — Resposta truncada (só abertura, sem fechamento) → detectada
-    _resp_truncada = "<TEXTO_HARMONIZADO>\nArt. 1º Texto sem fechamento..."
-    _m2 = _re.search(r'<TEXTO_HARMONIZADO>(.*?)</TEXTO_HARMONIZADO>', _resp_truncada, _re.DOTALL)
-    chk("Resposta truncada (sem </TEXTO_HARMONIZADO>) → m_texto_harm é None",
-        _m2 is None)
+    # 11e — TEXTO_HARMONIZADO: truncada (só abertura, sem fechamento) → None
+    _resp_trunc = "<TEXTO_HARMONIZADO>\nArt. 1º Texto sem fechamento..."
+    _me = _re.search(r'<TEXTO_HARMONIZADO>(.*?)</TEXTO_HARMONIZADO>', _resp_trunc, _re.DOTALL)
+    chk("TEXTO_HARMONIZADO: truncada (sem fechamento) → None",
+        _me is None)
 
-    # 11f — Resposta válida → extraída corretamente
+    # 11f — TEXTO_HARMONIZADO: válida → extraída com group(1)
     _resp_ok = "<TEXTO_HARMONIZADO>\nArt. 1º Texto.\nArt. 2º Outro.\n</TEXTO_HARMONIZADO>"
-    _m3 = _re.search(r'<TEXTO_HARMONIZADO>(.*?)</TEXTO_HARMONIZADO>', _resp_ok, _re.DOTALL)
-    chk("Resposta válida → texto extraído corretamente",
-        _m3 is not None and "Art. 1º" in _m3.group(1))
+    _mf = _re.search(r'<TEXTO_HARMONIZADO>(.*?)</TEXTO_HARMONIZADO>', _resp_ok, _re.DOTALL)
+    chk("TEXTO_HARMONIZADO: válida → extraída com group(1)",
+        _mf is not None and "Art. 1º" in _mf.group(1))
 
-    # 11g — texto_harm não usa mais extrair() com fallback para texto_original
-    chk("texto_harm usa m_texto_harm.group(1) (não extrair com fallback)",
-        "m_texto_harm.group(1).strip()" in src)
+    # 11g — texto_harm usa .group(1).strip() (sem fallback silencioso)
+    chk("texto_harm usa .group(1).strip() após validação (sem fallback)",
+        ".group(1).strip()" in src)
+
+    # 11h–11l — Truncamento detectado em cada uma das outras 5 tags
+    _OUTRAS_TAGS = [
+        "MAPA_RENUMERACAO", "AVISOS", "ERROS_CRITICOS",
+        "ALERTAS_ABSURDOS", "LOG_ALTERACOES",
+    ]
+    for _t in _OUTRAS_TAGS:
+        _resp_t = f"<{_t}>\nConteúdo truncado sem tag de fechamento..."
+        _mt = _re.search(rf'<{_t}>(.*?)</{_t}>', _resp_t, _re.DOTALL)
+        chk(f"{_t}: truncada (sem </{_t}>) → None",
+            _mt is None)
+
+    # 11m — LOG_ALTERACOES em _TAGS_NAO_VAZIAS (conteúdo não pode ser vazio)
+    chk("LOG_ALTERACOES exige conteúdo não vazio (em _TAGS_NAO_VAZIAS)",
+        bool(_re.search(r'_TAGS_NAO_VAZIAS\s*=\s*\{[^}]*LOG_ALTERACOES[^}]*\}', src)))
+
+    # 11n — Resposta completa válida: todos os 6 pares detectados
+    _resp_completa = (
+        "<TEXTO_HARMONIZADO>\nArt. 1º Texto.\n</TEXTO_HARMONIZADO>\n"
+        "<MAPA_RENUMERACAO>\nSem renumeração necessária.\n</MAPA_RENUMERACAO>\n"
+        "<AVISOS>\nNenhum aviso.\n</AVISOS>\n"
+        "<ERROS_CRITICOS>\nNenhum erro crítico.\n</ERROS_CRITICOS>\n"
+        "<ALERTAS_ABSURDOS>\nNenhum.\n</ALERTAS_ABSURDOS>\n"
+        "<LOG_ALTERACOES>\nEmenda 1 (Modificativa): Art. 1º atualizado.\n</LOG_ALTERACOES>"
+    )
+    _todos_ok = all(
+        _re.search(rf'<{t}>(.*?)</{t}>', _resp_completa, _re.DOTALL)
+        for t in ["TEXTO_HARMONIZADO", "MAPA_RENUMERACAO", "AVISOS",
+                  "ERROS_CRITICOS", "ALERTAS_ABSURDOS", "LOG_ALTERACOES"]
+    )
+    chk("Resposta completa e válida — todos os 6 pares detectados",
+        _todos_ok)
 
 except Exception as e:
-    chk("11 — validação XML", False, str(e))
+    chk("11 — validação XML generalizada", False, str(e))
 
 # ────────────────────────────────────────────────────────────────────────────
 # 12. _invalidar_resultado() PRESENTE E COBERTO EM app.py

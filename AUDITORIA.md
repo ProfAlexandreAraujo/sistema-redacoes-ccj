@@ -1,5 +1,5 @@
 # 🔍 AUDITORIA DO SISTEMA — CCJ CMRJ
-### Documento técnico para revisão externa — versão 2026-05-25 **rev.9**
+### Documento técnico para revisão externa — versão 2026-05-25 **rev.10**
 
 ---
 
@@ -151,6 +151,7 @@ Qualquer item escalado move-se de `avisos` para `alertas_absurdos`, ativando o m
 | 25/05/2026 | Resultado antigo sobrevivia a mudanças em emendas/votação (importar texto bruto, adicionar emenda manual, editar tipo/alvo, botões de votação individual e em lote) | Rastreabilidade/Consistência | ✅ app.py rev.8 — `_invalidar_resultado()` helper aplicado em todos os 13+ pontos de mutação |
 | 25/05/2026 | `extrair("TEXTO_HARMONIZADO", texto_original)` — resposta da IA sem tags retornava silenciosamente o original sem alertas | Falha silenciosa crítica | ✅ harmonizer.py rev.8 — guarda obrigatória: ValueError se `<TEXTO_HARMONIZADO>` ausente; default alterado para `""` |
 | 25/05/2026 | Guarda rev.8 verificava só tag de abertura — resposta truncada (sem `</TEXTO_HARMONIZADO>`) passava na guarda mas `extrair()` devolvia `""` silenciosamente | Falha silenciosa crítica (apontada por auditor externo) | ✅ harmonizer.py rev.9 — guarda exige par completo + conteúdo não vazio; tags de alertas (`AVISOS`, `ERROS_CRITICOS`, `ALERTAS_ABSURDOS`, `LOG_ALTERACOES`) também obrigatórias |
+| 25/05/2026 | Rev.9 exigia par completo apenas para `TEXTO_HARMONIZADO`; as demais 5 tags ainda checavam só a abertura — truncamento em qualquer delas (ex.: `<AVISOS>` sem `</AVISOS>`) faria `extrair()` devolver `""` silenciosamente, zerando alertas | Falha silenciosa generalizada | ✅ harmonizer.py rev.10 — guarda unificada: `_TODAS_TAGS` (6 tags) exige par completo via regex `<TAG>(.*?)</TAG>`; `_TAGS_NAO_VAZIAS` = {`TEXTO_HARMONIZADO`, `LOG_ALTERACOES`} exige conteúdo não vazio; verificar.py rev.6 — bloco [11] expandido: 14 verificações, truncamento testado tag a tag |
 
 ---
 
@@ -256,7 +257,7 @@ Executa adicionalmente: harmonização completa do PLC 17/2026 com as 10 emendas
 
 ---
 
-## 11. Extratos de código para verificação (rev.6)
+## 11. Extratos de código para verificação (rev.10)
 
 Esta seção contém os trechos mais críticos do código atual para facilitar a auditoria. O código completo está em https://github.com/ProfAlexandreAraujo/sistema-redacoes-ccj
 
@@ -354,29 +355,43 @@ docx_bytes = exportar_redacao_final_docx(
 
 ---
 
-### 11.3 `harmonizer.py` — validação XML obrigatória — rev.9
+### 11.3 `harmonizer.py` — validação XML obrigatória — rev.10
 
 ```python
-# Exige par completo <TEXTO_HARMONIZADO>...</TEXTO_HARMONIZADO> com conteúdo não vazio.
+# Guarda unificada: todas as 6 tags esperadas devem ter par completo.
 # Verificar só a tag de abertura não protege contra truncamento:
-# resposta cortada após <TEXTO_HARMONIZADO> passaria na guarda mas extrair() devolveria "".
-m_texto_harm = re.search(
-    r'<TEXTO_HARMONIZADO>(.*?)</TEXTO_HARMONIZADO>', resp_text, re.DOTALL
-)
-if not m_texto_harm or not m_texto_harm.group(1).strip():
-    _motivo = (
-        "par completo não encontrado" if not m_texto_harm else
-        "tag presente mas conteúdo vazio (resposta truncada?)"
+# resposta cortada após <TAG> faria extrair() devolver "" silenciosamente.
+# TEXTO_HARMONIZADO e LOG_ALTERACOES também exigem conteúdo não vazio.
+_TODAS_TAGS      = [
+    "TEXTO_HARMONIZADO", "MAPA_RENUMERACAO",
+    "AVISOS", "ERROS_CRITICOS", "ALERTAS_ABSURDOS", "LOG_ALTERACOES",
+]
+_TAGS_NAO_VAZIAS = {"TEXTO_HARMONIZADO", "LOG_ALTERACOES"}
+
+_sem_par:        list[str] = []
+_conteudo_vazio: list[str] = []
+
+for _tag in _TODAS_TAGS:
+    _m = re.search(rf'<{_tag}>(.*?)</{_tag}>', resp_text, re.DOTALL)
+    if not _m:
+        _sem_par.append(_tag)
+    elif _tag in _TAGS_NAO_VAZIAS and not _m.group(1).strip():
+        _conteudo_vazio.append(_tag)
+
+if _sem_par:
+    raise ValueError(
+        f"Resposta da IA truncada — par completo ausente: {', '.join(_sem_par)}. "
+        "Tente novamente; se o erro persistir, reduza o número de emendas por lote."
     )
-    raise ValueError(f"Resposta da IA inválida — {_motivo}. Tente novamente.")
+if _conteudo_vazio:
+    raise ValueError(
+        f"Resposta da IA inválida — conteúdo obrigatório vazio em: "
+        f"{', '.join(_conteudo_vazio)}. Tente novamente."
+    )
 
-# Tags de alertas também obrigatórias — truncamento após o texto não zera alertas
-_tags_obrigatorias = ["AVISOS", "ERROS_CRITICOS", "ALERTAS_ABSURDOS", "LOG_ALTERACOES"]
-_tags_ausentes = [t for t in _tags_obrigatorias if not re.search(rf'<{t}>', resp_text)]
-if _tags_ausentes:
-    raise ValueError(f"Resposta truncada — tags ausentes: {', '.join(_tags_ausentes)}.")
-
-texto_harm = m_texto_harm.group(1).strip()   # extraído direto, sem fallback silencioso
+texto_harm = re.search(
+    r'<TEXTO_HARMONIZADO>(.*?)</TEXTO_HARMONIZADO>', resp_text, re.DOTALL
+).group(1).strip()   # par validado acima — .group(1) seguro
 ```
 
 ---
@@ -433,7 +448,7 @@ _PADROES_ABSURDO_AVISO = re.compile(
 
 ---
 
-### 11.6 Resultado dos testes automatizados (verificar.py rev.5 — 57/58)
+### 11.6 Resultado dos testes automatizados (verificar.py rev.6 — 64/65)
 
 ```
 [1]  IMPORTAÇÕES               ✅ 3/3
@@ -453,15 +468,23 @@ _PADROES_ABSURDO_AVISO = re.compile(
 [8]  ANÁLISE ESTRUTURAL        ✅ 3/3
 [9]  API KEY                   ❌ 0/1  (esperado — chave ausente em ambiente local)
 [10] ARQUIVOS STRESS TEST      ✅ 2/2
-[11] VALIDAÇÃO XML
-  ✅  Par completo </TEXTO_HARMONIZADO> exigido (não só abertura)
-  ✅  Conteúdo vazio rejeitado (truncamento sem fechamento)
-  ✅  Tags de alertas obrigatórias verificadas
-  ✅  Sem par → None; Truncado → None; Válido → extrai; usa group(1) sem fallback  (7 verificações)
+[11] VALIDAÇÃO XML GENERALIZADA (rev.10 — 14 verificações)
+  ✅  _TODAS_TAGS cobre 6 tags (incl. MAPA_RENUMERACAO e LOG_ALTERACOES)
+  ✅  Truncamento detectado por _sem_par (par abertura+fechamento)
+  ✅  _TAGS_NAO_VAZIAS + _conteudo_vazio (conteúdo obrigatório não vazio)
+  ✅  TEXTO_HARMONIZADO: sem par → None; truncada → None; válida → group(1)
+  ✅  .group(1).strip() sem fallback silencioso
+  ✅  MAPA_RENUMERACAO: truncada → None
+  ✅  AVISOS: truncada → None
+  ✅  ERROS_CRITICOS: truncada → None
+  ✅  ALERTAS_ABSURDOS: truncada → None
+  ✅  LOG_ALTERACOES: truncada → None
+  ✅  LOG_ALTERACOES em _TAGS_NAO_VAZIAS (conteúdo obrigatório)
+  ✅  Resposta completa válida — todos os 6 pares detectados
 [12] HELPER _invalidar_resultado()
   ✅  Definido; ≥10 chamadas; v_apr; importar; adicionar manual               (5 verificações)
 
-RESULTADO: 57/58 (único fail = API key ausente — esperado)
+RESULTADO: 64/65 (único fail = API key ausente — esperado)
 ```
 
 ---
@@ -476,8 +499,9 @@ RESULTADO: 57/58 (único fail = API key ausente — esperado)
 | Relator pode confirmar ciência sem ler os alertas (checkbox impulsivo) | Possível | **Residual** | Interface exige: warning → checkbox → 2º st.error → log OVERRIDE-HUMANO rastreável; sem fricção de senha deliberadamente (usabilidade) |
 | IA não preenche erros_criticos/alertas_absurdos e P1 não escalona → sai como REDAÇÃO FINAL normal | Baixa (dupla camada) | **Residual** | E2/E3 forçam o modelo; P1 cobre casos estruturais independentemente; se ambos falham, é falha de prompt não detectável sem API |
 | Resposta da IA truncada (sem `</TEXTO_HARMONIZADO>`) → passava na guarda rev.8 | Baixa | **✅ Corrigido (rev.9)** | Guarda exige par completo + conteúdo não vazio; tags de alertas obrigatórias também verificadas |
+| Truncamento em qualquer das outras 5 tags (`MAPA_RENUMERACAO`, `AVISOS`, `ERROS_CRITICOS`, `ALERTAS_ABSURDOS`, `LOG_ALTERACOES`) → `extrair()` devolveria `""` silenciosamente | Baixa | **✅ Corrigido (rev.10)** | `_TODAS_TAGS` + `_sem_par`: todas as 6 tags verificam par completo; `_TAGS_NAO_VAZIAS` exige conteúdo não vazio em TEXTO_HARMONIZADO e LOG_ALTERACOES |
 | Resultado harmonizado sobrevivia a mudanças pós-harmonização | Possível em sessão longa | **✅ Corrigido (rev.8)** | `_invalidar_resultado()` aplicado em todos os pontos: votação, importação, edição, remoção de emendas |
 
 ---
 
-*Versão rev.9 — 25/05/2026 — Sistema de Redações CCJ CMRJ*
+*Versão rev.10 — 25/05/2026 — Sistema de Redações CCJ CMRJ*

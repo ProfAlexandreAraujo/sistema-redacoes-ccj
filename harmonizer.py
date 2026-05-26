@@ -657,37 +657,40 @@ O texto do dispositivo permanece exatamente como aprovado — apenas acrescente 
         m = re.search(rf'<{tag}>(.*?)</{tag}>', resp_text, re.DOTALL)
         return m.group(1).strip() if m else default
 
-    # ── Validação obrigatória do par completo <TAG>...</TAG> ─────────────────
-    # A guarda exige: (a) par completo de abertura+fechamento; (b) conteúdo não vazio.
-    # Verificar só a tag de abertura não protege contra truncamento — resposta cortada
-    # após <TEXTO_HARMONIZADO> faria extrair() devolver "" silenciosamente.
-    m_texto_harm = re.search(
+    # ── Validação: todas as tags esperadas devem ter par completo ───────────
+    # Verificar só a tag de abertura não protege contra truncamento:
+    # resposta cortada após <TAG> faria extrair() devolver "" silenciosamente.
+    # TEXTO_HARMONIZADO e LOG_ALTERACOES também exigem conteúdo não vazio.
+    _TODAS_TAGS      = [
+        "TEXTO_HARMONIZADO", "MAPA_RENUMERACAO",
+        "AVISOS", "ERROS_CRITICOS", "ALERTAS_ABSURDOS", "LOG_ALTERACOES",
+    ]
+    _TAGS_NAO_VAZIAS = {"TEXTO_HARMONIZADO", "LOG_ALTERACOES"}
+
+    _sem_par:        list[str] = []
+    _conteudo_vazio: list[str] = []
+
+    for _tag in _TODAS_TAGS:
+        _m = re.search(rf'<{_tag}>(.*?)</{_tag}>', resp_text, re.DOTALL)
+        if not _m:
+            _sem_par.append(_tag)
+        elif _tag in _TAGS_NAO_VAZIAS and not _m.group(1).strip():
+            _conteudo_vazio.append(_tag)
+
+    if _sem_par:
+        raise ValueError(
+            f"Resposta da IA truncada — par completo ausente: {', '.join(_sem_par)}. "
+            "Tente novamente; se o erro persistir, reduza o número de emendas por lote."
+        )
+    if _conteudo_vazio:
+        raise ValueError(
+            f"Resposta da IA inválida — conteúdo obrigatório vazio em: "
+            f"{', '.join(_conteudo_vazio)}. Tente novamente."
+        )
+
+    texto_harm = re.search(
         r'<TEXTO_HARMONIZADO>(.*?)</TEXTO_HARMONIZADO>', resp_text, re.DOTALL
-    )
-    if not m_texto_harm or not m_texto_harm.group(1).strip():
-        _motivo = (
-            "par completo <TEXTO_HARMONIZADO>...</TEXTO_HARMONIZADO> não encontrado"
-            if not m_texto_harm else
-            "tag <TEXTO_HARMONIZADO> presente mas conteúdo vazio (resposta truncada?)"
-        )
-        raise ValueError(
-            f"Resposta da IA inválida — {_motivo}. "
-            "O formato XML esperado não foi recebido corretamente. "
-            "Tente novamente; se o erro persistir, reduza o número de emendas por lote."
-        )
-
-    # Tags de alertas são obrigatórias (ausência pode zerar alertas silenciosamente)
-    _tags_obrigatorias = ["AVISOS", "ERROS_CRITICOS", "ALERTAS_ABSURDOS", "LOG_ALTERACOES"]
-    _tags_ausentes = [t for t in _tags_obrigatorias
-                      if not re.search(rf'<{t}>', resp_text)]
-    if _tags_ausentes:
-        raise ValueError(
-            f"Resposta da IA truncada — tags ausentes: {', '.join(_tags_ausentes)}. "
-            "Alertas e erros críticos podem ter sido perdidos. "
-            "Tente novamente; se o erro persistir, reduza o número de emendas por lote."
-        )
-
-    texto_harm    = m_texto_harm.group(1).strip()   # já extraído pela guarda acima
+    ).group(1).strip()   # par validado acima — .group(1) seguro
     mapa_raw      = extrair("MAPA_RENUMERACAO", "")
     avisos_raw    = extrair("AVISOS", "")
     erros_raw     = extrair("ERROS_CRITICOS", "")
