@@ -320,10 +320,12 @@ def exportar_redacao_final_docx(
     sec.left_margin   = Cm(2.5)
     sec.right_margin  = Cm(2.5)
 
-    # Estilo padrão: Times New Roman 10 pt, sem espaçamento extra
+    # Estilo padrão: Arial 11 pt, sem espaçamento extra
+    _FONT = 'Arial'
+    _FSIZE = 11
     normal = doc.styles['Normal']
-    normal.font.name  = 'Times New Roman'
-    normal.font.size  = Pt(10)
+    normal.font.name  = _FONT
+    normal.font.size  = Pt(_FSIZE)
     normal.paragraph_format.space_before = Pt(0)
     normal.paragraph_format.space_after  = Pt(0)
     normal.paragraph_format.line_spacing = 1.0
@@ -335,10 +337,12 @@ def exportar_redacao_final_docx(
         p.paragraph_format.space_after  = Pt(0)
 
     def _para(text: str, align=WD_ALIGN_PARAGRAPH.JUSTIFY,
-              bold: bool = False, size_pt: float = 10,
+              bold: bool = False, size_pt: float = None,
               underline: bool = False, italic: bool = False,
               color: RGBColor = None,
               sp_before: float = 0, sp_after: float = 0) -> None:
+        if size_pt is None:
+            size_pt = _FSIZE
         p = doc.add_paragraph()
         p.alignment = align
         p.paragraph_format.space_before = Pt(sp_before)
@@ -348,14 +352,14 @@ def exportar_redacao_final_docx(
             r.bold      = bold
             r.italic    = italic
             r.underline = underline
-            r.font.name = 'Times New Roman'
+            r.font.name = _FONT
             r.font.size = Pt(size_pt)
             if color:
                 r.font.color.rgb = color
 
     def _footer_para(text: str, bold: bool = False):
         _para(text, align=WD_ALIGN_PARAGRAPH.CENTER,
-              bold=bold, size_pt=10, sp_before=6, sp_after=6)
+              bold=bold, sp_before=6, sp_after=6)
 
     # ══════════════════════════════════════════════════════════════════════════
     # 1. TÍTULO
@@ -366,7 +370,7 @@ def exportar_redacao_final_docx(
         titulo_doc = "RASCUNHO DE TRABALHO — NÃO É REDAÇÃO FINAL"
         _para(titulo_doc,
               align=WD_ALIGN_PARAGRAPH.CENTER,
-              bold=True, size_pt=10,
+              bold=True,
               color=_COR_ALERTA)
         _para(
             "⚠ RASCUNHO — existem alertas de §2º (absurdo manifesto ou erro crítico) "
@@ -380,7 +384,7 @@ def exportar_redacao_final_docx(
         titulo_doc = tipo_redacao.upper()
         _para(titulo_doc,
               align=WD_ALIGN_PARAGRAPH.CENTER,
-              bold=True, underline=True, size_pt=10)
+              bold=True, underline=True)
         if tem_sec_2:
             _para(
                 "⚠ ALERTA CRÍTICO PENDENTE — ART. 250, §2º RI — "
@@ -399,7 +403,7 @@ def exportar_redacao_final_docx(
         nome_doc = nome_projeto if eh_rascunho else _aplicar_sufixo_a(nome_projeto)
         _para(nome_doc.upper(),
               align=WD_ALIGN_PARAGRAPH.CENTER,
-              bold=True, size_pt=10)
+              bold=True)
 
     _blank()
 
@@ -408,23 +412,15 @@ def exportar_redacao_final_docx(
     # ══════════════════════════════════════════════════════════════════════════
     _para("EMENTA:",
           align=WD_ALIGN_PARAGRAPH.JUSTIFY,
-          bold=True, size_pt=10)
+          bold=True)
 
     if ementa:
-        # Ementa em tabela sem bordas (padrão CMRJ)
-        tbl_em = doc.add_table(rows=1, cols=1)
-        _remover_bordas_tabela(tbl_em)
-        cell_em = tbl_em.cell(0, 0)
-        p_em    = cell_em.paragraphs[0]
-        p_em.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
-        r_em = p_em.add_run(ementa)
-        r_em.font.name = 'Times New Roman'
-        r_em.font.size = Pt(10)
+        # Ementa como parágrafo simples (padrão CMRJ — sem tabela)
+        _para(ementa, align=WD_ALIGN_PARAGRAPH.JUSTIFY, bold=False)
+        _blank(); _blank()
     else:
         # Espaço reservado para preenchimento manual
         _blank(); _blank(); _blank()
-
-    _blank(); _blank(); _blank()
 
     # ══════════════════════════════════════════════════════════════════════════
     # 4. AUTOR(ES)
@@ -432,7 +428,7 @@ def exportar_redacao_final_docx(
     if autor:
         _para(autor,
               align=WD_ALIGN_PARAGRAPH.JUSTIFY,
-              bold=True, size_pt=10)
+              bold=True)
 
     _blank(); _blank()
 
@@ -451,23 +447,23 @@ def exportar_redacao_final_docx(
             p.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
             r = p.add_run(linha)
             r.bold      = True
-            r.font.name = 'Times New Roman'
-            r.font.size = Pt(10)
+            r.font.name = _FONT
+            r.font.size = Pt(_FSIZE)
 
         elif _DECRETA_RE.match(linha):
             # "DECRETA:" / "D E C R E T A :" — alinhado à direita, negrito
             p.alignment = WD_ALIGN_PARAGRAPH.RIGHT
             r = p.add_run(linha)
             r.bold      = True
-            r.font.name = 'Times New Roman'
-            r.font.size = Pt(10)
+            r.font.name = _FONT
+            r.font.size = Pt(_FSIZE)
 
         else:
             # Demais linhas — justificado, sem negrito
             p.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
             r = p.add_run(linha)
-            r.font.name = 'Times New Roman'
-            r.font.size = Pt(10)
+            r.font.name = _FONT
+            r.font.size = Pt(_FSIZE)
 
     # ══════════════════════════════════════════════════════════════════════════
     # 6. FECHO — Sala da Comissão + Assinaturas
@@ -499,8 +495,8 @@ def exportar_redacao_final_docx(
         p.paragraph_format.space_before = Pt(6)
         p.paragraph_format.space_after  = Pt(6)
         r = p.add_run(text)
-        r.font.name = 'Times New Roman'
-        r.font.size = Pt(10)
+        r.font.name = _FONT
+        r.font.size = Pt(_FSIZE)
 
     # ══════════════════════════════════════════════════════════════════════════
     # 7. ANEXO DE AVISOS E ALERTAS (página separada, se houver)

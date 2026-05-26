@@ -1,5 +1,5 @@
 # Prompt de Auditoria Externa — Sistema de Redações CCJ CMRJ
-### Versão rev.17 — 26/05/2026
+### Versão rev.18 — 26/05/2026
 
 ---
 
@@ -263,7 +263,7 @@ alteradas por subemendas aprovadas era aplicado na versão original, ignorando a
 
 ---
 
-### 6. verificar.py — estado atual (rev.16)
+### 6. verificar.py — estado atual (rev.18)
 
 - **Seção 8:** 4 testes de análise estrutural (inclui novo teste B1 — "Art sem ponto")
 - **Seção 11:** valida 8 tags XML (inclui `NOTAS_TECNICAS` e `SUGESTOES_NORMATIVAS`)
@@ -278,7 +278,8 @@ alteradas por subemendas aprovadas era aplicado na versão original, ignorando a
   - **P2 pai inexistente → `erros_criticos` §2º** (positivo + negativo §1º + exclusão)
   - **P3 cadeia → `erros_criticos` §2º; excluída** (positivo + negativo + exclusão)
   - parsear reconhece `subemenda_de`; app.py exibe painel
-- **Resultado: 116/117** (1 falha esperada: chave API não configurada localmente)
+  - **2 novos testes em rev.17:** fallback multi-lote [1,2,3,4] e offset após fallback = 4
+- **Resultado: 118/119** (1 falha esperada: chave API não configurada localmente)
 
 Novo teste adicionado em rev.16 (Seção 8):
 ```python
@@ -607,8 +608,9 @@ for parte in partes:
 | **B2 — Stop markers mínimo** | **Python (utils)** | **`min()` entre todas as posições; nunca `break` no primeiro encontrado** |
 | **B3 — URL regex linha inteira** | **Python (utils)** | **`[^\n]+` em vez de `\S+` elimina sufixos de paginação** |
 | **B4 — DOCX formato CMRJ** | **Python (utils)** | **Reescrita completa; ementa, autor, fecho e assinaturas presentes** |
-| **B5 — Imports lazy (API interna)** | **Python (utils)** | **`qn`/`OxmlElement` movidos para dentro de `_remover_bordas_tabela`; falha de import não derruba o módulo — ⚠ ABERTO: download DOCX no Cloud não testado** |
+| **B5 — Imports lazy (API interna)** | **Python (utils)** | **`qn`/`OxmlElement` movidos para dentro de `_remover_bordas_tabela`; ✅ confirmado — download DOCX funciona no Cloud** |
 | **B6 — Fallback numeração multi-lote** | **Python (harmonizer)** | **`offset + idx_fb + 1` relativo ao lote; elimina double-counting que gerava buracos [1,2,5,6]** |
+| **B7 — Ementa em tabela + fontes inconsistentes** | **Python (utils)** | **Ementa movida para `_para()` simples; corpo e assinaturas unificados para Arial 11pt via `_FONT`/`_FSIZE`** |
 
 ---
 
@@ -705,9 +707,11 @@ for parte in partes:
 - **rev.16.1 (hotfix):** B5 — imports lazy para `qn`/`OxmlElement`; o app ficou fora do ar
   após o deploy de rev.16 por ImportError no Streamlit Cloud (não reproduzível localmente).
   Gap confirmado: ausência de smoke test de carregamento de módulo em ambiente Linux.
-  ⚠ **ABERTO:** confirmar que o download de DOCX no Cloud também funciona (os mesmos
-  paths `qn`/`OxmlElement` ainda executam quando `_remover_bordas_tabela()` é chamada).
-- **rev.17:** B6 — fallback de parsing multi-lote corrigido (`offset + idx_fb + 1`);
+- **rev.17:** B5 ✅ **FECHADO** — download de DOCX confirmado funcionando no Cloud.
+  B6 — fallback de parsing multi-lote corrigido (`offset + idx_fb + 1`);
   2 novos testes em verificar.py (118/119). Arquivos de referência CMRJ (4 DOCX + 1 PDF)
-  agora rastreados no Git. Inconsistência de nome em `730-A_2026` documentada
+  agora rastreados no Git. Inconsistência de nome em `730-A_2026` documentada.
+- **rev.18:** B7 — formatação DOCX unificada: ementa movida para parágrafo simples (elimina
+  tabela de ementa e reduz uso de `oxml`); corpo e assinaturas com Arial 11pt via constantes
+  `_FONT`/`_FSIZE`; `size_pt=10` explícito removido de título, nº projeto, EMENTA:, Autor(es).
   (nome do arquivo = ano da Redação Final; conteúdo = ano do projeto — comportamento normal).

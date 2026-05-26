@@ -1,5 +1,5 @@
 # 🔍 AUDITORIA DO SISTEMA — CCJ CMRJ
-### Documento técnico para revisão externa — versão 2026-05-26 **rev.16**
+### Documento técnico para revisão externa — versão 2026-05-26 **rev.18**
 
 ---
 
@@ -162,7 +162,8 @@ Qualquer item escalado move-se de `avisos` para `alertas_absurdos`, ativando o m
 | 26/05/2026 | **[B2]** `ler_pdf()`: stop markers truncavam no **primeiro marcador da lista** (`TRAMITAÇÃO DO PROJETO`, pos=24805) em vez de no **mais cedo** (`JUSTIFICATIVA`, pos=17241) — texto extraído incluía `Art. 169` e `Art. 5°` da seção de Legislação Citada, inflando a contagem para 23 artigos | Bug funcional (teste real na Câmara) | ✅ utils.py rev.16 — truncamento no mínimo entre todos os marcadores encontrados com pos > 500 |
 | 26/05/2026 | **[B3]** `ler_pdf()`: regex URL `r'https?://www\.camara\.rio/\S+'` não capturava sufixo de paginação " X/15" após espaço — rodapé residual nos PDFs do site da CMRJ | Cosmético (texto limpo para IA) | ✅ utils.py rev.16 — regex alterado para `r'https?://www\.camara\.rio/[^\n]+'` |
 | 26/05/2026 | **[B4]** `exportar_redacao_final_docx()`: formatação não seguia o modelo oficial CMRJ — fonte 12pt (correto: 10pt), artigos em negrito (correto: sem negrito), sem EMENTA/AUTOR/fecho/assinaturas, cabeçalho com estilos Heading incorretos, sem margens A4 | Produto (formatação horrorosa relatada em uso real) | ✅ utils.py rev.16 — função completamente reescrita; vide seção 11.1 |
-| 26/05/2026 | **[B5]** `from docx.oxml.ns import qn` e `from docx.oxml import OxmlElement` no topo de `utils.py` causavam `ImportError` no Streamlit Cloud ao carregar o módulo | Deploy crítico (app fora do ar) | ✅ utils.py rev.16.1 — imports movidos para lazy dentro de `_remover_bordas_tabela()`; ⚠ **ABERTO**: confirmar que o download de DOCX funciona no Cloud (vide seção 11.7) |
+| 26/05/2026 | **[B5]** `from docx.oxml.ns import qn` e `from docx.oxml import OxmlElement` no topo de `utils.py` causavam `ImportError` no Streamlit Cloud ao carregar o módulo | Deploy crítico (app fora do ar) | ✅ utils.py rev.16.1 — imports movidos para lazy dentro de `_remover_bordas_tabela()`; ✅ **CONFIRMADO rev.17**: download DOCX no Cloud funciona corretamente |
+| 26/05/2026 | **[B7]** `exportar_redacao_final_docx()`: ementa gerada em tabela sem bordas (resíduo de B4) em vez de parágrafo simples; corpo e assinaturas com fonte `'Times New Roman'` 10pt em vez de `Arial` 11pt (padrão CMRJ) | Produto (formatação inconsistente com modelos de referência) | ✅ utils.py rev.18 — ementa movida para `_para()` simples; todas as fontes unificadas para `Arial` 11pt via constantes `_FONT`/`_FSIZE` |
 | 26/05/2026 | **[B6]** `parsear_emendas_com_ia()`: fallback bruto com `offset + len(todas_emendas) + 1` somava o offset duas vezes em múltiplos lotes — ex: lotes [E1,E2] ok + [fallback] produzia [1,2,5,6] em vez de [1,2,3,4] | Bug funcional silencioso (numeração errada afeta votação e subemenda_de) | ✅ harmonizer.py rev.17 — fallback usa `offset + idx_fb + 1` onde `idx_fb` é relativo ao lote atual |
 
 ---
@@ -438,13 +439,7 @@ def _remover_bordas_tabela(tabela) -> None:
 # no nível de módulo em código que roda em ambientes distintos (local ≠ Cloud).
 ```
 
-**⚠ STATUS ABERTO — B5:** o fix lazy evita o crash no carregamento do módulo, mas
-`qn`/`OxmlElement` ainda são executados em tempo de download (quando `_remover_bordas_tabela()`
-é chamada para ementa e assinaturas). Se a incompatibilidade era de caminho e não de
-nível-de-módulo, o erro seria adiado para o clique de download. **Ação pendente:** testar
-o download de DOCX no Streamlit Cloud com um projeto real e confirmar que funciona.
-Se falhar, implementar fallback sem oxml (ex: aceitar bordas finas na tabela e instruir
-o usuário a removê-las no Word, ou usar `table.style = 'Table Grid'` com CSS visual).
+**✅ STATUS FECHADO — B5 (confirmado rev.17):** o fix lazy impede o crash no carregamento do módulo e foi confirmado em produção — o download de DOCX no Streamlit Cloud funciona corretamente. Nota adicional (rev.18): a tabela sem bordas na ementa foi substituída por `_para()` simples, eliminando uma das duas chamadas a `_remover_bordas_tabela()` e reduzindo ainda mais a superfície de uso de oxml.
 
 ---
 
@@ -595,7 +590,7 @@ RESULTADO: 116/117 (único fail = API key ausente — esperado)
 | Stop markers de `ler_pdf()` dependem de strings fixas — PDF com formatação diferente pode passar despercebido | Baixa | Monitorado | Usuário vê o texto extraído na aba 1 e pode editar antes de harmonizar |
 | **Paridade local ↔ Cloud** — código que passa localmente pode falhar no deploy por divergência de versão de pacote ou path de API interna | **Média** | **GAP confirmado em produção (B5)** | **Usar apenas API pública de pacotes terceiros no topo do módulo; APIs internas como imports lazy dentro das funções que as usam** |
 | Nenhum teste automatizado verifica "módulo carrega limpo em ambiente Linux/Cloud" | Média | **Gap aberto** | A ser investigado: verificar.py poderia incluir `import utils; import app` como smoke test de carregamento |
-| **B5 — download DOCX no Cloud com `qn`/`OxmlElement`** — import lazy evita crash na inicialização, mas os mesmos paths ainda são executados no download | **Média** | **⚠ ABERTO — aguarda teste manual no Cloud** | Testar download DOCX no app em produção; se falhar, substituir por fallback sem oxml ou tabela com bordas aceitas e remoção manual |
+| **B5 — download DOCX no Cloud com `qn`/`OxmlElement`** — import lazy evita crash na inicialização, e uso de oxml no download também confirmado funcional | Baixa | **✅ Confirmado rev.17 + rev.18** | Confirmado em produção; uso de oxml reduzido (ementa virou `_para()` simples em rev.18) |
 | **B6 — fallback de parsing multi-lote** — `offset + len(todas_emendas) + 1` causava buracos na numeração quando lotes anteriores já tinham emendas | **Alta** | **✅ Corrigido rev.17** | Fix: `offset + idx_fb + 1`; 2 novos testes em verificar.py (118/119) |
 
 ---
@@ -616,4 +611,4 @@ Os seguintes arquivos são rastreados no repositório como referência de format
 
 ---
 
-*Versão rev.17 — 26/05/2026 — Sistema de Redações CCJ CMRJ*
+*Versão rev.18 — 26/05/2026 — Sistema de Redações CCJ CMRJ*
