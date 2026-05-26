@@ -377,6 +377,17 @@ chk("2 artigos",    est["artigos"]    == 2, f"encontrado: {est['artigos']}")
 chk("2 parágrafos", est["paragrafos"] == 2, f"encontrado: {est['paragrafos']}")
 chk("3 anexos",     est["anexos"]     == 3, f"encontrado: {est['anexos']}")
 
+# Regressão: "Art X." sem ponto após "Art" (bug PLC 55/2025 — Art 14.)
+TEXTO_EST_SEM_PONTO = (
+    "Art. 1º Disposição.\n"
+    "Art 14. Dispositivo sem ponto após Art.\n"   # bug: PDF da CMRJ omite o ponto
+    "Art. 15. Normal.\n"
+    "Art. 21. Último.\n"
+)
+est2 = analisar_estrutura(TEXTO_EST_SEM_PONTO)
+chk("4 artigos (inclui Art sem ponto)", est2["artigos"] == 4,
+    f"encontrado: {est2['artigos']} — esperado 4 (Art 14. deve ser contado)")
+
 # ────────────────────────────────────────────────────────────────────────────
 # 9. CHAVE DE API
 # ────────────────────────────────────────────────────────────────────────────

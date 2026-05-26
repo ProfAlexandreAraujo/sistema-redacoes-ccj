@@ -20,6 +20,7 @@ from utils import (
     ler_docx, ler_txt, ler_pdf, analisar_estrutura,
     salvar_sessao, listar_sessoes, carregar_sessao,
     exportar_redacao_final_docx, exportar_relatorio_problemas_txt,
+    extrair_ementa_autor,
 )
 
 
@@ -923,6 +924,10 @@ with aba5:
             "📝 Baixar REDAÇÃO FINAL .docx (com alerta)" if _tem_sec_2 else
             "📝 Baixar .docx"
         )
+        # Extrai ementa e autor do texto original para o cabeçalho do DOCX
+        _ementa_doc, _autor_doc = extrair_ementa_autor(
+            st.session_state.get('texto_original', '')
+        )
         docx_bytes = exportar_redacao_final_docx(
             texto=texto_editavel,
             nome_projeto=nome_projeto,
@@ -933,6 +938,8 @@ with aba5:
             log=res.log_alteracoes,
             tipo_redacao=_tipo_rdz_aba5,
             prosseguir_com_alerta_sec_2=_prosseguir_sec_2,
+            ementa=_ementa_doc,
+            autor=_autor_doc,
         )
         ec2.download_button(
             label=_label_docx,
