@@ -32,7 +32,7 @@ def chk(nome: str, ok: bool, detalhe: str = "") -> None:
 
 print()
 print("=" * 65)
-print("  VERIFICAÇÃO DO SISTEMA — CCJ CMRJ — rev.7")
+print("  VERIFICAÇÃO DO SISTEMA — CCJ CMRJ — rev.8")
 print("=" * 65)
 
 # ────────────────────────────────────────────────────────────────────────────
@@ -397,10 +397,10 @@ try:
     import re as _re
     src = inspect.getsource(_harm_func)
 
-    # 11a — Guarda usa _TODAS_TAGS cobrindo 6 tags (incl. MAPA_RENUMERACAO)
-    chk("Guarda generalizada: _TODAS_TAGS cobre 6 tags (incl. MAPA_RENUMERACAO)",
+    # 11a — Guarda usa _TODAS_TAGS cobrindo 7 tags (incl. MAPA_RENUMERACAO e NOTAS_TECNICAS)
+    chk("Guarda generalizada: _TODAS_TAGS cobre 7 tags (incl. MAPA_RENUMERACAO e NOTAS_TECNICAS)",
         bool(_re.search(r'_TODAS_TAGS\s*=\s*\[', src)) and
-        "MAPA_RENUMERACAO" in src and "LOG_ALTERACOES" in src)
+        "MAPA_RENUMERACAO" in src and "LOG_ALTERACOES" in src and "NOTAS_TECNICAS" in src)
 
     # 11b — Truncamento detectado por ausência de par completo (_sem_par)
     chk("Truncamento detectado por _sem_par (par abertura+fechamento)",
@@ -432,10 +432,10 @@ try:
     chk("texto_harm usa .group(1).strip() após validação (sem fallback)",
         ".group(1).strip()" in src)
 
-    # 11h–11l — Truncamento detectado em cada uma das outras 5 tags
+    # 11h–11l — Truncamento detectado em cada uma das outras 6 tags
     _OUTRAS_TAGS = [
         "MAPA_RENUMERACAO", "AVISOS", "ERROS_CRITICOS",
-        "ALERTAS_ABSURDOS", "LOG_ALTERACOES",
+        "ALERTAS_ABSURDOS", "NOTAS_TECNICAS", "LOG_ALTERACOES",
     ]
     for _t in _OUTRAS_TAGS:
         _resp_t = f"<{_t}>\nConteúdo truncado sem tag de fechamento..."
@@ -447,21 +447,22 @@ try:
     chk("LOG_ALTERACOES exige conteúdo não vazio (em _TAGS_NAO_VAZIAS)",
         bool(_re.search(r'_TAGS_NAO_VAZIAS\s*=\s*\{[^}]*LOG_ALTERACOES[^}]*\}', src)))
 
-    # 11n — Resposta completa válida: todos os 6 pares detectados
+    # 11n — Resposta completa válida: todos os 7 pares detectados
     _resp_completa = (
         "<TEXTO_HARMONIZADO>\nArt. 1º Texto.\n</TEXTO_HARMONIZADO>\n"
         "<MAPA_RENUMERACAO>\nSem renumeração necessária.\n</MAPA_RENUMERACAO>\n"
         "<AVISOS>\nNenhum aviso.\n</AVISOS>\n"
         "<ERROS_CRITICOS>\nNenhum erro crítico.\n</ERROS_CRITICOS>\n"
         "<ALERTAS_ABSURDOS>\nNenhum.\n</ALERTAS_ABSURDOS>\n"
+        "<NOTAS_TECNICAS>\nNenhuma nota técnica.\n</NOTAS_TECNICAS>\n"
         "<LOG_ALTERACOES>\nEmenda 1 (Modificativa): Art. 1º atualizado.\n</LOG_ALTERACOES>"
     )
     _todos_ok = all(
         _re.search(rf'<{t}>(.*?)</{t}>', _resp_completa, _re.DOTALL)
         for t in ["TEXTO_HARMONIZADO", "MAPA_RENUMERACAO", "AVISOS",
-                  "ERROS_CRITICOS", "ALERTAS_ABSURDOS", "LOG_ALTERACOES"]
+                  "ERROS_CRITICOS", "ALERTAS_ABSURDOS", "NOTAS_TECNICAS", "LOG_ALTERACOES"]
     )
-    chk("Resposta completa e válida — todos os 6 pares detectados",
+    chk("Resposta completa e válida — todos os 7 pares detectados",
         _todos_ok)
 
 except Exception as e:
@@ -501,6 +502,42 @@ try:
         ])
 except Exception as e:
     chk("12 — _invalidar_resultado()", False, str(e))
+
+# ────────────────────────────────────────────────────────────────────────────
+# 13. REGRA A4 — "acrescente-se onde couber" (estrutural, sem API)
+# ────────────────────────────────────────────────────────────────────────────
+print("\n[13] REGRA A4 — emendas sem alvo definido (estrutural)")
+
+try:
+    import inspect as _insp_a4
+    _src_harm = _insp_a4.getsource(_harm_func)
+
+    chk("A4 presente no prompt de harmonização",
+        "A4." in _src_harm,
+        "Regra A4 não encontrada em harmonizar_texto")
+
+    chk("A4 cobre expressão 'onde couber'",
+        "onde couber" in _src_harm,
+        "Expressão 'onde couber' não encontrada no prompt A4")
+
+    chk("A4 exige LOG com prefixo 'A4 /'",
+        "A4 / Emenda" in _src_harm,
+        "Formato de LOG 'A4 / Emenda N' não encontrado no prompt")
+
+    chk("A4 exige AVISO com 'alvo não especificado'",
+        "alvo não especificado" in _src_harm,
+        "Frase 'alvo não especificado' não encontrada no prompt A4")
+
+    chk("A4 proíbe inserção silenciosa",
+        "NUNCA insira silenciosamente" in _src_harm,
+        "Proibição de inserção silenciosa não encontrada")
+
+    chk("A4 proíbe recusar aplicar emenda sem alvo",
+        "NUNCA recuse aplicar" in _src_harm,
+        "Proibição de recusa não encontrada")
+
+except Exception as e:
+    chk("13 — regra A4 estrutural", False, str(e))
 
 # ────────────────────────────────────────────────────────────────────────────
 # RESUMO

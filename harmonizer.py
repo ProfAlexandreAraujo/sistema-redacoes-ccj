@@ -435,6 +435,28 @@ A3. ANEXOS (preservação integral obrigatória)
     coordenadas UTM, tabelas de parâmetros e descrições de perímetros.
     Referências a Anexos nos artigos devem ser atualizadas se o Anexo for renumerado por emenda.
 
+A4. EMENDAS ADITIVAS SEM ALVO DEFINIDO — "acrescente-se onde couber"
+    Quando uma emenda aditiva, substitutiva ou de qualquer tipo não especificar o dispositivo
+    exato de destino (ex: "acrescente-se onde couber", "inclua-se no local adequado",
+    "onde cabível", ou quando o alvo estiver simplesmente omisso):
+
+    a) POSICIONAMENTO — identifique o lugar mais coerente tematicamente no texto:
+       — Afinidade de matéria: insira próximo a artigos que tratam do mesmo tema
+       — Sequência lógica: respeite a progressão normativa do capítulo ou seção
+       — Nunca crie "ilhas" temáticas: não insira artigo sobre tema X no meio de tema Y
+       — Em caso de empate entre dois locais igualmente coerentes, prefira o final
+         do capítulo temático correspondente
+
+    b) OBRIGATÓRIO — registrar no LOG_ALTERACOES:
+       "A4 / Emenda N: inserida após Art. Xº — [motivo breve da escolha] (alvo não especificado na emenda)"
+
+    c) OBRIGATÓRIO — gerar aviso em AVISOS:
+       "⚠ Emenda N / alvo não especificado: inserida após Art. Xº por coerência temática
+        com [tema]. Posicionamento definido pela CCJ — alvo não especificado na emenda original."
+
+    NUNCA insira silenciosamente sem AVISO e sem LOG.
+    NUNCA recuse aplicar a emenda por ausência de alvo — posicionar é responsabilidade da CCJ.
+
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 BLOCO B — RENUMERAÇÃO (LC 95/1998, art. 10; LC 48/2000, art. 9)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

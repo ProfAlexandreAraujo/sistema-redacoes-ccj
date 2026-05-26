@@ -16,6 +16,7 @@ Quando dezenas ou centenas de emendas são aprovadas em votação plenária, sur
 - Outras emendas que ainda referenciam os números antigos
 - Conflitos entre emendas que afetam o mesmo dispositivo
 - Referências cruzadas que ficam desatualizadas
+- Emendas aditivas sem alvo definido ("acrescente-se onde couber") que exigem decisão de posicionamento
 
 O sistema detecta e resolve esses problemas automaticamente.
 
@@ -63,6 +64,9 @@ Se detectar incoerência, contradição evidente ou absurdo manifesto entre emen
 ### Teor das emendas
 O sistema **jamais altera** o conteúdo substantivo de uma emenda aprovada.  
 A única modificação automática permitida é a atualização de referências cruzadas internas (ex: renumeração de artigos).
+
+### Emendas sem alvo definido ("acrescente-se onde couber")
+Quando uma emenda aditiva não especifica o dispositivo de destino, o sistema **posiciona automaticamente** o novo artigo no local mais coerente tematicamente, registra a decisão no log e gera um aviso identificando onde foi inserido e o motivo — para que o relator tenha visibilidade total da escolha feita.
 
 ---
 
