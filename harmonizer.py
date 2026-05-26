@@ -549,6 +549,20 @@ E1.5. PROIBIÇÃO ABSOLUTA — ANÁLISES DE MÉRITO NOS AVISOS:
     competência da CCJ na Redação Final. Colocá-los em AVISOS contamina o documento.
     Se perceber algo desse tipo, OMITA. Não registre. Não "avise com ressalva".
 
+    EXEMPLO PROIBIDO — nunca escreva nada parecido com isto:
+    ❌ "⚠ Emenda 6 / Anexo III: CA do Setor A aumentou de 8,0 para 16,0. Verificar
+       impacto urbanístico e consistência com os demais setores."
+    ❌ "⚠ Emenda 6 / Anexo III: Alteração significativa nos índices de aproveitamento.
+       Recomenda-se verificar adequação dos parâmetros."
+    ↑ Isso é MÉRITO. O Plenário aprovou — a CCJ não avisa, não questiona, não "ressalva".
+      OMITA COMPLETAMENTE. Não existe aviso da CCJ para mudança de CA.
+
+    AUTO-TESTE antes de escrever qualquer aviso:
+    Pergunte-se: "Este aviso é sobre um erro de PORTUGUÊS ou de TÉCNICA REDACIONAL FORMAL?"
+    — Se sim → escreva o aviso.
+    — Se não (se for sobre o que a lei permite, quanto vale, se os números fazem sentido,
+      se os parâmetros são adequados, se há impacto urbanístico) → NÃO ESCREVA. Delete.
+
 E2. ERROS CRÍTICOS — não tente resolver; a providência regimental indicada é a reabertura da discussão (art. 250, §2º RI):
     — Duas emendas aprovadas que se contradizem diretamente sobre o mesmo dispositivo
     — Emenda que ao ser aplicada torna outro dispositivo aprovado de cumprimento impossível
@@ -622,13 +636,13 @@ O texto do dispositivo permanece exatamente como aprovado — apenas acrescente 
 [Um aviso por linha. Formato: "⚠ Emenda N / Art. Xº: descrição detalhada do problema"]
 [Base legal do aviso entre colchetes, ex: [LC 48/2000, art. 9º, VIII]]
 [⚠ RESTRIÇÃO ABSOLUTA: AVISOS são estritamente para problemas de FORMA/LINGUAGEM.
- NUNCA inclua observações sobre conteúdo, mérito ou política urbanística, como:
- — comparações entre coeficientes de aproveitamento (CA), gabaritos, parâmetros urbanísticos
- — consistência interna dos valores numéricos aprovados pelo Plenário
- — opinião ou análise sobre se os parâmetros fazem sentido urbanisticamente
- — qualquer observação do tipo "CA do Setor X é maior/menor que Y"
- Esses são assuntos de mérito — soberania do Plenário — fora da competência da CCJ na
- Redação Final. Inclua-os aqui e o sistema ficará comprometido.]
+ NUNCA inclua observações sobre conteúdo, mérito ou política urbanística.
+ PROIBIDO (exemplos exatos do que NÃO escrever):
+ ❌ "CA do Setor A aumentou de 8,0 para 16,0 — verificar impacto urbanístico"
+ ❌ "Alteração significativa nos índices de aproveitamento — verificar adequação"
+ ❌ "Parâmetros do Setor B merecem atenção" / "Recomenda-se verificar consistência"
+ ↑ Qualquer coisa assim é MÉRITO. Delete. Não existe aviso da CCJ para mudança de CA.
+ Escreva "Nenhum aviso." se não houver problema de forma/linguagem.]
 [Escreva "Nenhum aviso." se não houver.]
 </AVISOS>
 
