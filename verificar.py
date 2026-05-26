@@ -294,6 +294,47 @@ if _DOCX_OK:
     except Exception as e:
         chk("7f — TXT modo rascunho", False, str(e))
 
+    # 7g — B7: Arial 11pt + ementa como parágrafo simples (rev.18)
+    try:
+        from docx.shared import Pt as _Pt
+        _docx_b7 = exportar_redacao_final_docx(
+            texto="Art. 1º Texto de teste B7.",
+            nome_projeto="PLC 1/2026",
+            ementa="INSTITUI PROGRAMA DE TESTE B7.",
+            autor="Autor(es): VEREADOR TESTE",
+            avisos=[], erros=[], alertas_absurdos=[],
+        )
+        _doc_b7 = Document(BytesIO(_docx_b7))
+        # Normal style deve ser Arial 11pt
+        _ns = _doc_b7.styles['Normal']
+        chk("B7 — Normal.font.name == 'Arial'",
+            _ns.font.name == 'Arial',
+            f"encontrado: {_ns.font.name!r}")
+        chk("B7 — Normal.font.size == 11pt",
+            _ns.font.size == _Pt(11),
+            f"encontrado: {_ns.font.size}")
+        # Deve haver exatamente 1 tabela (assinaturas) — ementa não está em tabela
+        _n_tab = len(_doc_b7.tables)
+        chk("B7 — apenas 1 tabela no DOCX (assinaturas; ementa não é tabela)",
+            _n_tab == 1,
+            f"encontrado: {_n_tab} tabela(s) — esperado 1")
+        # Ementa deve aparecer nos parágrafos, não nas células de tabela
+        _pars = [p.text for p in _doc_b7.paragraphs]
+        chk("B7 — ementa aparece como parágrafo simples",
+            "INSTITUI PROGRAMA DE TESTE B7." in _pars,
+            f"não encontrado nos parágrafos — amostra: {_pars[:8]}")
+        # Parágrafo do corpo deve ter fonte Arial explícita no run
+        _corpo_font = None
+        for _p in _doc_b7.paragraphs:
+            if "Art. 1º" in _p.text and _p.runs:
+                _corpo_font = _p.runs[0].font.name
+                break
+        chk("B7 — corpo do texto: run.font.name == 'Arial'",
+            _corpo_font == 'Arial',
+            f"encontrado: {_corpo_font!r}")
+    except Exception as e:
+        chk("7g — B7 formatação DOCX", False, str(e))
+
 else:
     print("  ⏭  DOCX — python-docx não disponível, pulando")
 

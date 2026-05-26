@@ -414,20 +414,22 @@ section.page_height = Cm(29.7)
 section.left_margin = section.right_margin = Cm(2.5)
 section.top_margin  = section.bottom_margin = Cm(2.5)
 
-# Estilo normal: Times New Roman 10pt, espaçamento simples
+# Estilo normal: Arial 11pt, espaçamento simples (rev.18 — B7)
+_FONT  = 'Arial'
+_FSIZE = 11
 normal = doc.styles['Normal']
-normal.font.name = 'Times New Roman'
-normal.font.size = Pt(10)
+normal.font.name = _FONT
+normal.font.size = Pt(_FSIZE)
 normal.paragraph_format.space_before = Pt(0)
 normal.paragraph_format.space_after  = Pt(0)
 normal.paragraph_format.line_spacing = 1.0
 ```
 
-**Estrutura do DOCX (ordem obrigatória):**
+**Estrutura do DOCX (ordem obrigatória — rev.18):**
 1. Título: CENTER, BOLD, UNDERLINE (ou vermelho se RASCUNHO)
 2. 3 parágrafos em branco
 3. Número do projeto: CENTER, BOLD, uppercase (com sufixo -A quando formal)
-4. EMENTA: label BOLD + conteúdo em tabela sem bordas (1×1)
+4. EMENTA: label BOLD + conteúdo como **parágrafo simples** (não tabela — rev.18 B7)
 5. Autor(es): JUSTIFY, BOLD
 6. 2 parágrafos em branco
 7. Corpo do texto:

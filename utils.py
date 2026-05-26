@@ -330,6 +330,15 @@ def exportar_redacao_final_docx(
     normal.paragraph_format.space_after  = Pt(0)
     normal.paragraph_format.line_spacing = 1.0
 
+    # Unificar estilos Heading do anexo (herdam do Word e teriam tamanhos maiores)
+    for _h_level in ('Heading 1', 'Heading 2', 'Heading 3'):
+        try:
+            _hs = doc.styles[_h_level]
+            _hs.font.name = _FONT
+            _hs.font.size = Pt(_FSIZE)
+        except KeyError:
+            pass  # estilo ausente no template mínimo — ignorar
+
     # ── Helpers locais ───────────────────────────────────────────────────────
     def _blank():
         p = doc.add_paragraph()

@@ -214,7 +214,7 @@ Usar `TAB_1_PLC_17_2026_TEXTO_ORIGINAL.txt` (19 artigos + 4 Anexos) com `TAB_2_P
 | 12 | Estrutura final | 18 artigos e 5 Anexos |
 | 13 | DOCX — texto de absurdo cita §2º e reabertura | Seção de absurdos menciona "§2º" e "reabertura" — nunca "ofício" ou "§1º" |
 | 14 | DOCX — seção de avisos não afirma preservação total | Texto da seção não contém "preservados exatamente como aprovados" |
-| **15** | **DOCX rev.16 — formato oficial CMRJ** | **Título CENTER BOLD UNDERLINE; fonte 10pt Times New Roman; A CÂMARA MUNICIPAL negrito; DECRETA: alinhado à direita; artigos SEM negrito; fecho com data em português; assinaturas dos 3 vereadores** |
+| **15** | **DOCX rev.18 — formato oficial CMRJ** | **Título CENTER BOLD UNDERLINE; fonte Arial 11pt (B7); ementa como parágrafo simples (não tabela); A CÂMARA MUNICIPAL negrito; DECRETA: alinhado à direita; artigos SEM negrito; fecho com data em português; assinaturas dos 3 vereadores** |
 
 ### ❌ Comportamentos proibidos (falha crítica)
 
@@ -326,12 +326,14 @@ sec.bottom_margin = Cm(2.5)
 sec.left_margin   = Cm(2.5)
 sec.right_margin  = Cm(2.5)
 
-# Estilo padrão: Times New Roman 10 pt, sem espaçamento extra
+# Estilo padrão B4: Times New Roman 10 pt — posteriormente atualizado em B7
+# (B7 rev.18: Arial 11pt via constantes _FONT/_FSIZE; vide seção B7 abaixo)
 normal = doc.styles['Normal']
-normal.font.name  = 'Times New Roman'
-normal.font.size  = Pt(10)
+normal.font.name  = 'Times New Roman'   # B4; B7 muda para 'Arial'
+normal.font.size  = Pt(10)              # B4; B7 muda para Pt(11)
 
-# Ementa em tabela sem bordas (padrão CMRJ)
+# Ementa B4: tabela sem bordas — posteriormente substituído em B7
+# (B7 rev.18: ementa como parágrafo simples _para(), sem tabela)
 if ementa:
     tbl_em = doc.add_table(rows=1, cols=1)
     _remover_bordas_tabela(tbl_em)
