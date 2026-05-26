@@ -68,7 +68,7 @@ A única modificação automática permitida é a atualização de referências 
 ### Emendas sem alvo definido ("acrescente-se onde couber")
 Quando uma **emenda aditiva** não especifica o dispositivo de destino, o sistema posiciona automaticamente a unidade normativa (artigo, parágrafo, inciso, alínea ou item) no local mais coerente tematicamente, registra a decisão no log e gera um aviso com o tipo de unidade inserida e o local exato.
 
-Quando uma **emenda modificativa ou substitutiva** chega sem alvo identificável, o sistema **não aplica** a modificação — gerar um aviso de revisão manual obrigatória e registra no log que a emenda não foi aplicada, evitando que o modelo invente qual dispositivo deveria ser alterado.
+Quando uma **emenda modificativa ou substitutiva** chega sem alvo identificável, o sistema **não aplica** a modificação e classifica como **Erro Crítico (§2º RI)** — o documento é exportado como Rascunho de Trabalho por padrão, exigindo confirmação explícita do relator antes de virar Redação Final. Isso evita que o modelo invente qual dispositivo deveria ser alterado e garante que uma emenda aprovada não seja silenciosamente ignorada.
 
 ---
 
@@ -76,13 +76,17 @@ Quando uma **emenda modificativa ou substitutiva** chega sem alvo identificável
 
 ```
 sistema_redacoes/
-├── app.py              # Interface Streamlit
-├── harmonizer.py       # Motor de harmonização (IA)
-├── utils.py            # Leitura de docx, exportação, save/load
-├── iniciar.bat         # Atalho para iniciar
-├── requirements.txt    # Dependências Python
-├── README.md           # Este arquivo
-└── sessoes_salvas/     # Sessões salvas automaticamente (JSON)
+├── app.py                        # Interface Streamlit
+├── harmonizer.py                 # Motor de harmonização (IA) + regras A1–A4, B, C, D, E
+├── utils.py                      # Leitura de docx/txt/pdf, exportação, save/load
+├── auditoria.py                  # Diagnóstico rápido do ambiente (dependências, API, módulos)
+├── verificar.py                  # Suite de testes estruturais (78/79 sem API)
+├── teste_real.py                 # Teste com PLC 92/2025 real (sem custo de API)
+├── PROMPT_AUDITORIA_EXTERNA.md   # Prompt para auditoria por LLM externa
+├── iniciar.bat                   # Atalho para iniciar localmente
+├── requirements.txt              # Dependências Python
+├── README.md                     # Este arquivo
+└── sessoes_salvas/               # Sessões salvas automaticamente (JSON)
 ```
 
 ---
