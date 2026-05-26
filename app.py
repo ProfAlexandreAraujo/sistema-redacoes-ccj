@@ -214,13 +214,11 @@ with st.sidebar:
 
     st.divider()
     st.markdown("""
-<div style="font-size: 0.78rem; color: #6c757d; line-height: 1.6;">
-⚖️ <strong>Sistema de Redações CCJ</strong><br>
-Ferramenta de apoio à elaboração de redações legislativas.<br>
-Comissão de Constituição, Justiça e Redação —<br>
-Câmara Municipal do Rio de Janeiro<br><br>
+<div style="font-size: 0.78rem; color: #6c757d; line-height: 1.8;">
+⚖️ <strong>Sistema de Redações CCJR</strong><br>
+Ferramenta de apoio à elaboração de redações legislativas.<br><br>
 Concepção e desenvolvimento:<br>
-<strong>Alexandre Araujo</strong>
+<span style="font-size: 0.95rem; font-weight: 700; color: #1a3a5c; letter-spacing: 0.03em;">Alexandre Araujo</span>
 </div>
 """, unsafe_allow_html=True)
 
