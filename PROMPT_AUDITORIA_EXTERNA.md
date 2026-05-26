@@ -28,13 +28,14 @@ O modelo recebe:
 - O texto original do projeto de lei
 - As emendas aprovadas
 
-E deve produzir, em formato XML estruturado:
+E deve produzir, em formato XML estruturado (8 tags obrigatórias):
 - `<TEXTO_HARMONIZADO>` — texto com todas as emendas aplicadas, renumeração atualizada
 - `<MAPA_RENUMERACAO>` — mapa de dispositivos renumerados
 - `<AVISOS>` — problemas formais/linguísticos (art. 250, §1º RI)
 - `<ERROS_CRITICOS>` — contradições insanáveis (art. 250, §2º RI)
 - `<ALERTAS_ABSURDOS>` — absurdos manifestos (art. 250, §2º RI)
 - `<NOTAS_TECNICAS>` — informações de mérito para equipes técnicas (NÃO vão pro DOCX)
+- `<SUGESTOES_NORMATIVAS>` — sugestões orientativas para conflitos E2 (NÃO vão pro DOCX)
 - `<LOG_ALTERACOES>` — registro de cada operação realizada
 
 ---
