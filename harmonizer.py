@@ -729,7 +729,7 @@ O texto do dispositivo permanece exatamente como aprovado — apenas acrescente 
             → corrige avisos multi-linha contados como muitos itens.
         modo='linha': cada linha não-vazia é um item separado (para log de alterações).
         """
-        skip = {"Nenhum aviso.", "Nenhum erro crítico.", "Nenhum.", "Sem renumeração necessária."}
+        skip = {"Nenhum aviso.", "Nenhum erro crítico.", "Nenhum.", "Sem renumeração necessária.", "Nenhuma nota técnica."}
         if modo == 'paragrafo':
             blocos = re.split(r'\n\s*\n', raw.strip())
             items = [' '.join(l.strip() for l in b.splitlines() if l.strip()) for b in blocos]
