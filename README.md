@@ -66,7 +66,9 @@ O sistema **jamais altera** o conteúdo substantivo de uma emenda aprovada.
 A única modificação automática permitida é a atualização de referências cruzadas internas (ex: renumeração de artigos).
 
 ### Emendas sem alvo definido ("acrescente-se onde couber")
-Quando uma emenda aditiva não especifica o dispositivo de destino, o sistema **posiciona automaticamente** o novo artigo no local mais coerente tematicamente, registra a decisão no log e gera um aviso identificando onde foi inserido e o motivo — para que o relator tenha visibilidade total da escolha feita.
+Quando uma **emenda aditiva** não especifica o dispositivo de destino, o sistema posiciona automaticamente a unidade normativa (artigo, parágrafo, inciso, alínea ou item) no local mais coerente tematicamente, registra a decisão no log e gera um aviso com o tipo de unidade inserida e o local exato.
+
+Quando uma **emenda modificativa ou substitutiva** chega sem alvo identificável, o sistema **não aplica** a modificação — gerar um aviso de revisão manual obrigatória e registra no log que a emenda não foi aplicada, evitando que o modelo invente qual dispositivo deveria ser alterado.
 
 ---
 
