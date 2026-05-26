@@ -71,6 +71,7 @@ class ResultadoHarmonizacao:
     alertas_absurdos: list[str] = field(default_factory=list)  # 🔴 Absurdo manifesto
     mapa_renumeracao: dict = field(default_factory=dict)
     log_alteracoes: list[str] = field(default_factory=list)
+    notas_tecnicas: list[str] = field(default_factory=list)   # ℹ informativo — não vai pro DOCX
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -547,21 +548,18 @@ E1.5. PROIBIÇÃO ABSOLUTA — ANÁLISES DE MÉRITO NOS AVISOS:
     — Qualquer julgamento sobre se os valores fazem sentido técnico ou urbanístico
     Esses são assuntos de MÉRITO — soberania exclusiva do Plenário — totalmente fora da
     competência da CCJ na Redação Final. Colocá-los em AVISOS contamina o documento.
-    Se perceber algo desse tipo, OMITA. Não registre. Não "avise com ressalva".
+    Se perceber algo desse tipo, NÃO coloque em AVISOS.
+    Registre em <NOTAS_TECNICAS> como nota informativa para equipes técnicas — sem julgamento.
 
-    EXEMPLO PROIBIDO — nunca escreva nada parecido com isto:
-    ❌ "⚠ Emenda 6 / Anexo III: CA do Setor A aumentou de 8,0 para 16,0. Verificar
-       impacto urbanístico e consistência com os demais setores."
-    ❌ "⚠ Emenda 6 / Anexo III: Alteração significativa nos índices de aproveitamento.
-       Recomenda-se verificar adequação dos parâmetros."
-    ↑ Isso é MÉRITO. O Plenário aprovou — a CCJ não avisa, não questiona, não "ressalva".
-      OMITA COMPLETAMENTE. Não existe aviso da CCJ para mudança de CA.
+    EXEMPLO PROIBIDO em AVISOS (coloque em NOTAS_TECNICAS, nunca em AVISOS):
+    ❌ AVISOS: "⚠ Emenda 6 / Anexo III: CA do Setor A aumentou de 8,0 para 16,0."
+    ✅ NOTAS_TECNICAS: "ℹ Emenda 6 / Anexo III: CA Setor A: 8,0 → 16,0; CA Setor B: 6,0 → 18,0."
 
     AUTO-TESTE antes de escrever qualquer aviso:
     Pergunte-se: "Este aviso é sobre um erro de PORTUGUÊS ou de TÉCNICA REDACIONAL FORMAL?"
-    — Se sim → escreva o aviso.
-    — Se não (se for sobre o que a lei permite, quanto vale, se os números fazem sentido,
-      se os parâmetros são adequados, se há impacto urbanístico) → NÃO ESCREVA. Delete.
+    — Se sim → escreva em AVISOS.
+    — Se não (se for sobre o que a lei permite, quanto vale, parâmetros, impacto) →
+      coloque em NOTAS_TECNICAS (nunca em AVISOS).
 
 E2. ERROS CRÍTICOS — não tente resolver; a providência regimental indicada é a reabertura da discussão (art. 250, §2º RI):
     — Duas emendas aprovadas que se contradizem diretamente sobre o mesmo dispositivo
@@ -635,15 +633,9 @@ O texto do dispositivo permanece exatamente como aprovado — apenas acrescente 
 <AVISOS>
 [Um aviso por linha. Formato: "⚠ Emenda N / Art. Xº: descrição detalhada do problema"]
 [Base legal do aviso entre colchetes, ex: [LC 48/2000, art. 9º, VIII]]
-[⚠ RESTRIÇÃO ABSOLUTA: AVISOS são estritamente para problemas de FORMA/LINGUAGEM.
- NUNCA inclua observações sobre conteúdo, mérito ou política urbanística.
- PROIBIDO (exemplos exatos do que NÃO escrever):
- ❌ "CA do Setor A aumentou de 8,0 para 16,0 — verificar impacto urbanístico"
- ❌ "Alteração significativa nos índices de aproveitamento — verificar adequação"
- ❌ "Parâmetros do Setor B merecem atenção" / "Recomenda-se verificar consistência"
- ↑ Qualquer coisa assim é MÉRITO. Delete. Não existe aviso da CCJ para mudança de CA.
+[⚠ AVISOS são estritamente para problemas de FORMA/LINGUAGEM.
+ Parâmetros técnicos (CA, gabaritos, valores numéricos) → coloque em NOTAS_TECNICAS, não aqui.
  Escreva "Nenhum aviso." se não houver problema de forma/linguagem.]
-[Escreva "Nenhum aviso." se não houver.]
 </AVISOS>
 
 <ERROS_CRITICOS>
@@ -658,6 +650,14 @@ O texto do dispositivo permanece exatamente como aprovado — apenas acrescente 
 [A providência regimental indicada é a reabertura da discussão (art. 250, §2º RI).]
 [Na dúvida, classifique como AVISO. Escreva "Nenhum." se não houver.]
 </ALERTAS_ABSURDOS>
+
+<NOTAS_TECNICAS>
+[Notas informativas para equipes técnicas — NÃO são avisos formais da CCJ e NÃO constam no documento exportado.]
+[Use para registrar objetivamente alterações de parâmetros técnicos (CA, gabaritos, valores numéricos) que outros técnicos possam querer verificar.]
+[Formato: "ℹ Emenda N / Dispositivo: descrição objetiva da alteração — sem julgamento de mérito"]
+[Exemplo: "ℹ Emenda 6 / Anexo III: CA Setor A: 8,0 → 16,0; CA Setor B: 6,0 → 18,0 (inalterados: C e D)."]
+[Escreva "Nenhuma nota técnica." se não houver.]
+</NOTAS_TECNICAS>
 
 <LOG_ALTERACOES>
 [Um registro por linha: "Emenda N (Tipo): ação exata realizada no texto"]
@@ -680,7 +680,7 @@ O texto do dispositivo permanece exatamente como aprovado — apenas acrescente 
     # TEXTO_HARMONIZADO e LOG_ALTERACOES também exigem conteúdo não vazio.
     _TODAS_TAGS      = [
         "TEXTO_HARMONIZADO", "MAPA_RENUMERACAO",
-        "AVISOS", "ERROS_CRITICOS", "ALERTAS_ABSURDOS", "LOG_ALTERACOES",
+        "AVISOS", "ERROS_CRITICOS", "ALERTAS_ABSURDOS", "NOTAS_TECNICAS", "LOG_ALTERACOES",
     ]
     _TAGS_NAO_VAZIAS = {"TEXTO_HARMONIZADO", "LOG_ALTERACOES"}
 
@@ -712,6 +712,7 @@ O texto do dispositivo permanece exatamente como aprovado — apenas acrescente 
     avisos_raw    = extrair("AVISOS", "")
     erros_raw     = extrair("ERROS_CRITICOS", "")
     alertas_raw   = extrair("ALERTAS_ABSURDOS", "")
+    notas_raw     = extrair("NOTAS_TECNICAS", "")
     log_raw       = extrair("LOG_ALTERACOES", "")
 
     # Mapa de renumeração
@@ -739,6 +740,7 @@ O texto do dispositivo permanece exatamente como aprovado — apenas acrescente 
     avisos_list  = parse_linhas(avisos_raw,  modo='paragrafo')
     erros_list   = parse_linhas(erros_raw,   modo='paragrafo')
     alertas_list = parse_linhas(alertas_raw, modo='paragrafo')
+    notas_list   = parse_linhas(notas_raw,   modo='paragrafo')
     log_list     = parse_linhas(log_raw,     modo='linha')
 
     # Pós-processamento: eleva absurdos manifestos classificados erroneamente como §1º avisos
@@ -753,4 +755,5 @@ O texto do dispositivo permanece exatamente como aprovado — apenas acrescente 
         alertas_absurdos  = alertas_list,
         mapa_renumeracao  = mapa,
         log_alteracoes    = log_list,
+        notas_tecnicas    = notas_list,
     )

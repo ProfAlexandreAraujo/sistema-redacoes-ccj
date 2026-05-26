@@ -723,6 +723,17 @@ with aba4:
         if not alertas and not res.erros_criticos and not res.avisos:
             st.success("✅ Nenhum problema jurídico ou redacional detectado!")
 
+        # ── Notas técnicas (informativas — não constam no documento exportado) ──
+        notas_tec = getattr(res, 'notas_tecnicas', [])
+        if notas_tec:
+            with st.expander(f"ℹ️ {len(notas_tec)} nota(s) técnica(s) para equipes — clique para ver"):
+                st.caption(
+                    "Registro informativo de alterações em parâmetros técnicos (CA, gabaritos, etc.). "
+                    "**Não são avisos formais da CCJ e não constam no documento exportado.**"
+                )
+                for n in notas_tec:
+                    st.info(n)
+
         # ── Mapa e Log (operacionais) ──
         if res.mapa_renumeracao:
             with st.expander(f"🔢 Mapa de renumeração ({n_mapa} dispositivos renumerados)"):
