@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-verificar.py — Verificação do Sistema de Redações CCJ CMRJ (rev.10)
+verificar.py — Verificação do Sistema de Redações CCJ CMRJ (rev.11)
 Testa todos os comportamentos críticos do AUDITORIA.md sem custo de API.
 
 Uso:
@@ -32,7 +32,7 @@ def chk(nome: str, ok: bool, detalhe: str = "") -> None:
 
 print()
 print("=" * 65)
-print("  VERIFICAÇÃO DO SISTEMA — CCJ CMRJ — rev.10")
+print("  VERIFICAÇÃO DO SISTEMA — CCJ CMRJ — rev.11")
 print("=" * 65)
 
 # ────────────────────────────────────────────────────────────────────────────
@@ -664,7 +664,7 @@ try:
                     novo_texto="Novo texto aprovado pela subemenda.",
                     status=StatusEmenda.APROVADA, parseada=True,
                     subemenda_de=3)
-    _lista, _log_s, _av_s = _resolver_subemendas([_e_pai, _e_sub], [_e_pai, _e_sub])
+    _lista, _log_s, _av_s, _ec_s = _resolver_subemendas([_e_pai, _e_sub], [_e_pai, _e_sub])
 
     chk("SubEmenda aprovada + pai aprovado → substitui texto do pai",
         len(_lista) == 1 and _lista[0].numero == 3 and
@@ -685,7 +685,7 @@ try:
     _e_sub2 = Emenda(numero=7, texto_bruto="SubEmenda.",
                      novo_texto="Sub texto.",
                      status=StatusEmenda.APROVADA, parseada=True, subemenda_de=3)
-    _lista2, _log2, _av2 = _resolver_subemendas([_e_pai_rej, _e_sub2], [_e_sub2])
+    _lista2, _log2, _av2, _ec2 = _resolver_subemendas([_e_pai_rej, _e_sub2], [_e_sub2])
 
     chk("SubEmenda aprovada + pai rejeitado → aviso de inoperante",
         any("inoperante" in a for a in _av2),
@@ -702,7 +702,7 @@ try:
     _e_pai3 = Emenda(numero=3, texto_bruto="Texto original mantido.",
                      novo_texto="Texto original mantido.",
                      status=StatusEmenda.APROVADA, parseada=True)
-    _lista3, _log3, _av3 = _resolver_subemendas([_e_pai3, _e_sub3], [_e_pai3])
+    _lista3, _log3, _av3, _ec3 = _resolver_subemendas([_e_pai3, _e_sub3], [_e_pai3])
 
     chk("SubEmenda rejeitada → pai mantém texto original (log registra)",
         any("SubEmenda 8" in l and "mantém texto original" in l for l in _log3),
@@ -719,11 +719,15 @@ try:
                     novo_texto="Texto B", parseada=True, subemenda_de=3)
     _e_pai4 = Emenda(numero=3, status=StatusEmenda.APROVADA, texto_bruto="Original",
                      novo_texto="Original", parseada=True)
-    _lista4, _log4, _av4 = _resolver_subemendas(
+    _lista4, _log4, _av4, _ec4 = _resolver_subemendas(
         [_e_pai4, _sub_a, _sub_b], [_e_pai4, _sub_a, _sub_b]
     )
-    chk("Conflito de subemendas → aviso crítico gerado",
-        any("CONFLITO DE SUBEMENDAS" in a for a in _av4),
+    chk("Conflito de subemendas → erro crítico §2º gerado (não §1º aviso)",
+        any("CONFLITO DE SUBEMENDAS" in e for e in _ec4),
+        f"erros_criticos={_ec4}, avisos={_av4}")
+
+    chk("Conflito de subemendas → NÃO entra em avisos §1º (somente §2º)",
+        not any("CONFLITO DE SUBEMENDAS" in a for a in _av4),
         f"avisos={_av4}")
 
     chk("Conflito de subemendas → nenhuma substituição automática (texto pai preservado)",

@@ -1,4 +1,5 @@
 # Prompt de Auditoria Externa — Sistema de Redações CCJ CMRJ
+### Versão rev.14 — 26/05/2026
 
 ---
 
@@ -17,7 +18,7 @@ A interface é uma aplicação **Streamlit** com 5 abas:
 1. Projeto original (upload/texto)
 2. Emendas (parsing via IA ou manual)
 3. Votação (painel rápido para uso em plenário)
-4. Harmonização (chama a API)
+4. Harmonização (chama a API; inclui painel de subemendas)
 5. Redação Final (revisão, edição e exportação .docx / .txt)
 
 ---
@@ -26,38 +27,90 @@ A interface é uma aplicação **Streamlit** com 5 abas:
 
 O modelo recebe:
 - O texto original do projeto de lei
-- As emendas aprovadas
+- As emendas aprovadas (já pré-processadas — subemendas já resolvidas pela camada Python)
 
-E deve produzir, em formato XML estruturado (8 tags obrigatórias):
+E deve produzir, em formato XML estruturado (**8 tags obrigatórias** — par completo exigido
+por guarda Python; ValueError se truncado):
+
 - `<TEXTO_HARMONIZADO>` — texto com todas as emendas aplicadas, renumeração atualizada
 - `<MAPA_RENUMERACAO>` — mapa de dispositivos renumerados
 - `<AVISOS>` — problemas formais/linguísticos (art. 250, §1º RI)
-- `<ERROS_CRITICOS>` — contradições insanáveis (art. 250, §2º RI)
-- `<ALERTAS_ABSURDOS>` — absurdos manifestos (art. 250, §2º RI)
+- `<ERROS_CRITICOS>` — contradições insanáveis (art. 250, §2º RI) — **dispara rascunho**
+- `<ALERTAS_ABSURDOS>` — absurdos manifestos (art. 250, §2º RI) — **dispara rascunho**
 - `<NOTAS_TECNICAS>` — informações de mérito para equipes técnicas (NÃO vão pro DOCX)
 - `<SUGESTOES_NORMATIVAS>` — sugestões orientativas para conflitos E2 (NÃO vão pro DOCX)
 - `<LOG_ALTERACOES>` — registro de cada operação realizada
 
+**Fluxo §2º (rascunho de trabalho):** qualquer item em `erros_criticos` ou
+`alertas_absurdos` faz o DOCX/TXT sair como **"RASCUNHO DE TRABALHO — NÃO É REDAÇÃO FINAL"**
+por padrão. O relator confirma ciência via checkbox na aba 5 para exportar como Redação Final
+(com "ALERTA CRÍTICO PENDENTE" no cabeçalho e entrada "OVERRIDE-HUMANO" no log).
+
 ---
 
-## Implementações recentes (para auditoria)
+## Pré-processamento Python (camada antes da IA)
+
+### Subemendas — `_resolver_subemendas()` (harmonizer.py rev.14)
+
+Antes de chamar a IA, o sistema processa subemendas (emendas que substituem o texto de
+outra emenda antes de votá-la). A função retorna **4 valores**:
+
+```python
+def _resolver_subemendas(
+    todas_emendas: list[Emenda],
+    aprovadas: list[Emenda],
+) -> tuple[list[Emenda], list[str], list[str], list[str]]:
+    """
+    Retorna (lista_processada, log_entries, avisos_simples, erros_criticos).
+    erros_criticos (§2º) dispara o fluxo de rascunho de trabalho no app.
+    """
+```
+
+**Regras processadas:**
+
+| Caso | Entrada | Saída |
+|---|---|---|
+| Normal | SubEmenda aprovada + emenda-pai aprovada | `novo_texto` do pai substituído; subemenda retirada da lista enviada à IA |
+| Inoperante | SubEmenda aprovada + emenda-pai NÃO aprovada | Aviso §1º registrado em `avisos_simples` |
+| Rejeitada | SubEmenda rejeitada/prejudicada | Emenda-pai mantém texto; registro em `log_entries` |
+| **Conflito** | **Duas subemendas aprovadas para o mesmo pai** | **`erros_criticos` (§2º)** → rascunho; nenhuma substituição automática; log registra |
+
+**Bug corrigido em rev.14:** Antes desta versão, o caso de conflito de subemendas ia para
+`avisos_simples` (§1º) em vez de `erros_criticos` (§2º), o que **não disparava** o fluxo
+de rascunho de trabalho. Um conflito entre duas subemendas aprovadas é tão grave quanto um
+conflito entre duas emendas aprovadas — ambos requerem a decisão do relator (art. 250, §2º RI).
+
+**Injeção no resultado:**
+```python
+emendas_para_ia, log_subemendas, avisos_subemendas, erros_criticos_sub = _resolver_subemendas(...)
+
+# ... chamada à IA ...
+
+if log_subemendas:
+    log_list = log_subemendas + log_list
+if avisos_subemendas:
+    avisos_list = avisos_subemendas + avisos_list
+if erros_criticos_sub:
+    # Conflito de subemendas → §2º → ativa fluxo de rascunho de trabalho
+    erros_list = erros_criticos_sub + erros_list
+```
+
+---
+
+## Implementações no prompt da IA (para auditoria)
 
 ### 1. Regra A4 — emendas sem alvo definido (harmonizer.py)
 
-**Problema identificado:** emendas que chegam sem alvo definido — expressões como
-"acrescente-se onde couber", "inclua-se no local adequado" ou simplesmente sem indicação
-do dispositivo de destino — não tinham tratamento explícito. O modelo poderia inserir
-silenciosamente sem registrar ou, pior, recusar aplicar.
+**Problema:** emendas que chegam sem alvo definido ("acrescente-se onde couber",
+"inclua-se no local adequado" ou alvo simplesmente omisso) não tinham tratamento explícito.
 
-**Solução implementada:** regra A4 com dois sub-casos:
+**Solução — regra A4 com dois sub-casos:**
 
 ```
 A4. EMENDAS SEM ALVO DEFINIDO — "acrescente-se onde couber"
 
     A4.1 — EMENDAS ADITIVAS SEM ALVO (texto novo autônomo)
-    Quando uma emenda aditiva não especificar o dispositivo exato de destino
-    (ex: "acrescente-se onde couber", "inclua-se no local adequado", "onde cabível",
-    ou quando o alvo estiver simplesmente omisso):
+    Quando uma emenda aditiva não especificar o dispositivo exato de destino:
 
     a) IDENTIFIQUE a unidade normativa que está sendo inserida:
        — Artigo novo → inserir após o artigo tematicamente mais próximo
@@ -72,47 +125,41 @@ A4. EMENDAS SEM ALVO DEFINIDO — "acrescente-se onde couber"
     b) CRITÉRIOS DE POSICIONAMENTO (em ordem de prioridade):
        — Afinidade de matéria: insira próximo a dispositivos que tratam do mesmo tema
        — Sequência lógica: respeite a progressão normativa do capítulo ou seção
-       — Nunca crie "ilhas" temáticas: não insira dispositivo sobre tema X no meio de tema Y
+       — Nunca crie "ilhas" temáticas
        — Em caso de empate, prefira o final do capítulo temático correspondente
 
-    c) OBRIGATÓRIO — registrar no LOG_ALTERACOES:
-       "A4 / Emenda N: inserida como [artigo/parágrafo/inciso/alínea/item] em [local exato] — [motivo breve] (alvo não especificado na emenda)"
+    c) OBRIGATÓRIO — LOG_ALTERACOES:
+       "A4 / Emenda N: inserida como [tipo] em [local exato] — [motivo] (alvo não especificado)"
 
-    d) OBRIGATÓRIO — gerar aviso em AVISOS:
-       "⚠ Emenda N / alvo não especificado: inserida como [tipo] em [local exato] por coerência temática com [tema]. Posicionamento definido pela CCJ — alvo não especificado na emenda original."
+    d) OBRIGATÓRIO — AVISOS:
+       "⚠ Emenda N / alvo não especificado: inserida como [tipo] em [local exato] ..."
 
     NUNCA insira silenciosamente sem AVISO e sem LOG.
-    NUNCA recuse aplicar a emenda por ausência de alvo — posicionar é responsabilidade da CCJ.
+    NUNCA recuse aplicar a emenda por ausência de alvo.
 
     A4.2 — EMENDAS MODIFICATIVAS OU SUBSTITUTIVAS SEM ALVO IDENTIFICÁVEL
-    Quando uma emenda modificativa ou substitutiva não especificar o dispositivo de destino
-    e o alvo não puder ser inferido com segurança a partir do texto da emenda:
-
     a) NÃO aplique a substituição — não invente qual dispositivo está sendo modificado.
-    b) OBRIGATÓRIO — registrar em ERROS_CRITICOS (não em AVISOS):
+    b) OBRIGATÓRIO — ERROS_CRITICOS (não em AVISOS):
        "🚨 Emenda N (modificativa/substitutiva): alvo não identificável — emenda NÃO aplicada.
         A Redação Final está materialmente incompleta. Revisão e decisão do relator obrigatórias
         antes da publicação (art. 250, §2º RI)."
-    c) OBRIGATÓRIO — registrar no LOG_ALTERACOES:
-       "A4.2 / Emenda N: NÃO aplicada — alvo não identificável (modificativa/substitutiva sem alvo definido)"
+    c) OBRIGATÓRIO — LOG_ALTERACOES:
+       "A4.2 / Emenda N: NÃO aplicada — alvo não identificável"
 ```
 
-**Decisão de projeto:** A4.1 e A4.2 tratam casos fundamentalmente diferentes.
-- Aditivas sem alvo: o sistema posiciona — responsabilidade da CCJ, rastro obrigatório.
-- Modificativas/substitutivas sem alvo: não aplica e lança **ERROS_CRITICOS** — a Redação
-  Final fica materialmente incompleta, o que dispara o fluxo §2º (rascunho por padrão,
-  confirmação explícita do relator para exportar como Redação Final).
+**Decisão de projeto:**
+- A4.1: posiciona (responsabilidade da CCJ) + rastro obrigatório (§1º)
+- A4.2: não aplica + ERRO CRÍTICO (§2º) — a Redação Final fica materialmente incompleta
 
 ---
 
-### 2. Tag NOTAS_TECNICAS — separação de mérito e forma (harmonizer.py + app.py)
+### 2. Tag NOTAS_TECNICAS — separação de mérito e forma
 
-**Problema identificado:** o modelo colocava em `AVISOS` observações sobre coeficiente
-de aproveitamento (CA), gabaritos e parâmetros urbanísticos — matéria de **mérito**,
-fora da competência da CCJ na Redação Final.
+**Problema:** o modelo colocava análises de CA urbanístico e gabaritos em `AVISOS` (§1º) —
+matéria de mérito, fora da competência da CCJ.
 
-**Solução implementada:**
-- Nova tag `<NOTAS_TECNICAS>` no formato XML de saída
+**Solução:**
+- Nova tag `<NOTAS_TECNICAS>` no XML de saída
 - Regra E1.5 no prompt proíbe expressamente mérito em AVISOS:
 
 ```
@@ -121,9 +168,8 @@ E1.5. PROIBIÇÃO ABSOLUTA — ANÁLISES DE MÉRITO NOS AVISOS:
     — Coeficiente de aproveitamento (CA): comparações, proporções, relações entre setores
     — Gabaritos, alturas, número de pavimentos: análises de adequação
     — Consistência dos parâmetros urbanísticos aprovados pelo Plenário
-    — Qualquer julgamento sobre se os valores fazem sentido técnico ou urbanístico
     Se perceber algo desse tipo, NÃO coloque em AVISOS.
-    Registre em <NOTAS_TECNICAS> como nota informativa para equipes técnicas — sem julgamento.
+    Registre em <NOTAS_TECNICAS> como nota informativa — sem julgamento.
 ```
 
 - `NOTAS_TECNICAS` aparecem na interface como expander colapsável com disclaimer
@@ -133,24 +179,23 @@ E1.5. PROIBIÇÃO ABSOLUTA — ANÁLISES DE MÉRITO NOS AVISOS:
 
 ### 3. Correção de bug — skip set incompleto (harmonizer.py)
 
-`"Nenhuma nota técnica."` não estava no conjunto `skip` de `parse_linhas()`,
-fazendo o expander aparecer com "1 nota técnica" cujo conteúdo era a própria frase.
+`"Nenhuma nota técnica."` e `"Nenhuma sugestão."` não estavam no conjunto `skip` de
+`parse_linhas()`, fazendo os expanders aparecerem com "1 item" cujo conteúdo era a própria frase.
 
 ```python
-# Corrigido:
+# Skip set completo:
 skip = {"Nenhum aviso.", "Nenhum erro crítico.", "Nenhum.",
-        "Sem renumeração necessária.", "Nenhuma nota técnica."}
+        "Sem renumeração necessária.", "Nenhuma nota técnica.", "Nenhuma sugestão."}
 ```
 
 ---
 
 ### 4. Regra E2 — conflitos entre emendas aprovadas + sugestão normativa (harmonizer.py)
 
-**Problema identificado:** o sistema já tinha uma regra E2, mas ela se limitava a listar situações
-de conflito sem dar instruções claras sobre como o modelo deve agir e sem oferecer sugestão
-de harmonização — deixando o relator sem apoio para resolver o conflito.
+**Problema:** a regra E2 anterior listava situações de conflito sem instruir o modelo
+a realizar varredura prévia nem oferecer sugestão de harmonização.
 
-**Solução implementada:** E2 reformulada em quatro passos obrigatórios:
+**Solução — E2 reformulada em três passos:**
 
 ```
 E2. CONFLITOS ENTRE EMENDAS APROVADAS — DETECÇÃO OBRIGATÓRIA E SUGESTÃO NORMATIVA
@@ -179,33 +224,23 @@ E2. CONFLITOS ENTRE EMENDAS APROVADAS — DETECÇÃO OBRIGATÓRIA E SUGESTÃO NO
 ```
 
 **Nova tag XML:** `<SUGESTOES_NORMATIVAS>` — 8ª tag obrigatória na resposta.
-- Aparece na interface como expander amarelo expandido (visível imediatamente).
-- NÃO exportada para o DOCX.
-- Marcador `[[⚠️ CCJ: CONFLITO DE EMENDAS...]]` removido automaticamente pelo regex existente.
+- Aparece na interface como expander amarelo expandido (visível imediatamente)
+- **NÃO exportada** para o DOCX/TXT
+- Marcador `[[⚠️ CCJ: CONFLITO DE EMENDAS...]]` removido automaticamente dos dois produtos exportados
 
-**Decisão de projeto:**
-- `sugestoes_normativas` é campo novo no dataclass `ResultadoHarmonizacao`.
-- O sistema NÃO toma a decisão — posiciona a emenda de menor número como cautela neutra
-  e fornece ao relator as informações e uma sugestão orientativa para decidir.
-- O conflito dispara o fluxo §2º (rascunho de trabalho por padrão via `erros_criticos`).
+**Fluxo completo:** E2 → `ERROS_CRITICOS` → §2º → DOCX como rascunho por padrão
 
 ---
 
-### 5. Subemendas — campo `subemenda_de` + `_resolver_subemendas()` (harmonizer.py + app.py)
+### 5. Subemendas — campo `subemenda_de` + `_resolver_subemendas()` (harmonizer.py rev.13/14 + app.py)
 
-**Problema identificado:** O sistema não suportava subemendas — o texto de emendas que haviam sido
-alteradas por subemendas aprovadas era aplicado na sua versão original, ignorando a decisão do Plenário.
+**Problema:** O sistema não suportava subemendas — o texto de emendas que haviam sido
+alteradas por subemendas aprovadas era aplicado na versão original, ignorando a decisão do Plenário.
 
-**Solução implementada:**
+**Implementação:**
 
 - Campo `subemenda_de: Optional[int]` adicionado ao dataclass `Emenda`.
-- Função `_resolver_subemendas(todas_emendas, aprovadas)` executa **antes** da chamada à IA:
-  - SubEmenda aprovada + emenda-pai aprovada → substitui `novo_texto` do pai pelo texto da subemenda;
-    subemenda é retirada do bloco enviado à IA.
-  - SubEmenda aprovada + emenda-pai NÃO aprovada → aviso de subemenda inoperante.
-  - SubEmenda rejeitada/prejudicada → emenda-pai mantém texto original; log registra.
-  - Duas subemendas aprovadas para a mesma emenda-pai → aviso crítico de conflito; nenhuma
-    substituição automática realizada.
+- Função `_resolver_subemendas()` executa **antes** da chamada à IA (detalhada acima).
 - `parsear_emendas_com_ia` atualizado: reconhece texto como subemenda e extrai `subemenda_de`.
 - Interface (app.py):
   - **Aba 2:** badge `↳ SubEm.E{N}` no cabeçalho do card; campo `subemenda_de` editável.
@@ -213,19 +248,29 @@ alteradas por subemendas aprovadas era aplicado na sua versão original, ignoran
   - **Aba 4:** painel expandido com status de cada subemenda antes de harmonizar.
   - **Formulário manual:** campo para informar `subemenda_de`.
 
+**Bug crítico corrigido em rev.14 (durante autoauditoria):**
+O conflito de subemendas era roteado para `avisos` (§1º) em vez de `erros_criticos` (§2º),
+o que impedia o acionamento do fluxo de rascunho de trabalho. Corrigido: retorno passou de
+3 para 4 valores; conflito vai exclusivamente para `erros_criticos_sub`.
+
 ---
 
-### 6. verificar.py — estado atual (rev.10)
+### 6. verificar.py — estado atual (rev.11)
 
 - **Seção 11:** valida 8 tags XML (inclui `NOTAS_TECNICAS` e `SUGESTOES_NORMATIVAS`)
 - **Seção 13:** 11 testes estruturais (sem API) para A4.1 e A4.2
 - **Seção 14:** 12 testes estruturais (sem API) para E2 + SUGESTOES_NORMATIVAS
-- **Seção 15:** 12 testes estruturais (sem API) para subemendas
-- **Resultado: 105/106** (1 falha esperada: chave API não configurada localmente)
+- **Seção 15:** 14 testes estruturais (sem API) para subemendas, incluindo:
+  - Caso normal: substituição, remoção da lista, log
+  - Caso inoperante: aviso §1º, não vai à IA
+  - Caso rejeitada: texto pai preservado
+  - **Conflito → `erros_criticos` §2º gerado** (not `avisos` §1º) — 2 testes opostos
+  - parsear reconhece `subemenda_de`; app.py exibe painel
+- **Resultado: 106/107** (1 falha esperada: chave API não configurada localmente)
 
 ---
 
-## Arquitetura de proteções (estado atual)
+## Arquitetura de proteções (estado atual — rev.14)
 
 | Proteção | Onde | O que faz |
 |---|---|---|
@@ -238,40 +283,51 @@ alteradas por subemendas aprovadas era aplicado na sua versão original, ignoran
 | E1 — correções linguísticas | Prompt | Concordância, caixa, pontuação — registradas no LOG |
 | E1.5 — sem mérito em AVISOS | Prompt | Mérito vai para NOTAS_TECNICAS |
 | E2 — conflito entre emendas | Prompt | Varredura prévia; cautela por menor número; ERROS_CRITICOS + SUGESTOES_NORMATIVAS |
-| Subemendas | Python (pré-IA) | Substitui texto da emenda-pai; conflito detectado; inoperante registrado |
+| Subemendas — caso normal | Python (pré-IA) | Substitui texto da emenda-pai; subemenda retirada da lista |
+| Subemendas — conflito | Python (pré-IA) | **ERROS_CRITICOS §2º** → rascunho; nenhuma substituição automática |
+| Subemendas — inoperante | Python (pré-IA) | Aviso §1º; subemenda não vai à IA |
 | Detecção estrutural absurdos | Python | Circular, inoperante — independe do modelo |
 | Escalada de §1º para §2º | Python | Padrões semânticos nos avisos |
 | Validação XML | Python | Par completo de 8 tags ou ValueError |
 | Rascunho de trabalho | Python + App | §2º → DOCX sai como rascunho até relator confirmar |
 | `_invalidar_resultado()` | App | Qualquer mudança limpa resultado anterior |
 | Skip set completo | Python | Strings "Nenhum/a..." filtradas corretamente |
+| Limpeza de marcadores inline | Python + App | `[[⚠️ CCJ:...]]` removido de DOCX e TXT antes da exportação |
 
 ---
 
 ## Perguntas para sua auditoria
 
-1. **A regra E2 reformulada é suficientemente robusta?**
+1. **O bug de subemendas corrigido em rev.14 é suficientemente coberto?**
+   - O retorno de 4 valores em `_resolver_subemendas()` é a abordagem correta?
+   - Há outros edge cases de subemendas não cobertos? (ex: subemenda de subemenda? auto-referência?)
+   - A lógica de "menor número como cautela" do E2 deveria se aplicar também ao conflito
+     de subemendas (ou mantém a abordagem atual de não aplicar nenhuma)?
+
+2. **A regra E2 reformulada é suficientemente robusta?**
    - A política de "aplicar emenda de menor número como cautela" é a abordagem correta?
-   - Há risco de o modelo não realizar a varredura prévia e detectar o conflito apenas depois de aplicar as emendas?
+   - Há risco de o modelo não realizar a varredura prévia e detectar o conflito apenas
+     depois de aplicar as emendas?
    - As sugestões normativas podem criar viés para que o relator as adote sem análise crítica?
 
-2. **A regra A4 refinada está bem formulada?**
+3. **A regra A4 está bem formulada?**
    - A distinção A4.1 (aditiva: posiciona) vs A4.2 (modificativa: não aplica) é a abordagem correta?
-   - Os critérios de posicionamento para unidades menores (parágrafo, inciso, alínea, item) são suficientes?
-   - O LOG/AVISO com tipo de unidade e local exato é informativo o suficiente?
+   - Os critérios de posicionamento para unidades menores (parágrafo, inciso, alínea, item)
+     são suficientes?
 
-3. **A separação AVISOS / NOTAS_TECNICAS / SUGESTOES_NORMATIVAS é robusta?**
+4. **A separação AVISOS / NOTAS_TECNICAS / SUGESTOES_NORMATIVAS é robusta?**
    - A regra E1.5 é suficiente para o modelo não "vazar" mérito nos AVISOS?
    - Há risco de sugestões normativas aparecerem em ERROS_CRITICOS em vez de SUGESTOES_NORMATIVAS?
 
-4. **Há algo que deveria ter sido implementado e não foi?**
-   - Considerando o fluxo completo (upload → parsing → votação → harmonização → exportação),
-     há algum ponto cego evidente?
+5. **Há algo que deveria ter sido implementado e não foi?**
+   - Considerando o fluxo completo (upload → parsing → subemendas → votação → harmonização
+     → exportação), há algum ponto cego evidente?
 
-5. **O prompt tem riscos de regressão com E2 + A4 + E1.5?**
-   - Há conflito potencial com A1 (preservação verbatim) ou com as regras do Bloco B (renumeração)?
+6. **O prompt tem riscos de regressão com E2 + A4 + E1.5 + subemendas?**
+   - Há conflito potencial com A1 (preservação verbatim) ou com as regras do Bloco B
+     (renumeração)?
 
-6. **Sugestões livres** — o que você mudaria ou acrescentaria?
+7. **Sugestões livres** — o que você mudaria ou acrescentaria?
 
 ---
 
@@ -282,3 +338,4 @@ alteradas por subemendas aprovadas era aplicado na sua versão original, ignoran
 - O modelo usado é `claude-sonnet-4-6` com `max_tokens=60000`.
 - A chave API fica nos Secrets do Streamlit Cloud — não há chave local em produção.
 - O app está em: https://ccj-redacoes.streamlit.app
+- O código-fonte está em: https://github.com/ProfAlexandreAraujo/sistema-redacoes-ccj

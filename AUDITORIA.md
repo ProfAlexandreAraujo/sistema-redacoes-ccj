@@ -1,5 +1,5 @@
 # 🔍 AUDITORIA DO SISTEMA — CCJ CMRJ
-### Documento técnico para revisão externa — versão 2026-05-25 **rev.11**
+### Documento técnico para revisão externa — versão 2026-05-26 **rev.14**
 
 ---
 
@@ -156,6 +156,7 @@ Qualquer item escalado move-se de `avisos` para `alertas_absurdos`, ativando o m
 | 26/05/2026 | Regra E2 era genérica demais: listava situações de conflito mas não instruía o modelo a realizar varredura prévia, não especificava qual emenda aplicar como cautela nem gerava sugestão orientativa | Funcional/Regimental | ✅ harmonizer.py rev.12 — E2 reformulada com varredura prévia obrigatória, cautela por menor número, marcador inline `[[CCJ: CONFLITO DE EMENDAS]]`, ERROS_CRITICOS estruturado e nova tag SUGESTOES_NORMATIVAS; app.py — expander amarelo expandido com sugestões (não exportadas); verificar.py rev.9 — seção [14] com 12 testes; resultado: 91/92 |
 | 26/05/2026 | TXT exportado sem limpeza de marcadores inline `[[⚠️ CCJ:...]]` (DOCX limpava, TXT não) | Qualidade do produto | ✅ app.py — `_marker_re_txt` aplicado antes de codificar TXT; verificar.py rev.10 — 2 testes na seção [7f] |
 | 26/05/2026 | Sistema não suportava subemendas (emenda que substitui o texto de outra emenda antes de votá-la) | Funcional — lacuna legislativa | ✅ harmonizer.py rev.13 — campo `subemenda_de` no dataclass; `_resolver_subemendas()` pré-processa substituições antes da chamada à IA; parser IA reconhece subemenda; app.py — painel de subemendas na aba 4, badges nas abas 2/3, campo de edição; verificar.py rev.10 — seção [15] com 12 testes; resultado: 105/106 |
+| 26/05/2026 | `_resolver_subemendas()` roteava "🚨 CONFLITO DE SUBEMENDAS" para `avisos` (§1º) em vez de `erros_criticos` (§2º) — conflito de subemendas aprovadas **não disparava** o fluxo de rascunho de trabalho, deixando o documento ser exportado como Redação Final normal | Regimental crítico | ✅ harmonizer.py rev.14 — assinatura alterada para 4 valores `(lista, log, avisos_simples, erros_criticos)`; conflito de subemendas → `erros_criticos` (§2º); `erros_criticos_sub` injetado em `erros_list` em `harmonizar_texto()`; verificar.py rev.11 — 2 testes adicionais na seção [15]: §2º gerado + NÃO em §1º; resultado: 106/107 |
 
 ---
 
@@ -483,7 +484,7 @@ _PADROES_ABSURDO_AVISO = re.compile(
 
 ---
 
-### 11.6 Resultado dos testes automatizados (verificar.py rev.10 — 105/106)
+### 11.6 Resultado dos testes automatizados (verificar.py rev.11 — 106/107)
 
 ```
 [1]  IMPORTAÇÕES               ✅ 3/3
@@ -535,15 +536,17 @@ _PADROES_ABSURDO_AVISO = re.compile(
   ✅  Cautela menor número; marcador CONFLITO DE EMENDAS; formato 'CONFLITO / Emendas'
   ✅  SUGESTOES_NORMATIVAS em _TODAS_TAGS; sugestão normativa gerada
   ✅  'Nenhuma sugestão.' no skip set; campo no dataclass; app.py exibe mas não exporta
-[15] SUBEMENDAS — pré-processamento (12 verificações)
+[15] SUBEMENDAS — pré-processamento (14 verificações — rev.14)
   ✅  subemenda_de no dataclass Emenda
   ✅  SubEmenda aprovada + pai aprovado → texto substituído; subemenda retirada da lista; log
   ✅  SubEmenda aprovada + pai rejeitado → aviso inoperante; subemenda não vai à IA
   ✅  SubEmenda rejeitada → pai mantém texto original; log registra
-  ✅  Conflito de subemendas → aviso crítico; nenhuma substituição automática
+  ✅  Conflito de subemendas → erro crítico §2º gerado (não §1º aviso)  ← NEW (rev.14)
+  ✅  Conflito de subemendas → NÃO entra em avisos §1º (somente §2º)   ← NEW (rev.14)
+  ✅  Conflito de subemendas → nenhuma substituição automática (texto pai preservado)
   ✅  parsear_emendas_com_ia reconhece subemenda_de; app.py exibe painel de subemendas
 
-RESULTADO: 105/106 (único fail = API key ausente — esperado)
+RESULTADO: 106/107 (único fail = API key ausente — esperado)
 ```
 
 ---
@@ -561,7 +564,8 @@ RESULTADO: 105/106 (único fail = API key ausente — esperado)
 | Truncamento em qualquer das outras tags (`MAPA_RENUMERACAO`, `AVISOS`, `ERROS_CRITICOS`, `ALERTAS_ABSURDOS`, `NOTAS_TECNICAS`, `SUGESTOES_NORMATIVAS`, `LOG_ALTERACOES`) → `extrair()` devolveria `""` silenciosamente | Baixa | **✅ Corrigido (rev.10 + rev.12)** | `_TODAS_TAGS` + `_sem_par`: todas as 8 tags (incluindo `NOTAS_TECNICAS` e `SUGESTOES_NORMATIVAS`) verificam par completo; `_TAGS_NAO_VAZIAS` exige conteúdo não vazio em TEXTO_HARMONIZADO e LOG_ALTERACOES |
 | Resultado harmonizado sobrevivia a mudanças pós-harmonização | Possível em sessão longa | **✅ Corrigido (rev.8)** | `_invalidar_resultado()` aplicado em todos os pontos: votação, importação, edição, remoção de emendas |
 | `parsear_emendas_com_ia`: IA não retorna JSON → `continue` silencioso descartava o lote inteiro sem erro | Baixa (lotes com texto muito formatado) | **✅ Corrigido (rev.11)** | `raise ValueError` com mensagem explícita; `except` ampliado para `ValueError`; fallback bruto cria emendas marcadas para revisão manual — nenhuma emenda é perdida silenciosamente |
+| Conflito de subemendas (`🚨 CONFLITO DE SUBEMENDAS`) roteado para `avisos` (§1º) em vez de `erros_criticos` (§2º) — rascunho de trabalho não era disparado | Confirmado (bug ativo até rev.13) | **✅ Corrigido (rev.14)** | `_resolver_subemendas()` retorna 4 valores; conflito vai para `erros_criticos_sub` e é injetado em `erros_list` em `harmonizar_texto()`; verificar.py rev.11 testa explicitamente os dois lados (§2º positivo + §1º negativo) |
 
 ---
 
-*Versão rev.13 — 26/05/2026 — Sistema de Redações CCJ CMRJ*
+*Versão rev.14 — 26/05/2026 — Sistema de Redações CCJ CMRJ*

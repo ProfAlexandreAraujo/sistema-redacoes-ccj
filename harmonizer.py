@@ -108,7 +108,7 @@ def _chunk_text(text: str, max_chars: int = 40_000) -> list[str]:
 def _resolver_subemendas(
     todas_emendas: list["Emenda"],
     aprovadas: list["Emenda"],
-) -> tuple[list["Emenda"], list[str], list[str]]:
+) -> tuple[list["Emenda"], list[str], list[str], list[str]]:
     """
     Pré-processa subemendas antes da harmonização.
 
@@ -119,15 +119,16 @@ def _resolver_subemendas(
     Regras:
     - SubEmenda aprovada + Emenda-pai aprovada  → texto da emenda-pai substituído
       pelo texto da subemenda; subemenda retirada do bloco enviado à IA.
-    - SubEmenda aprovada + Emenda-pai NÃO aprovada → inoperante; registra aviso.
+    - SubEmenda aprovada + Emenda-pai NÃO aprovada → inoperante; registra aviso (§1º).
     - SubEmenda rejeitada/prejudicada → emenda-pai mantém texto original; registra log.
-    - Duas subemendas aprovadas para a mesma emenda-pai → conflito; registra aviso crítico.
+    - Duas subemendas aprovadas para a mesma emenda-pai → CONFLITO → erro crítico (§2º).
 
     Parâmetros:
     - todas_emendas: lista completa (para verificar status da emenda-pai)
     - aprovadas: emendas com status APROVADA (base da harmonização)
 
-    Retorna (lista_processada, log_entries, avisos).
+    Retorna (lista_processada, log_entries, avisos_simples, erros_criticos).
+    Erros críticos (§2º) disparam o fluxo de rascunho de trabalho no app.
     """
     # Mapa de todas as emendas por número (para buscar status do pai)
     todas_por_num: dict[int, "Emenda"] = {e.numero: e for e in todas_emendas}
@@ -143,7 +144,8 @@ def _resolver_subemendas(
             subs_apr_por_pai[e.subemenda_de].append(i)
 
     log: list[str] = []
-    avisos: list[str] = []
+    avisos: list[str] = []          # §1º — avisos informativos
+    erros_criticos: list[str] = []  # §2º — conflitos que bloqueiam publicação
     excluir: set[int] = set()   # índices de subemendas a retirar da lista final
 
     for pai_num, sub_idxs in subs_apr_por_pai.items():
@@ -161,14 +163,18 @@ def _resolver_subemendas(
                 excluir.add(si)
             continue
 
-        # Conflito: mais de uma subemenda aprovada para o mesmo pai
+        # Conflito: mais de uma subemenda aprovada para o mesmo pai → ERRO CRÍTICO §2º
         if len(sub_idxs) > 1:
             nums = [aprovadas_copia[si].numero for si in sub_idxs]
-            avisos.append(
+            erros_criticos.append(
                 f"🚨 CONFLITO DE SUBEMENDAS — Emenda {pai_num}: "
                 f"SubEmendas {nums} foram todas aprovadas — somente uma deveria prevalecer. "
-                "Decisão do relator obrigatória antes da harmonização. "
+                "Decisão do relator obrigatória antes da harmonização (art. 250, §2º RI). "
                 "Nenhuma substituição automática foi realizada."
+            )
+            log.append(
+                f"SubEmendas {nums} → Emenda {pai_num}: CONFLITO — nenhuma substituição "
+                "aplicada. Decisão do relator obrigatória (art. 250, §2º RI)."
             )
             excluir.update(sub_idxs)
             continue
@@ -213,7 +219,7 @@ def _resolver_subemendas(
                 )
 
     lista_final = [e for i, e in enumerate(aprovadas_copia) if i not in excluir]
-    return lista_final, log, avisos
+    return lista_final, log, avisos, erros_criticos
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -492,7 +498,7 @@ def harmonizar_texto(
         )
 
     # Pré-processa subemendas: substitui textos e retira subemendas da lista enviada à IA
-    emendas_para_ia, log_subemendas, avisos_subemendas = _resolver_subemendas(emendas, aprovadas)
+    emendas_para_ia, log_subemendas, avisos_subemendas, erros_criticos_sub = _resolver_subemendas(emendas, aprovadas)
 
     if not emendas_para_ia:
         return ResultadoHarmonizacao(
@@ -500,6 +506,7 @@ def harmonizar_texto(
             log_alteracoes=["Nenhuma emenda restante após resolução de subemendas. Texto original mantido."]
                            + log_subemendas,
             avisos=avisos_subemendas,
+            erros_criticos=erros_criticos_sub,
         )
 
     # Monta o sumário das emendas aprovadas (já com textos de subemendas substituídos)
@@ -978,11 +985,14 @@ O texto do dispositivo permanece exatamente como aprovado — apenas acrescente 
         avisos_list, texto_harm, alertas_list
     )
 
-    # Injeta log e avisos de subemendas no início (pré-processamento visível no resultado)
+    # Injeta log, avisos e erros críticos de subemendas no início (pré-processamento visível)
     if log_subemendas:
         log_list = log_subemendas + log_list
     if avisos_subemendas:
         avisos_list = avisos_subemendas + avisos_list
+    if erros_criticos_sub:
+        # Conflito de subemendas → §2º → ativa fluxo de rascunho de trabalho
+        erros_list = erros_criticos_sub + erros_list
 
     return ResultadoHarmonizacao(
         texto_harmonizado    = texto_harm,
