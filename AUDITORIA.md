@@ -357,16 +357,17 @@ docx_bytes = exportar_redacao_final_docx(
 
 ---
 
-### 11.3 `harmonizer.py` — validação XML obrigatória — rev.10
+### 11.3 `harmonizer.py` — validação XML obrigatória — rev.12
 
 ```python
-# Guarda unificada: todas as 6 tags esperadas devem ter par completo.
+# Guarda unificada: todas as 8 tags esperadas devem ter par completo.
 # Verificar só a tag de abertura não protege contra truncamento:
 # resposta cortada após <TAG> faria extrair() devolver "" silenciosamente.
 # TEXTO_HARMONIZADO e LOG_ALTERACOES também exigem conteúdo não vazio.
 _TODAS_TAGS      = [
     "TEXTO_HARMONIZADO", "MAPA_RENUMERACAO",
-    "AVISOS", "ERROS_CRITICOS", "ALERTAS_ABSURDOS", "LOG_ALTERACOES",
+    "AVISOS", "ERROS_CRITICOS", "ALERTAS_ABSURDOS",
+    "NOTAS_TECNICAS", "SUGESTOES_NORMATIVAS", "LOG_ALTERACOES",
 ]
 _TAGS_NAO_VAZIAS = {"TEXTO_HARMONIZADO", "LOG_ALTERACOES"}
 
@@ -480,7 +481,7 @@ _PADROES_ABSURDO_AVISO = re.compile(
 
 ---
 
-### 11.6 Resultado dos testes automatizados (verificar.py rev.7 — 66/67)
+### 11.6 Resultado dos testes automatizados (verificar.py rev.9 — 91/92)
 
 ```
 [1]  IMPORTAÇÕES               ✅ 3/3
@@ -506,8 +507,8 @@ _PADROES_ABSURDO_AVISO = re.compile(
 [8]  ANÁLISE ESTRUTURAL        ✅ 3/3
 [9]  API KEY                   ❌ 0/1  (esperado — chave ausente em ambiente local)
 [10] ARQUIVOS STRESS TEST      ✅ 2/2
-[11] VALIDAÇÃO XML GENERALIZADA (rev.10 — 14 verificações)
-  ✅  _TODAS_TAGS cobre 6 tags (incl. MAPA_RENUMERACAO e LOG_ALTERACOES)
+[11] VALIDAÇÃO XML GENERALIZADA (rev.12 — 16 verificações)
+  ✅  _TODAS_TAGS cobre 8 tags (incl. NOTAS_TECNICAS e SUGESTOES_NORMATIVAS)
   ✅  Truncamento detectado por _sem_par (par abertura+fechamento)
   ✅  _TAGS_NAO_VAZIAS + _conteudo_vazio (conteúdo obrigatório não vazio)
   ✅  TEXTO_HARMONIZADO: sem par → None; truncada → None; válida → group(1)
@@ -516,13 +517,24 @@ _PADROES_ABSURDO_AVISO = re.compile(
   ✅  AVISOS: truncada → None
   ✅  ERROS_CRITICOS: truncada → None
   ✅  ALERTAS_ABSURDOS: truncada → None
+  ✅  NOTAS_TECNICAS: truncada → None
+  ✅  SUGESTOES_NORMATIVAS: truncada → None
   ✅  LOG_ALTERACOES: truncada → None
   ✅  LOG_ALTERACOES em _TAGS_NAO_VAZIAS (conteúdo obrigatório)
-  ✅  Resposta completa válida — todos os 6 pares detectados
+  ✅  Resposta completa válida — todos os 8 pares detectados
 [12] HELPER _invalidar_resultado()
   ✅  Definido; ≥10 chamadas; v_apr; importar; adicionar manual               (5 verificações)
+[13] REGRA A4 — emendas sem alvo (11 verificações)
+  ✅  A4.1: aditiva sem alvo; 'onde couber'; unidades menores; LOG com tipo; AVISO com alvo
+  ✅  A4.1: proíbe inserção silenciosa; proíbe recusar aplicar
+  ✅  A4.2: modificativa/substitutiva sem alvo; proíbe aplicar; ERROS_CRITICOS; LOG NÃO aplicada
+[14] REGRA E2 — conflito entre emendas + sugestão normativa (12 verificações)
+  ✅  Varredura prévia obrigatória; MESMO dispositivo; supressiva + modificativa
+  ✅  Cautela menor número; marcador CONFLITO DE EMENDAS; formato 'CONFLITO / Emendas'
+  ✅  SUGESTOES_NORMATIVAS em _TODAS_TAGS; sugestão normativa gerada
+  ✅  'Nenhuma sugestão.' no skip set; campo no dataclass; app.py exibe mas não exporta
 
-RESULTADO: 66/67 (único fail = API key ausente — esperado)
+RESULTADO: 91/92 (único fail = API key ausente — esperado)
 ```
 
 ---

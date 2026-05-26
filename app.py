@@ -841,6 +841,9 @@ with aba5:
         _slug_doc = "rascunho_trabalho" if _eh_rascunho_aba5 else _slug_tipo
 
         # TXT simples — respeita o mesmo modo do DOCX
+        # Remove marcadores inline de trabalho [[⚠️ CCJ:...]] (mesma lógica do DOCX)
+        _marker_re_txt = re.compile(r'\s*\[\[⚠️ CCJ:[^\]]*\]\]', re.UNICODE)
+        _texto_limpo_txt = _marker_re_txt.sub('', texto_editavel)
         if _eh_rascunho_aba5:
             _cabecalho_rascunho = (
                 "RASCUNHO DE TRABALHO — NÃO É REDAÇÃO FINAL\n"
@@ -850,9 +853,9 @@ with aba5:
                 f"Elaborado em {datetime.date.today().strftime('%d/%m/%Y')}\n"
                 "=" * 60 + "\n\n"
             )
-            _txt_content = (_cabecalho_rascunho + texto_editavel).encode('utf-8')
+            _txt_content = (_cabecalho_rascunho + _texto_limpo_txt).encode('utf-8')
         else:
-            _txt_content = texto_editavel.encode('utf-8')
+            _txt_content = _texto_limpo_txt.encode('utf-8')
 
         _label_txt = "📄 Baixar RASCUNHO .txt" if _eh_rascunho_aba5 else "📄 Baixar .txt"
         ec1.download_button(

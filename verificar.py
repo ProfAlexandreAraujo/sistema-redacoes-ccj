@@ -272,7 +272,11 @@ if _DOCX_OK:
             f"Elaborado em {_dt.date.today().strftime('%d/%m/%Y')}\n"
             "=" * 60 + "\n\n"
         )
-        _txt_content = (_cab + "Art. 1º Texto.").encode('utf-8')
+        # Simula limpeza de marcadores no TXT (P2 — auditoria externa)
+        _marker_re_txt_sim = re.compile(r'\s*\[\[⚠️ CCJ:[^\]]*\]\]', re.UNICODE)
+        _texto_com_marcador = "Art. 1º Texto. [[⚠️ CCJ: CONFLITO DE EMENDAS — decisão do relator obrigatória]]\nArt. 2º Fim."
+        _texto_limpo_sim = _marker_re_txt_sim.sub('', _texto_com_marcador)
+        _txt_content = (_cab + _texto_limpo_sim).encode('utf-8')
         _slug_doc_sim = "rascunho_trabalho"
         chk("TXT rascunho: cabeçalho contém 'RASCUNHO DE TRABALHO'",
             b"RASCUNHO DE TRABALHO" in _txt_content)
@@ -280,6 +284,13 @@ if _DOCX_OK:
             "reabertura da discussão".encode('utf-8') in _txt_content)
         chk("TXT rascunho: nome slug é 'rascunho_trabalho'",
             _slug_doc_sim == "rascunho_trabalho")
+        chk("TXT: marcadores [[⚠️ CCJ:...]] removidos (P2 — auditoria externa)",
+            b"[[" not in _txt_content and b"CONFLITO DE EMENDAS" not in _txt_content)
+        chk("TXT: limpeza usa mesmo padrão regex do DOCX (_marker_re_txt)",
+            "_marker_re_txt" in _app_src if '_app_src' in dir() else
+            "_marker_re_txt" in pathlib.Path(
+                r"C:\Users\Admin\Documents\Claude\CCJ\sistema_redacoes\app.py"
+            ).read_text(encoding='utf-8'))
     except Exception as e:
         chk("7f — TXT modo rascunho", False, str(e))
 
