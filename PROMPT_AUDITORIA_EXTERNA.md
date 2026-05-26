@@ -143,11 +143,59 @@ skip = {"Nenhum aviso.", "Nenhum erro crítico.", "Nenhum.",
 
 ---
 
-### 4. verificar.py — estado atual (rev.8)
+### 4. Regra E2 — conflitos entre emendas aprovadas + sugestão normativa (harmonizer.py)
 
-- **Seção 11:** valida 7 tags XML (inclui `NOTAS_TECNICAS`)
+**Problema identificado:** o sistema já tinha uma regra E2, mas ela se limitava a listar situações
+de conflito sem dar instruções claras sobre como o modelo deve agir e sem oferecer sugestão
+de harmonização — deixando o relator sem apoio para resolver o conflito.
+
+**Solução implementada:** E2 reformulada em quatro passos obrigatórios:
+
+```
+E2. CONFLITOS ENTRE EMENDAS APROVADAS — DETECÇÃO OBRIGATÓRIA E SUGESTÃO NORMATIVA
+
+    ⚡ ANTES DE APLICAR QUALQUER EMENDA — VARREDURA PRÉVIA OBRIGATÓRIA:
+    (a) Duas ou mais emendas afetam o MESMO dispositivo
+    (b) Uma emenda supressiva e uma modificativa sobre o MESMO dispositivo
+    (c) Duas emendas com valores, prazos ou condições incompatíveis para a MESMA obrigação
+    (d) Uma emenda que torna outro dispositivo aprovado de cumprimento impossível
+
+    PASSO 1 — No TEXTO_HARMONIZADO: aplica emenda de MENOR NÚMERO (cautela formal)
+    e insere: [[⚠️ CCJ: CONFLITO DE EMENDAS — decisão do relator obrigatória]]
+
+    PASSO 2 — Em ERROS_CRITICOS:
+    "🚨 CONFLITO / Emendas [N] e [M] — [dispositivo]:
+    • Emenda N ([tipo]): [ação]
+    • Emenda M ([tipo]): [ação]
+    Conflito: [descrição precisa]
+    No texto: mantida Emenda [N] (menor número) como cautela.
+    A providência regimental indicada é a reabertura da discussão (art. 250, §2º RI)."
+
+    PASSO 3 — Em SUGESTOES_NORMATIVAS:
+    "💡 Sugestão / Emendas [N] e [M] — [dispositivo]:
+    [Proposta de reconciliação ou alternativas A/B se irreconciliáveis]
+    ⚠ Sugestão estritamente orientativa — decisão final exclusiva do relator."
+```
+
+**Nova tag XML:** `<SUGESTOES_NORMATIVAS>` — 8ª tag obrigatória na resposta.
+- Aparece na interface como expander amarelo expandido (visível imediatamente).
+- NÃO exportada para o DOCX.
+- Marcador `[[⚠️ CCJ: CONFLITO DE EMENDAS...]]` removido automaticamente pelo regex existente.
+
+**Decisão de projeto:**
+- `sugestoes_normativas` é campo novo no dataclass `ResultadoHarmonizacao`.
+- O sistema NÃO toma a decisão — posiciona a emenda de menor número como cautela neutra
+  e fornece ao relator as informações e uma sugestão orientativa para decidir.
+- O conflito dispara o fluxo §2º (rascunho de trabalho por padrão via `erros_criticos`).
+
+---
+
+### 5. verificar.py — estado atual (rev.9)
+
+- **Seção 11:** valida 8 tags XML (inclui `NOTAS_TECNICAS` e `SUGESTOES_NORMATIVAS`)
 - **Seção 13:** 11 testes estruturais (sem API) para A4.1 e A4.2
-- **Resultado: 78/79** (1 falha esperada: chave API não configurada localmente)
+- **Seção 14:** 12 testes estruturais (sem API) para E2 + SUGESTOES_NORMATIVAS
+- **Resultado: 91/92** (1 falha esperada: chave API não configurada localmente)
 
 ---
 
@@ -163,9 +211,10 @@ skip = {"Nenhum aviso.", "Nenhum erro crítico.", "Nenhum.",
 | Renumeração (B1–B5) | Prompt | LC 95/98 + LC 48/2000 |
 | E1 — correções linguísticas | Prompt | Concordância, caixa, pontuação — registradas no LOG |
 | E1.5 — sem mérito em AVISOS | Prompt | Mérito vai para NOTAS_TECNICAS |
+| E2 — conflito entre emendas | Prompt | Varredura prévia; cautela por menor número; ERROS_CRITICOS + SUGESTOES_NORMATIVAS |
 | Detecção estrutural absurdos | Python | Circular, inoperante — independe do modelo |
 | Escalada de §1º para §2º | Python | Padrões semânticos nos avisos |
-| Validação XML | Python | Par completo de 7 tags ou ValueError |
+| Validação XML | Python | Par completo de 8 tags ou ValueError |
 | Rascunho de trabalho | Python + App | §2º → DOCX sai como rascunho até relator confirmar |
 | `_invalidar_resultado()` | App | Qualquer mudança limpa resultado anterior |
 | Skip set completo | Python | Strings "Nenhum/a..." filtradas corretamente |
@@ -174,23 +223,28 @@ skip = {"Nenhum aviso.", "Nenhum erro crítico.", "Nenhum.",
 
 ## Perguntas para sua auditoria
 
-1. **A regra A4 refinada está bem formulada?**
+1. **A regra E2 reformulada é suficientemente robusta?**
+   - A política de "aplicar emenda de menor número como cautela" é a abordagem correta?
+   - Há risco de o modelo não realizar a varredura prévia e detectar o conflito apenas depois de aplicar as emendas?
+   - As sugestões normativas podem criar viés para que o relator as adote sem análise crítica?
+
+2. **A regra A4 refinada está bem formulada?**
    - A distinção A4.1 (aditiva: posiciona) vs A4.2 (modificativa: não aplica) é a abordagem correta?
    - Os critérios de posicionamento para unidades menores (parágrafo, inciso, alínea, item) são suficientes?
    - O LOG/AVISO com tipo de unidade e local exato é informativo o suficiente?
 
-2. **A separação AVISOS / NOTAS_TECNICAS é robusta?**
+3. **A separação AVISOS / NOTAS_TECNICAS / SUGESTOES_NORMATIVAS é robusta?**
    - A regra E1.5 é suficiente para o modelo não "vazar" mérito nos AVISOS?
-   - Há risco de algo relevante para AVISOS acabar em NOTAS_TECNICAS por engano?
+   - Há risco de sugestões normativas aparecerem em ERROS_CRITICOS em vez de SUGESTOES_NORMATIVAS?
 
-3. **Há algo que deveria ter sido implementado e não foi?**
+4. **Há algo que deveria ter sido implementado e não foi?**
    - Considerando o fluxo completo (upload → parsing → votação → harmonização → exportação),
      há algum ponto cego evidente?
 
-4. **O prompt tem riscos de regressão com A4 + E1.5?**
+5. **O prompt tem riscos de regressão com E2 + A4 + E1.5?**
    - Há conflito potencial com A1 (preservação verbatim) ou com as regras do Bloco B (renumeração)?
 
-5. **Sugestões livres** — o que você mudaria ou acrescentaria?
+6. **Sugestões livres** — o que você mudaria ou acrescentaria?
 
 ---
 

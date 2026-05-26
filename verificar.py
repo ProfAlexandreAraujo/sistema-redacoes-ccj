@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-verificar.py — Verificação do Sistema de Redações CCJ CMRJ (rev.7)
+verificar.py — Verificação do Sistema de Redações CCJ CMRJ (rev.9)
 Testa todos os comportamentos críticos do AUDITORIA.md sem custo de API.
 
 Uso:
@@ -32,7 +32,7 @@ def chk(nome: str, ok: bool, detalhe: str = "") -> None:
 
 print()
 print("=" * 65)
-print("  VERIFICAÇÃO DO SISTEMA — CCJ CMRJ — rev.8")
+print("  VERIFICAÇÃO DO SISTEMA — CCJ CMRJ — rev.9")
 print("=" * 65)
 
 # ────────────────────────────────────────────────────────────────────────────
@@ -397,10 +397,11 @@ try:
     import re as _re
     src = inspect.getsource(_harm_func)
 
-    # 11a — Guarda usa _TODAS_TAGS cobrindo 7 tags (incl. MAPA_RENUMERACAO e NOTAS_TECNICAS)
-    chk("Guarda generalizada: _TODAS_TAGS cobre 7 tags (incl. MAPA_RENUMERACAO e NOTAS_TECNICAS)",
+    # 11a — Guarda usa _TODAS_TAGS cobrindo 8 tags (incl. MAPA_RENUMERACAO, NOTAS_TECNICAS e SUGESTOES_NORMATIVAS)
+    chk("Guarda generalizada: _TODAS_TAGS cobre 8 tags (incl. MAPA_RENUMERACAO, NOTAS_TECNICAS e SUGESTOES_NORMATIVAS)",
         bool(_re.search(r'_TODAS_TAGS\s*=\s*\[', src)) and
-        "MAPA_RENUMERACAO" in src and "LOG_ALTERACOES" in src and "NOTAS_TECNICAS" in src)
+        "MAPA_RENUMERACAO" in src and "LOG_ALTERACOES" in src and
+        "NOTAS_TECNICAS" in src and "SUGESTOES_NORMATIVAS" in src)
 
     # 11b — Truncamento detectado por ausência de par completo (_sem_par)
     chk("Truncamento detectado por _sem_par (par abertura+fechamento)",
@@ -432,10 +433,10 @@ try:
     chk("texto_harm usa .group(1).strip() após validação (sem fallback)",
         ".group(1).strip()" in src)
 
-    # 11h–11l — Truncamento detectado em cada uma das outras 6 tags
+    # 11h–11l — Truncamento detectado em cada uma das outras 7 tags
     _OUTRAS_TAGS = [
         "MAPA_RENUMERACAO", "AVISOS", "ERROS_CRITICOS",
-        "ALERTAS_ABSURDOS", "NOTAS_TECNICAS", "LOG_ALTERACOES",
+        "ALERTAS_ABSURDOS", "NOTAS_TECNICAS", "SUGESTOES_NORMATIVAS", "LOG_ALTERACOES",
     ]
     for _t in _OUTRAS_TAGS:
         _resp_t = f"<{_t}>\nConteúdo truncado sem tag de fechamento..."
@@ -447,7 +448,7 @@ try:
     chk("LOG_ALTERACOES exige conteúdo não vazio (em _TAGS_NAO_VAZIAS)",
         bool(_re.search(r'_TAGS_NAO_VAZIAS\s*=\s*\{[^}]*LOG_ALTERACOES[^}]*\}', src)))
 
-    # 11n — Resposta completa válida: todos os 7 pares detectados
+    # 11n — Resposta completa válida: todos os 8 pares detectados
     _resp_completa = (
         "<TEXTO_HARMONIZADO>\nArt. 1º Texto.\n</TEXTO_HARMONIZADO>\n"
         "<MAPA_RENUMERACAO>\nSem renumeração necessária.\n</MAPA_RENUMERACAO>\n"
@@ -455,14 +456,16 @@ try:
         "<ERROS_CRITICOS>\nNenhum erro crítico.\n</ERROS_CRITICOS>\n"
         "<ALERTAS_ABSURDOS>\nNenhum.\n</ALERTAS_ABSURDOS>\n"
         "<NOTAS_TECNICAS>\nNenhuma nota técnica.\n</NOTAS_TECNICAS>\n"
+        "<SUGESTOES_NORMATIVAS>\nNenhuma sugestão.\n</SUGESTOES_NORMATIVAS>\n"
         "<LOG_ALTERACOES>\nEmenda 1 (Modificativa): Art. 1º atualizado.\n</LOG_ALTERACOES>"
     )
     _todos_ok = all(
         _re.search(rf'<{t}>(.*?)</{t}>', _resp_completa, _re.DOTALL)
         for t in ["TEXTO_HARMONIZADO", "MAPA_RENUMERACAO", "AVISOS",
-                  "ERROS_CRITICOS", "ALERTAS_ABSURDOS", "NOTAS_TECNICAS", "LOG_ALTERACOES"]
+                  "ERROS_CRITICOS", "ALERTAS_ABSURDOS", "NOTAS_TECNICAS",
+                  "SUGESTOES_NORMATIVAS", "LOG_ALTERACOES"]
     )
-    chk("Resposta completa e válida — todos os 7 pares detectados",
+    chk("Resposta completa e válida — todos os 8 pares detectados",
         _todos_ok)
 
 except Exception as e:
@@ -560,6 +563,73 @@ try:
 
 except Exception as e:
     chk("13 — regra A4 estrutural", False, str(e))
+
+# ────────────────────────────────────────────────────────────────────────────
+# 14. REGRA E2 — conflitos entre emendas aprovadas + sugestão normativa
+# ────────────────────────────────────────────────────────────────────────────
+print("\n[14] REGRA E2 — conflito de emendas aprovadas + sugestão normativa (estrutural)")
+
+try:
+    import inspect as _insp_e2
+    _src_e2 = _insp_e2.getsource(_harm_func)
+
+    # E2 — detecção de conflito no prompt
+    chk("E2 tem instrução de varredura prévia obrigatória",
+        "VARREDURA PRÉVIA OBRIGATÓRIA" in _src_e2 or "varredura prévia" in _src_e2.lower(),
+        "Instrução de varredura prévia não encontrada no prompt E2")
+
+    chk("E2 identifica emendas sobre o MESMO dispositivo",
+        "MESMO dispositivo" in _src_e2 or "mesmo dispositivo" in _src_e2,
+        "Cobertura de emendas sobre mesmo dispositivo não encontrada")
+
+    chk("E2 identifica supressão + modificação simultânea",
+        "supressiva" in _src_e2.lower() and "modificativa" in _src_e2.lower(),
+        "Cobertura de supressão + modificação simultânea não encontrada")
+
+    chk("E2 aplica menor número como cautela formal",
+        "MENOR NÚMERO" in _src_e2 or "menor número" in _src_e2.lower(),
+        "Política de cautela (menor número) não encontrada no prompt E2")
+
+    chk("E2 insere marcador de conflito no texto harmonizado",
+        "CONFLITO DE EMENDAS" in _src_e2,
+        "Marcador de conflito no texto não encontrado")
+
+    chk("E2 exige registro em ERROS_CRITICOS com formato 'CONFLITO / Emendas'",
+        "CONFLITO / Emendas" in _src_e2,
+        "Formato 'CONFLITO / Emendas' em ERROS_CRITICOS não encontrado")
+
+    # SUGESTOES_NORMATIVAS — tag e integração
+    chk("SUGESTOES_NORMATIVAS presente em _TODAS_TAGS",
+        "SUGESTOES_NORMATIVAS" in _src_e2,
+        "Tag SUGESTOES_NORMATIVAS não encontrada em harmonizar_texto")
+
+    chk("E2 exige geração de sugestão normativa orientativa",
+        "SUGESTOES_NORMATIVAS" in _src_e2 and "Sugestão" in _src_e2,
+        "Geração de sugestão normativa em SUGESTOES_NORMATIVAS não encontrada")
+
+    chk("'Nenhuma sugestão.' presente no skip set",
+        "Nenhuma sugestão." in _src_e2,
+        "Frase 'Nenhuma sugestão.' não encontrada no skip set")
+
+    chk("sugestoes_normativas no dataclass ResultadoHarmonizacao",
+        "sugestoes_normativas" in _insp_e2.getsource(ResultadoHarmonizacao),
+        "Campo 'sugestoes_normativas' não encontrado no dataclass")
+
+    # app.py — exibição sem exportação
+    _app_e2 = pathlib.Path(r"C:\Users\Admin\Documents\Claude\CCJ\sistema_redacoes\app.py").read_text(encoding='utf-8')
+    chk("app.py exibe sugestoes_normativas",
+        "sugestoes_normativas" in _app_e2,
+        "sugestoes_normativas não encontrado em app.py")
+
+    chk("app.py NÃO passa sugestoes_normativas para exportar_redacao_final_docx",
+        "sugestoes_normativas" not in _app_e2[
+            _app_e2.rindex("exportar_redacao_final_docx"):
+            _app_e2.rindex("exportar_redacao_final_docx") + 600
+        ],
+        "sugestoes_normativas está sendo passado para exportar_redacao_final_docx (não deveria)")
+
+except Exception as e:
+    chk("14 — regra E2 estrutural", False, str(e))
 
 # ────────────────────────────────────────────────────────────────────────────
 # RESUMO

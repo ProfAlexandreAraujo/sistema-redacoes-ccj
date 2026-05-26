@@ -2,52 +2,55 @@
 
 Artigos: 18  |  Anexos: 5
 
---- ALERTAS §2º (4) ---
-  🔴 Emenda 1 / Art. 4º final (ex-Art. 5º original) — CASO 1 — AUTOREFERÊNCIA CIRCULAR: A Emenda 1 suprimiu o Art. 4º original (delimitação georreferenciada da área de abrangência). O Art. 5º original, que passa a ser o Art. 4º final, contém no caput a expressão "Observada a área de abrangência definida no Art. 4º". Com a renumeração, o Art. 4º final aponta para si mesmo, configurando autoreferência circular. O dispositivo foi reproduzido verbatim com marcador inline. A CCJ NÃO deve oferecer Redação Final para este dispositivo; propõe-se reabertura da discussão nos termos do art. 250, §2º, do Regimento Interno, para que o Plenário delibere sobre a correção da remissão (possivelmente para os Anexos I e II) ou a reinserção de artigo de delimitação. [art. 250, §2º RI; E3, Caso 1]
-  🔴 Emenda 10 / Art. 11 final, caput — CASO 4 — REFERÊNCIA EXCLUSIVA A DISPOSITIVO SUPRIMIDO: O caput do Art. 11 final (texto aprovado pela Emenda 10, aglutinativa) contém a expressão "área de abrangência definida no Art. 4º". O Art. 4º original — que definia a área de abrangência georreferenciada — foi integralmente suprimido pela Emenda 1. O novo Art. 4º final (ex-Art. 5º original) trata dos setores de planejamento, não da delimitação do perímetro, e já constitui ele mesmo dispositivo com absurdo manifesto (CASO 1). A única remissão operativa do caput do Art. 11 final aponta para conteúdo que não mais existe como dispositivo normativo autônomo, tornando o caput operativamente vazio quanto ao critério de abrangência territorial. O dispositivo foi reproduzido verbatim com marcador inline. A CCJ NÃO deve oferecer Redação Final para este dispositivo; propõe-se reabertura da discussão nos termos do art. 250, §2º, do Regimento Interno. [art. 250, §2º RI; E3, Caso 4]
-  🔴 Emenda 10 / Art. 11 final, §4º — CASO 3 — REMISSÃO MATERIALMENTE INCOMPATÍVEL: O §4º do Art. 11 final (texto aprovado pela Emenda 10) dispõe que "O potencial construtivo certificado será utilizado nos termos do artigo anterior". O "artigo anterior" ao Art. 11 final, após todas as renumerações, é o Art. 10 final — artigo inserido pela Emenda 3, que trata exclusivamente de sistema permanente de monitoramento e fiscalização dos empreendimentos licenciados na AEIU-ZPN. O conteúdo do Art. 10 final é completamente incompatível com o objeto do §4º (utilização de potencial construtivo certificado). No texto original da Emenda 10, a expressão "artigo anterior" provavelmente pretendia remeter ao próprio Art. 11 em sua feição anterior (antes da aglutinação) ou ao conjunto dos parágrafos precedentes, mas, como dispositivo normativo, aponta para conteúdo de monitoramento, tornando o §4º normalmente inoperante. O dispositivo foi reproduzido verbatim com marcador inline. A CCJ NÃO deve oferecer Redação Final para este parágrafo; propõe-se reabertura da discussão nos termos do art. 250, §2º, do Regimento Interno. [art. 250, §2º RI; E3, Caso 3; LC 48/2000, art. 10, II, g]
-  🔴 Emenda 5 / Art. 12 final (ex-Art. 13 original), §1º (ex-§2º original) — CASO 2 — CONDIÇÃO NORMATIVA INOPERANTE (AUTOREFERÊNCIA): A Emenda 5 suprimiu o §1º original do Art. 13 (que exigia declaração técnica prévia de inexistência de interferência como condição para a concessão do direito de superfície). Com a supressão, o §2º original — "Atendida a condição prevista no §1º deste artigo, fica dispensada a apresentação, pelo superficiário, de estudo complementar de interferência estrutural, ressalvada exigência superveniente motivada por risco não identificado no exame inicial" — foi renumerado para §1º. O §1º final do Art. 12 remete à "condição prevista no §1º deste artigo", que é o próprio parágrafo que faz a remissão. A condição normativa de dispensa tornou-se autoreferencial e inoperante: o §1º dispensa o estudo complementar desde que atendida a condição prevista no §1º (si mesmo), o que é logicamente impossível. O dispositivo foi reproduzido verbatim com marcador inline. A CCJ NÃO deve oferecer Redação Final para este parágrafo; propõe-se reabertura da discussão nos termos do art. 250, §2º, do Regimento Interno, para que o Plenário delibere sobre a supressão também do §2º original (hoje §1º final), alteração de sua redação, ou reinserção do §1º original suprimido. [art. 250, §2º RI; E3, Caso 2]
+--- ALERTAS §2º (5) ---
+  🔴 Emenda 1 / Art. 4º final (ex-Art. 5º original): o caput do Art. 4º final contém a expressão "Observada a área de abrangência definida no Art. 4º". Com a supressão do Art. 4º original pela Emenda 1 e a renumeração do Art. 5º original para Art. 4º, o dispositivo resultante passou a remeter a si mesmo — configurando autoreferência circular (Caso 1 da regra E3). O Art. 4º original, que definia a área de abrangência por meio do Anexo I e do perímetro georreferenciado, foi integralmente suprimido sem que seu conteúdo migrasse para nenhum outro artigo, tornando a remissão operativamente vazia e produzindo texto manifestamente ininteligível. Não há artigo de destino para atualização via A2. Texto preservado verbatim. A providência regimental indicada é a reabertura da discussão (art. 250, § 2º, RI).
+  🔴 Emenda 10 / Art. 11 final, caput: o caput do Art. 11 final contém a expressão "Os empreendimentos situados na área de abrangência definida no Art. 4º". O Art. 4º original (delimitação da área de abrangência, com referência ao Anexo I e às coordenadas georreferenciadas) foi integralmente suprimido pela Emenda 1, sem que seu conteúdo tenha migrado para nenhum outro artigo do texto — configurando referência exclusiva a dispositivo suprimido (Caso 4 da regra E3). A regra A2-aglut não é aplicável, pois o Art. 4º original não foi aglutinado a outro dispositivo, mas simplesmente eliminado. A remissão é operativamente vazia, tornando o caput normativo ininteligível quanto à delimitação do universo de empreendimentos alcançados. Texto preservado verbatim. A providência regimental indicada é a reabertura da discussão (art. 250, § 2º, RI).
+  🔴 Emenda 10 / Art. 11 final, § 4º: o § 4º contém a expressão "O potencial construtivo certificado será utilizado nos termos do artigo anterior". Após a inserção do Art. 10 (monitoramento e fiscalização) pela Emenda 3, o artigo imediatamente anterior ao Art. 11 final passou a ser o Art. 10 (monitoramento), cujo conteúdo — verificação de usos, fiscalização de vedações e lavratura de autos de infração — é completamente incompatível com a matéria do § 4º, que trata da utilização de potencial construtivo certificado. A remissão ao "artigo anterior" configura remissão materialmente incompatível (Caso 3 da regra E3). A expressão "artigo anterior" tampouco pode ser substituída por referência expressa a outro artigo sem alterar o teor do texto aprovado pelo Plenário. Texto preservado verbatim. A providência regimental indicada é a reabertura da discussão (art. 250, § 2º, RI).
+  🔴 Emenda 5 / Art. 12 final, § 1º (ex-§ 2º do Art. 13 original): o § 1º contém a expressão "Atendida a condição prevista no § 1º deste artigo, fica dispensada a apresentação, pelo superficiário, de estudo complementar de interferência estrutural". Com a supressão do § 1º original do Art. 13 (atual Art. 12) pela Emenda 5 e a consequente renumeração do § 2º original para § 1º final, o dispositivo passou a condicionar a dispensa ao cumprimento de condição "prevista no § 1º deste artigo" — que é o próprio § 1º que faz a remissão. Configura-se condição normativa inoperante por autoreferência (Caso 2 da regra E3): a condição que ativaria a dispensa foi eliminada, e o parágrafo agora remete a si mesmo, tornando a dispensa operativamente desprovida de pressuposto. Texto preservado verbatim. A providência regimental indicada é a reabertura da discussão (art. 250, § 2º, RI).
+  🔴 §1º: o parágrafo remete ao próprio §1º deste artigo (condição normativa inoperante) — absurdo manifesto detectado em pós-processamento (Caso 2 — art. 250, §2º RI). A providência regimental indicada é a reabertura da discussão.
 
 --- ERROS CRÍTICOS (0) ---
 
---- AVISOS §1º (8) ---
-  ⚠ Emenda 6 / Anexo III — Setor A: CA Máximo alterado de 8,0 para 16,0. O §2º do Art. 6º final (ex-Art. 7º original, modificado pela Emenda 2) prevê condição especial para coeficiente "superior a seis inteiros". Com CA Máximo agora em 16,0 para o Setor A, a condição do §2º incide apenas sobre a faixa de 6 a 16 CA. A aparente desproporção entre o patamar condicional (6) e o limite máximo (16) é questão de mérito e não cabe à CCJ corrigir, mas recomenda-se atenção do Plenário. [LC 95/1998, art. 11, II]
-  ⚠ Emenda 6 / Anexo III — Setor B: CA Máximo alterado de 6,0 para 18,0. O Setor B passa a ter CA Máximo superior ao do Setor A (16,0), inversão em relação ao gabarito (Setor A: 47m/15 pav; Setor B: 35m/11 pav). A desproporção entre gabarito e CA Máximo é questão de mérito; registra-se para conhecimento dos órgãos de controle. [LC 95/1998, art. 11, II]
-  ⚠ Emenda 4 / Art. 13 final (ex-Art. 14 original) — Pontuação: O inciso III, que não é imediatamente antecedente ao último inciso completo (o inciso IV desdobra-se em alíneas e o inciso V é o último), termina com ";" no texto aprovado. A rigor, o inciso imediatamente anterior ao último deve receber "; e" ou "; ou". Como o inciso IV termina com ":" (por ter alíneas), há ambiguidade estrutural quanto à posição do conector cumulativo. O texto foi preservado como aprovado; a questão pontuação estrutural em incisos com alíneas pode merecer apreciação da Mesa. [LC 48/2000, art. 9º, VI e VII]
-  ⚠ Emenda 10 / Art. 11 final — Referência vaga "artigo anterior" no §4º: além do absurdo manifesto já identificado na seção ALERTAS_ABSURDOS (CASO 3), registra-se que a expressão "artigo anterior" é referência vaga expressamente vedada pela técnica legislativa aplicável. [LC 48/2000, art. 10, II, g]
-  ⚠ E1 / Art. 9º final, inciso I: pontuação ajustada de ";" para "; e" (penúltimo inciso de rol com dois itens, de sentido cumulativo). [LC 48/2000, art. 9º, VII]
-  ⚠ E1 / Art. 9º final, inciso II (ex-inciso III original do Art. 10): "Depósitos" → "depósitos" (inicial minúscula obrigatória em inciso — regra C2). [LC 48/2000, art. 9º, VI]
-  ⚠ E1 / Art. 15 final (ex-Art. 16 original — Emenda 8): "que serão aplicada" → "que serão aplicadas" (concordância verbal — correção automática por E1). [LC 95/1998, art. 11, II, b]
-  ⚠ E1 / Art. 15 final, inciso IV: pontuação ajustada de ";" para "." (último inciso do rol — regra C2). [LC 48/2000, art. 9º, VII]
+--- AVISOS §1º (12) ---
+  ⚠ Emenda 9 / Art. 9º, inciso I: com a supressão do inciso II original, o inciso I tornou-se penúltimo de dois incisos; o texto aprovado termina com ";" mas a boa técnica legislativa recomendaria "; e" para o penúltimo inciso em enumeração cumulativa. Não foi feita correção automática por força da exceção prevista em C2. [LC 48/2000, art. 9º, VIII]
+  ⚠ Emenda 4 / Art. 13, inciso IV, alínea b): o inciso IV é penúltimo (há o inciso V); a alínea b), última do inciso IV, termina com ";" no texto aprovado, quando a boa técnica legislativa recomendaria "; e" para indicar a cumulatividade com o inciso V. Não foi feita correção automática por força da exceção prevista em C2/C3. [LC 48/2000, art. 9º, VIII]
+  ⚠ Emenda 8 / Art. 15, caput: corrigido automaticamente o erro de concordância nominal — "serão aplicada" → "serão aplicadas". [E1 — LC 48/2000, art. 10, II, b]
+  ⚠ Emenda 8 / Art. 15, inciso IV: corrigido automaticamente o sinal de pontuação do último inciso — ";" → "." conforme regra C2. [E1 — LC 48/2000, art. 9º, VI]
+  ⚠ Emenda 9 / Art. 9º, inciso II: corrigido automaticamente o uso de letra maiúscula em "Depósitos" (início do inciso renumerado, não sendo nome próprio nem início de artigo) — "Depósitos" → "depósitos" conforme regra C2. [E1 — LC 48/2000, art. 9º, VI]
+  ⚠ Emenda 2 / Art. 6º, § 2º: atualizada referência cruzada — "Art. 6º" → "Art. 5º" (gabarito), em razão da renumeração provocada pela Emenda 1. [A2 — LC 95/1998, art. 10; LC 48/2000, art. 10, II, g]
+  ⚠ Emenda 3 / Art. 10, caput e §§ 1º e 2º: atualizadas referências cruzadas em razão da renumeração provocada pelas Emendas 1 e 3 — "Art. 9º" → "Art. 8º" (usos permitidos) e "Art. 10" → "Art. 9º" (vedações), em três ocorrências. [A2 — LC 95/1998, art. 10; LC 48/2000, art. 10, II, g]
+  ⚠ Emenda 10 / Art. 11, § 2º: atualizadas referências cruzadas — "Art. 6º" → "Art. 5º" (gabarito) e "Art. 7º" → "Art. 6º" (CA Máximo), em razão da renumeração provocada pela Emenda 1. [A2-aglut — LC 95/1998, art. 10; LC 48/2000, art. 10, II, g]
+  ⚠ Emenda 10 / Art. 14 (ex-Art. 15 original): atualizada referência cruzada "da transferência de potencial construtivo prevista no Art. 12" → "prevista no Art. 11", em razão da aglutinação dos Arts. 11 e 12 originais no Art. 11 final pela Emenda 10. O Art. 14 final referencia o Art. 11 duas vezes na mesma oração (outorga onerosa e transferência de potencial construtivo), o que decorre necessariamente da fusão dos dois institutos no mesmo artigo. [A2-aglut — LC 95/1998, art. 10]
+  ⚠ Emenda 8 / Art. 15: atualizada referência cruzada "Arts. 9º e 10" → "Arts. 8º e 9º" (usos permitidos e vedações, respectivamente), em razão das renumerações provocadas pelas Emendas 1 e 3. [A2 — LC 95/1998, art. 10; LC 48/2000, art. 10, II, g]
+  ⚠ Emenda 7 / Anexo V, Meta 2: atualizada referência cruzada "Art. 18" → "Art. 17" (prazo de adequação de estabelecimentos existentes), em razão da renumeração provocada pelas Emendas 1, 3 e 10. [A2 — LC 95/1998, art. 10; LC 48/2000, art. 10, II, g]
+  ⚠ Emenda 4 / Art. 13, inciso I (não modificado pela emenda, mas integra artigo com 5 incisos): o inciso I, não sendo o penúltimo, termina corretamente com ";". Nenhuma correção necessária.
 
 --- LOG DE ALTERAÇÕES ---
-  Emenda 1 (Supressiva): suprimido integralmente o Art. 4º original (delimitação georreferenciada da AEIU-ZPN); Arts. 5º a 19 originais renumerados sequencialmente para Arts. 4º a 18 finais.
-  Emenda 2 (Modificativa): substituída a redação do §2º do Art. 7º original (→ §2º do Art. 6º final) — patamar de coeficiente alterado de "quatro inteiros" para "seis inteiros"; acrescida referência ao gabarito.
-  A2 / Art. 6º final, §2º: "Art. 6º" → "Art. 5º" (renumeração — Art. 6º original = gabarito → Art. 5º final; Emenda 1).
-  Emenda 3 (Aditiva): acrescido novo artigo após o Art. 10 original (→ Art. 9º final), passando a ser o Art. 10 final — sistema permanente de monitoramento e fiscalização.
-  A2 / Art. 10 final, caput: "Art. 9º" → "Art. 8º" (renumeração — Art. 9º original = usos permitidos → Art. 8º final; Emenda 1).
-  A2 / Art. 10 final, caput: "Art. 10" → "Art. 9º" (renumeração — Art. 10 original = vedações → Art. 9º final; Emenda 1).
-  A2 / Art. 10 final, §2º: "Art. 9º" → "Art. 8º" (renumeração — mesma base; Emenda 1).
-  A2 / Art. 10 final, §2º: "Art. 10" → "Art. 9º" (renumeração — mesma base; Emenda 1).
-  Emenda 4 (Modificativa): substituída a redação dos incisos III e IV do Art. 14 original (→ Art. 13 final); acrescido inciso V com alíneas a), b) e c).
-  Emenda 5 (Supressiva): suprimido integralmente o §1º do Art. 13 original (→ Art. 12 final); §§ 2º e 3º originais renumerados para §§ 1º e 2º do Art. 12 final.
-  Emenda 6 (Modificativa — Anexo III): CA Máximo do Setor A alterado de 8,0 para 16,0; CA Máximo do Setor B alterado de 6,0 para 18,0; Setores C e D preservados.
-  Emenda 7 (Aditiva — Anexo V): acrescido Anexo V — Programa de Metas da AEIU-ZPN, com Metas 1, 2 e 3.
-  A2 / Anexo V, Meta 2: "Art. 18" → "Art. 17" (renumeração — Art. 18 original = prazo de adequação → Art. 17 final; Emenda 1).
-  Emenda 8 (Substitutiva): substituída integralmente a redação do Art. 16 original (→ Art. 15 final).
-  A2 / Art. 15 final, caput: "Arts. 9º e 10" → "Arts. 8º e 9º" (renumeração — Arts. 9º e 10 originais → Arts. 8º e 9º finais; Emenda 1).
-  E1 / Art. 15 final, caput: "que serão aplicada" → "que serão aplicadas" (concordância verbal — correção automática).
-  E1 / Art. 15 final, inciso IV: pontuação ";" → "." (último inciso — regra C2; correção automática).
-  Emenda 9 (Supressiva): suprimido integralmente o inciso II do Art. 10 original (→ Art. 9º final); inciso III original renumerado para inciso II do Art. 9º final.
-  E1 / Art. 9º final, inciso II (ex-inciso III original): "Depósitos" → "depósitos" (inicial maiúscula indevida em inciso — correção automática; regra C2).
-  E1 / Art. 9º final, inciso I: pontuação ";" → "; e" (penúltimo inciso de rol binário cumulativo — correção automática; regra C2).
-  Emenda 10 (Aglutinativa): aglutinados os conteúdos dos Arts. 11 e 12 originais (→ Arts. 10 e 11 intermediários após Emenda 1; → Arts. 11 e 12 intermediários após Emenda 3) em artigo único, passando o conteúdo aglutinado a ser o Art. 11 final; Art. 12 original suprimido pela aglutinação.
-  A2 / Art. 11 final, §2º: "Art. 6º" → "Art. 5º" (renumeração — Art. 6º original = gabarito → Art. 5º final; Emenda 1).
-  A2 / Art. 11 final, §2º: "Art. 7º" → "Art. 6º" (renumeração — Art. 7º original = CA → Art. 6º final; Emenda 1).
-  A2-aglut / Art. 14 final, Parágrafo único: "Art. 12" → "Art. 11" (conteúdo da transferência de potencial construtivo migrou do Art. 12 original para o Art. 11 final pela aglutinação — Emenda 10).
+  Emenda 1 (Supressiva): suprimido integralmente o Art. 4º original; Arts. 5º a 19 originais renumerados sequencialmente para Arts. 4º a 18.
+  Emenda 2 (Modificativa): substituído o § 2º do Art. 7º original (Art. 6º final) pelo texto aprovado pela emenda.
+  Emenda 3 (Aditiva): inserido novo artigo de monitoramento e fiscalização após o Art. 9º final (ex-Art. 10 original), constituindo o Art. 10 final; Arts. subsequentes renumerados.
+  Emenda 4 (Modificativa): substituídos os incisos III e IV do Art. 14 original (Art. 13 final) pelos textos aprovados pela emenda; acrescentado inciso V ao mesmo artigo.
+  Emenda 5 (Supressiva): suprimido integralmente o § 1º do Art. 13 original (Art. 12 final); §§ 2º e 3º originais renumerados para §§ 1º e 2º.
+  Emenda 6 (Modificativa): substituídas as linhas referentes ao Setor A e ao Setor B no Anexo III (Quadro de Parâmetros Urbanísticos), alterando o CA Máximo do Setor A de 8,0 para 16,0 e o CA Máximo do Setor B de 6,0 para 18,0.
+  Emenda 7 (Aditiva): acrescentado Anexo V — Programa de Metas da AEIU-ZPN ao final da lei.
+  Emenda 8 (Substitutiva): substituído integralmente o Art. 16 original (Art. 15 final) pelo texto aprovado pela emenda.
+  Emenda 9 (Supressiva): suprimido integralmente o inciso II do Art. 10 original (Art. 9º final); inciso III original renumerado para inciso II.
+  Emenda 10 (Aglutinativa): Arts. 11 e 12 originais (Arts. 10 e 11 pós-Emenda 1) aglutinados em novo Art. 11 final; Art. 12 original suprimido, com conteúdo migrado para Art. 11 final; Arts. subsequentes renumerados.
+  A2 / Art. 6º, § 2º: "Art. 6º" → "Art. 5º" (gabarito máximo; renumeração pela Emenda 1 — Emenda 2)
+  A2 / Art. 10, caput: "Art. 9º" → "Art. 8º" (usos admitidos; renumeração pelas Emendas 1 e 3 — Emenda 3)
+  A2 / Art. 10, § 1º: "Art. 9º" → "Art. 8º" (usos); "Art. 10" → "Art. 9º" (vedações; renumeração pelas Emendas 1 e 3 — Emenda 3)
+  A2 / Art. 10, § 2º: "Art. 9º" → "Art. 8º" (usos); "Art. 10" → "Art. 9º" (vedações; renumeração pelas Emendas 1 e 3 — Emenda 3)
+  A2-aglut / Art. 11, § 2º: "Art. 6º" → "Art. 5º" (gabarito; renumeração pela Emenda 1); "Art. 7º" → "Art. 6º" (CA Máximo; renumeração pela Emenda 1 — Emenda 10)
+  A2-aglut / Art. 14, caput: "da transferência de potencial construtivo prevista no Art. 12" → "da transferência de potencial construtivo prevista no Art. 11" (conteúdo do Art. 12 original migrou para Art. 11 final pela aglutinação — Emenda 10)
+  A2 / Art. 15, caput: "Arts. 9º e 10" → "Arts. 8º e 9º" (usos e vedações; renumeração pelas Emendas 1, 3 e 10 — Emenda 8)
+  A2 / Anexo V, Meta 2: "Art. 18" → "Art. 17" (prazo de adequação de estabelecimentos; renumeração pelas Emendas 1, 3 e 10 — Emenda 7)
+  E1 / Art. 9º, inciso II: "Depósitos" → "depósitos" (letra maiúscula indevida em início de inciso; Emenda 9 — renumeração)
+  E1 / Art. 15, caput: "serão aplicada" → "serão aplicadas" (concordância nominal — particípio com sujeito plural feminino "penalidades"; Emenda 8)
+  E1 / Art. 15, inciso IV: ";" → "." (pontuação do último inciso; regra C2; Emenda 8)
 
 --- TEXTO HARMONIZADO ---
 PROJETO DE LEI COMPLEMENTAR Nº 17/2026
+REDAÇÃO FINAL
 
 Institui a Área de Especial Interesse Urbanístico da Zona Portuária Norte — AEIU-ZPN, estabelece parâmetros de ocupação do solo, cria instrumentos de gestão e dá outras providências.
 
@@ -139,7 +142,7 @@ IV — as atividades produtivas de baixo impacto, os laboratórios de inovação
 
 Art. 9º São vedados na AEIU-ZPN:
 
-I — depósitos de produtos inflamáveis, explosivos ou tóxicos, salvo aqueles estritamente necessários ao funcionamento regular de atividade licenciada e armazenados na forma da legislação aplicável; e
+I — depósitos de produtos inflamáveis, explosivos ou tóxicos, salvo aqueles estritamente necessários ao funcionamento regular de atividade licenciada e armazenados na forma da legislação aplicável;
 
 II — depósitos abertos de sucata, pátios de veículos inservíveis e atividades que produzam emissão contínua de poeira, vibração ou odor incompatível com os usos admitidos nesta Lei Complementar.
 
@@ -210,14 +213,14 @@ III — multa de cinco mil Unidades Fiscais Municipais e suspensão temporária 
 
 IV — cassação da licença, interdição imediata da atividade e obrigação de recomposição integral do dano, quando houver risco à segurança, à saúde pública, ao meio ambiente ou ao patrimônio cultural.
 
-CAPÍTULO V
-DISPOSIÇÕES FINAIS
-
 Art. 16. Das penalidades aplicadas com fundamento nesta Lei Complementar caberá recurso administrativo ao órgão municipal competente, no prazo de trinta dias contados da ciência da decisão.
 
 § 1º O recurso terá efeito suspensivo quanto à exigibilidade da multa, salvo quando a manutenção da atividade representar risco iminente à segurança, à saúde, ao meio ambiente ou ao patrimônio protegido.
 
 § 2º A decisão do recurso deverá ser motivada e indicar, quando mantida a penalidade, o prazo e as condições para regularização do empreendimento ou encerramento da atividade.
+
+CAPÍTULO V
+DISPOSIÇÕES FINAIS
 
 Art. 17. Os estabelecimentos e empreendimentos regularmente licenciados antes da entrada em vigor desta Lei Complementar terão prazo de trezentos e sessenta dias para adequar seus usos, acessos, sistemas de drenagem e condições operacionais às exigências aplicáveis da AEIU-ZPN.
 

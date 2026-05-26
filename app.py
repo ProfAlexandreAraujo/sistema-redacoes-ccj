@@ -721,6 +721,22 @@ with aba4:
             for e in res.erros_criticos:
                 st.markdown(f"> 🚨 {e}")
 
+        # ── Sugestões normativas (orientativas — não constam no documento exportado) ──
+        sugest = getattr(res, 'sugestoes_normativas', [])
+        if sugest:
+            with st.expander(
+                f"💡 {len(sugest)} sugestão(ões) normativa(s) para conflitos — clique para ver",
+                expanded=True,
+            ):
+                st.caption(
+                    "Sugestões orientativas geradas pelo sistema para auxiliar na resolução dos "
+                    "conflitos acima. **A decisão final é exclusiva do relator**, que deverá "
+                    "justificar a escolha e comunicar via ofício (art. 250, §2º RI). "
+                    "**Não constam no documento exportado.**"
+                )
+                for s in sugest:
+                    st.warning(s)
+
         # ── Nível 3: Avisos jurídicos ──
         if res.avisos:
             st.warning(

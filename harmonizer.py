@@ -72,6 +72,7 @@ class ResultadoHarmonizacao:
     mapa_renumeracao: dict = field(default_factory=dict)
     log_alteracoes: list[str] = field(default_factory=list)
     notas_tecnicas: list[str] = field(default_factory=list)   # ℹ informativo — não vai pro DOCX
+    sugestoes_normativas: list[str] = field(default_factory=list)  # 💡 orientativas — não vão pro DOCX
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -605,11 +606,49 @@ E1.5. PROIBIÇÃO ABSOLUTA — ANÁLISES DE MÉRITO NOS AVISOS:
     — Se não (se for sobre o que a lei permite, quanto vale, parâmetros, impacto) →
       coloque em NOTAS_TECNICAS (nunca em AVISOS).
 
-E2. ERROS CRÍTICOS — não tente resolver; a providência regimental indicada é a reabertura da discussão (art. 250, §2º RI):
-    — Duas emendas aprovadas que se contradizem diretamente sobre o mesmo dispositivo
-    — Emenda que ao ser aplicada torna outro dispositivo aprovado de cumprimento impossível
-    — Supressão e modificação simultânea do mesmo artigo por emendas distintas
-    — Resultado que gera absurdo jurídico manifesto insanável sem alterar teor
+E2. CONFLITOS ENTRE EMENDAS APROVADAS — DETECÇÃO OBRIGATÓRIA E SUGESTÃO NORMATIVA
+
+    ⚡ ANTES DE APLICAR QUALQUER EMENDA — VARREDURA PRÉVIA OBRIGATÓRIA:
+    Examine a lista completa de emendas aprovadas e identifique TODOS os pares em que:
+    (a) Duas ou mais emendas modificam, substituem ou suprimem o MESMO dispositivo
+        (mesmo artigo, mesmo parágrafo, mesmo inciso ou mesma alínea)
+    (b) Uma emenda supressiva e uma emenda modificativa afetam o MESMO dispositivo
+    (c) Duas emendas fixam valores, prazos ou condições incompatíveis para a MESMA obrigação
+    (d) Uma emenda que, ao ser aplicada, torna outro dispositivo aprovado de cumprimento impossível
+
+    ⚠ ATENÇÃO — DUAS EMENDAS MODIFICANDO O MESMO DISPOSITIVO É O CASO MAIS PERIGOSO:
+    Não tente adivinhar qual deve "prevalecer" — ambas foram aprovadas pelo Plenário soberano.
+    Qualquer escolha não autorizada configuraria usurpação da competência plenária.
+
+    PROCEDIMENTO OBRIGATÓRIO PARA CADA CONFLITO IDENTIFICADO:
+
+    PASSO 1 — No TEXTO_HARMONIZADO:
+    Aplique a emenda de MENOR NÚMERO (cautela formal — menor número = votada primeiro).
+    Imediatamente após o dispositivo conflitante, insira o marcador:
+    [[⚠️ CCJ: CONFLITO DE EMENDAS — decisão do relator obrigatória]]
+
+    PASSO 2 — Em ERROS_CRITICOS, registre:
+    "🚨 CONFLITO / Emendas [N] e [M] — [dispositivo afetado]:
+    • Emenda [N] ([tipo]): [descreva o texto ou ação da Emenda N]
+    • Emenda [M] ([tipo]): [descreva o texto ou ação da Emenda M]
+    Conflito: [descrição precisa — em que aspecto exato se contradizem]
+    No texto: mantida Emenda [N] (menor número) como cautela — marcado para revisão.
+    A providência regimental indicada é a reabertura da discussão (art. 250, §2º RI)."
+
+    PASSO 3 — Em SUGESTOES_NORMATIVAS, registre:
+    "💡 Sugestão / Emendas [N] e [M] — [dispositivo afetado]:
+    [Proposta de redação que tente reconciliar as duas emendas. Se irreconciliáveis, apresente
+    as alternativas claramente:
+    Alternativa A (Emenda [N] — [tipo]): [texto ou consequência]
+    Alternativa B (Emenda [M] — [tipo]): [texto ou consequência]
+    Fundamentação da sugestão preferencial (se existir): [razão técnico-legislativa objetiva]]
+    ⚠ Sugestão estritamente orientativa — decisão final exclusiva do relator (art. 250, §2º RI)."
+
+    SITUAÇÕES QUE NUNCA DEVEM PASSAR DESPERCEBIDAS:
+    — Emenda X modifica Art. Y com redação α; Emenda Z modifica o MESMO Art. Y com redação β
+    — Emenda P suprime Art. Q; Emenda R modifica o MESMO Art. Q
+    — Emenda S estabelece prazo N dias; Emenda T estabelece prazo M dias para a MESMA obrigação
+    — Resultado que gera absurdo jurídico manifesto insanável sem alterar teor (→ ver E3)
 
 E3. ALERTA DE ABSURDO MANIFESTO (art. 250, §2º RI — providência regimental indicada é a reabertura):
     QUATRO SITUAÇÕES QUE OBRIGATORIAMENTE geram 🔴 — NÃO downgrade para ⚠ AVISO:
@@ -703,6 +742,14 @@ O texto do dispositivo permanece exatamente como aprovado — apenas acrescente 
 [Escreva "Nenhuma nota técnica." se não houver.]
 </NOTAS_TECNICAS>
 
+<SUGESTOES_NORMATIVAS>
+[Sugestões orientativas de harmonização — geradas SOMENTE quando há conflito entre emendas aprovadas (E2).]
+[NÃO são decisões da CCJ. NÃO constam no documento exportado. A decisão final é exclusiva do relator.]
+[Formato: "💡 Sugestão / Emendas N e M — [dispositivo]: [proposta de texto ou alternativas]"]
+[        "⚠ Sugestão estritamente orientativa — decisão final exclusiva do relator (art. 250, §2º RI)."]
+[Escreva "Nenhuma sugestão." se não houver conflito.]
+</SUGESTOES_NORMATIVAS>
+
 <LOG_ALTERACOES>
 [Um registro por linha: "Emenda N (Tipo): ação exata realizada no texto"]
 </LOG_ALTERACOES>"""
@@ -724,7 +771,8 @@ O texto do dispositivo permanece exatamente como aprovado — apenas acrescente 
     # TEXTO_HARMONIZADO e LOG_ALTERACOES também exigem conteúdo não vazio.
     _TODAS_TAGS      = [
         "TEXTO_HARMONIZADO", "MAPA_RENUMERACAO",
-        "AVISOS", "ERROS_CRITICOS", "ALERTAS_ABSURDOS", "NOTAS_TECNICAS", "LOG_ALTERACOES",
+        "AVISOS", "ERROS_CRITICOS", "ALERTAS_ABSURDOS",
+        "NOTAS_TECNICAS", "SUGESTOES_NORMATIVAS", "LOG_ALTERACOES",
     ]
     _TAGS_NAO_VAZIAS = {"TEXTO_HARMONIZADO", "LOG_ALTERACOES"}
 
@@ -757,6 +805,7 @@ O texto do dispositivo permanece exatamente como aprovado — apenas acrescente 
     erros_raw     = extrair("ERROS_CRITICOS", "")
     alertas_raw   = extrair("ALERTAS_ABSURDOS", "")
     notas_raw     = extrair("NOTAS_TECNICAS", "")
+    sugest_raw    = extrair("SUGESTOES_NORMATIVAS", "")
     log_raw       = extrair("LOG_ALTERACOES", "")
 
     # Mapa de renumeração
@@ -773,7 +822,7 @@ O texto do dispositivo permanece exatamente como aprovado — apenas acrescente 
             → corrige avisos multi-linha contados como muitos itens.
         modo='linha': cada linha não-vazia é um item separado (para log de alterações).
         """
-        skip = {"Nenhum aviso.", "Nenhum erro crítico.", "Nenhum.", "Sem renumeração necessária.", "Nenhuma nota técnica."}
+        skip = {"Nenhum aviso.", "Nenhum erro crítico.", "Nenhum.", "Sem renumeração necessária.", "Nenhuma nota técnica.", "Nenhuma sugestão."}
         if modo == 'paragrafo':
             blocos = re.split(r'\n\s*\n', raw.strip())
             items = [' '.join(l.strip() for l in b.splitlines() if l.strip()) for b in blocos]
@@ -785,6 +834,7 @@ O texto do dispositivo permanece exatamente como aprovado — apenas acrescente 
     erros_list   = parse_linhas(erros_raw,   modo='paragrafo')
     alertas_list = parse_linhas(alertas_raw, modo='paragrafo')
     notas_list   = parse_linhas(notas_raw,   modo='paragrafo')
+    sugest_list  = parse_linhas(sugest_raw,  modo='paragrafo')
     log_list     = parse_linhas(log_raw,     modo='linha')
 
     # Pós-processamento: eleva absurdos manifestos classificados erroneamente como §1º avisos
@@ -793,11 +843,12 @@ O texto do dispositivo permanece exatamente como aprovado — apenas acrescente 
     )
 
     return ResultadoHarmonizacao(
-        texto_harmonizado = texto_harm,
-        avisos            = avisos_list,
-        erros_criticos    = erros_list,
-        alertas_absurdos  = alertas_list,
-        mapa_renumeracao  = mapa,
-        log_alteracoes    = log_list,
-        notas_tecnicas    = notas_list,
+        texto_harmonizado    = texto_harm,
+        avisos               = avisos_list,
+        erros_criticos       = erros_list,
+        alertas_absurdos     = alertas_list,
+        mapa_renumeracao     = mapa,
+        log_alteracoes       = log_list,
+        notas_tecnicas       = notas_list,
+        sugestoes_normativas = sugest_list,
     )
