@@ -113,7 +113,7 @@ sistema_redacoes/
 ├── harmonizer.py                 # Motor de harmonização (IA) + regras A1–A4, B, C, D, E
 ├── utils.py                      # Leitura de docx/txt/pdf, exportação, save/load
 ├── auditoria.py                  # Diagnóstico rápido do ambiente (dependências, API, módulos)
-├── verificar.py                  # Suite de testes estruturais (106/107 sem API)
+├── verificar.py                  # Suite de testes estruturais (115/116 sem API)
 ├── teste_real.py                 # Teste com PLC 92/2025 real (sem custo de API)
 ├── PROMPT_AUDITORIA_EXTERNA.md   # Prompt para auditoria por LLM externa
 ├── iniciar.bat                   # Atalho para iniciar localmente

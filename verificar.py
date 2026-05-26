@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-verificar.py — Verificação do Sistema de Redações CCJ CMRJ (rev.11)
+verificar.py — Verificação do Sistema de Redações CCJ CMRJ (rev.12)
 Testa todos os comportamentos críticos do AUDITORIA.md sem custo de API.
 
 Uso:
@@ -32,7 +32,7 @@ def chk(nome: str, ok: bool, detalhe: str = "") -> None:
 
 print()
 print("=" * 65)
-print("  VERIFICAÇÃO DO SISTEMA — CCJ CMRJ — rev.11")
+print("  VERIFICAÇÃO DO SISTEMA — CCJ CMRJ — rev.12")
 print("=" * 65)
 
 # ────────────────────────────────────────────────────────────────────────────
@@ -733,6 +733,60 @@ try:
     chk("Conflito de subemendas → nenhuma substituição automática (texto pai preservado)",
         len(_lista4) == 1 and _lista4[0].novo_texto == "Original",
         f"lista={[e.numero for e in _lista4]}")
+
+    # ── P1: Auto-referência (subemenda_de == numero próprio) ─────────────────
+    _e_autoref = Emenda(numero=5, texto_bruto="Texto E5.",
+                        novo_texto="Texto E5.", status=StatusEmenda.APROVADA,
+                        parseada=True, subemenda_de=5)   # aponta para si mesma
+    _lista_p1, _log_p1, _av_p1, _ec_p1 = _resolver_subemendas(
+        [_e_autoref], [_e_autoref]
+    )
+    chk("P1: auto-referência → erro crítico §2º gerado",
+        any("AUTO-REFERÊNCIA" in e for e in _ec_p1),
+        f"erros_criticos={_ec_p1}")
+    chk("P1: auto-referência → emenda excluída da lista (não vai à IA)",
+        len(_lista_p1) == 0,
+        f"lista={[e.numero for e in _lista_p1]}")
+    chk("P1: auto-referência → NÃO entra em avisos §1º",
+        not any("AUTO" in a for a in _av_p1),
+        f"avisos={_av_p1}")
+
+    # ── P2: Pai inexistente → ERRO CRÍTICO §2º (não §1º aviso) ───────────────
+    _e_orphan = Emenda(numero=9, texto_bruto="Sub sem pai.",
+                       novo_texto="Texto sub.", status=StatusEmenda.APROVADA,
+                       parseada=True, subemenda_de=99)   # Emenda 99 não existe
+    _lista_p2, _log_p2, _av_p2, _ec_p2 = _resolver_subemendas(
+        [_e_orphan], [_e_orphan]
+    )
+    chk("P2: pai inexistente → erro crítico §2º gerado",
+        any("SEM PAI" in e for e in _ec_p2),
+        f"erros_criticos={_ec_p2}")
+    chk("P2: pai inexistente → NÃO entra em avisos §1º (era bug pré-rev.15)",
+        not any("consta na lista" in a or "verifique a numeração" in a for a in _av_p2),
+        f"avisos={_av_p2}")
+    chk("P2: pai inexistente → subemenda excluída da lista",
+        len(_lista_p2) == 0,
+        f"lista={[e.numero for e in _lista_p2]}")
+
+    # ── P3: Subemenda encadeada (subemenda de subemenda) → ERRO CRÍTICO §2º ──
+    _e3_base  = Emenda(numero=3, texto_bruto="Base.", novo_texto="Base.",
+                       status=StatusEmenda.APROVADA, parseada=True)
+    _e7_sub3  = Emenda(numero=7, texto_bruto="Sub7 da 3.", novo_texto="Texto Sub7.",
+                       status=StatusEmenda.APROVADA, parseada=True, subemenda_de=3)
+    _e8_sub7  = Emenda(numero=8, texto_bruto="Sub8 da 7.", novo_texto="Texto Sub8.",
+                       status=StatusEmenda.APROVADA, parseada=True, subemenda_de=7)
+    _lista_p3, _log_p3, _av_p3, _ec_p3 = _resolver_subemendas(
+        [_e3_base, _e7_sub3, _e8_sub7], [_e3_base, _e7_sub3, _e8_sub7]
+    )
+    chk("P3: subemenda encadeada → erro crítico §2º gerado",
+        any("ENCADEADA" in e for e in _ec_p3),
+        f"erros_criticos={_ec_p3}")
+    chk("P3: subemenda encadeada → NÃO entra em avisos §1º",
+        not any("encadeada" in a.lower() for a in _av_p3),
+        f"avisos={_av_p3}")
+    chk("P3: subemenda encadeada → subemenda de subemenda excluída da lista",
+        all(e.numero != 8 for e in _lista_p3),
+        f"lista={[e.numero for e in _lista_p3]}")
 
     # Verifica presença de subemenda_de no parser
     import inspect as _insp15

@@ -1,5 +1,5 @@
 # Prompt de Auditoria Externa — Sistema de Redações CCJ CMRJ
-### Versão rev.14 — 26/05/2026
+### Versão rev.15 — 26/05/2026
 
 ---
 
@@ -73,12 +73,20 @@ def _resolver_subemendas(
 | Normal | SubEmenda aprovada + emenda-pai aprovada | `novo_texto` do pai substituído; subemenda retirada da lista enviada à IA |
 | Inoperante | SubEmenda aprovada + emenda-pai NÃO aprovada | Aviso §1º registrado em `avisos_simples` |
 | Rejeitada | SubEmenda rejeitada/prejudicada | Emenda-pai mantém texto; registro em `log_entries` |
-| **Conflito** | **Duas subemendas aprovadas para o mesmo pai** | **`erros_criticos` (§2º)** → rascunho; nenhuma substituição automática; log registra |
+| **Conflito** | **Duas subemendas aprovadas para o mesmo pai** | **`erros_criticos` (§2º)** → rascunho; nenhuma substituição automática |
+| **P1 — Auto-referência** | **`subemenda_de == numero` próprio** | **`erros_criticos` (§2º)**; emenda excluída da lista |
+| **P2 — Pai inexistente** | **Pai não consta em `todas_emendas`** | **`erros_criticos` (§2º)**; deliberação sem efeito |
+| **P3 — Cadeia** | **Pai é ele próprio uma subemenda** | **`erros_criticos` (§2º)**; subemenda encadeada excluída |
 
-**Bug corrigido em rev.14:** Antes desta versão, o caso de conflito de subemendas ia para
-`avisos_simples` (§1º) em vez de `erros_criticos` (§2º), o que **não disparava** o fluxo
-de rascunho de trabalho. Um conflito entre duas subemendas aprovadas é tão grave quanto um
-conflito entre duas emendas aprovadas — ambos requerem a decisão do relator (art. 250, §2º RI).
+**Bugs corrigidos em rev.14 e rev.15 (apontados por auditoria externa):**
+
+- **rev.14:** conflito de subemendas ia para `avisos` (§1º) — não disparava rascunho.
+- **rev.15/P1:** auto-referência (`subemenda_de == numero`) removia a emenda silenciosamente
+  sem gerar nenhum erro ou aviso.
+- **rev.15/P2:** pai inexistente gerava `avisos` §1º — uma deliberação do Plenário aprovada
+  sem efeito deve ser §2º (equivalente à regra A4.2).
+- **rev.15/P3:** subemenda encadeada (Sub8 da Sub7 da E3) não era detectada; a cadeia não
+  era resolvida — E3 recebia o texto de Sub7, não de Sub8.
 
 **Injeção no resultado:**
 ```python
@@ -248,25 +256,28 @@ alteradas por subemendas aprovadas era aplicado na versão original, ignorando a
   - **Aba 4:** painel expandido com status de cada subemenda antes de harmonizar.
   - **Formulário manual:** campo para informar `subemenda_de`.
 
-**Bug crítico corrigido em rev.14 (durante autoauditoria):**
-O conflito de subemendas era roteado para `avisos` (§1º) em vez de `erros_criticos` (§2º),
-o que impedia o acionamento do fluxo de rascunho de trabalho. Corrigido: retorno passou de
-3 para 4 valores; conflito vai exclusivamente para `erros_criticos_sub`.
+**Histórico de correções em rev.14 e rev.15 (conflitos de subemendas):**
+- rev.14: retorno 3→4 valores; conflito de subemendas agora em `erros_criticos` (§2º).
+- rev.15: 3 edge cases corrigidos por auditoria externa (P1 auto-ref, P2 pai inexistente,
+  P3 cadeia) — todos roteados para `erros_criticos` (§2º) com detecção no mapeamento.
 
 ---
 
-### 6. verificar.py — estado atual (rev.11)
+### 6. verificar.py — estado atual (rev.12)
 
 - **Seção 11:** valida 8 tags XML (inclui `NOTAS_TECNICAS` e `SUGESTOES_NORMATIVAS`)
 - **Seção 13:** 11 testes estruturais (sem API) para A4.1 e A4.2
 - **Seção 14:** 12 testes estruturais (sem API) para E2 + SUGESTOES_NORMATIVAS
-- **Seção 15:** 14 testes estruturais (sem API) para subemendas, incluindo:
+- **Seção 15:** 23 testes estruturais (sem API) para subemendas, incluindo:
   - Caso normal: substituição, remoção da lista, log
   - Caso inoperante: aviso §1º, não vai à IA
   - Caso rejeitada: texto pai preservado
-  - **Conflito → `erros_criticos` §2º gerado** (not `avisos` §1º) — 2 testes opostos
+  - **Conflito → `erros_criticos` §2º** (positivo + negativo §1º)
+  - **P1 auto-referência → `erros_criticos` §2º; excluída** (positivo + negativo + exclusão)
+  - **P2 pai inexistente → `erros_criticos` §2º** (positivo + negativo §1º + exclusão)
+  - **P3 cadeia → `erros_criticos` §2º; excluída** (positivo + negativo + exclusão)
   - parsear reconhece `subemenda_de`; app.py exibe painel
-- **Resultado: 106/107** (1 falha esperada: chave API não configurada localmente)
+- **Resultado: 115/116** (1 falha esperada: chave API não configurada localmente)
 
 ---
 
@@ -285,7 +296,10 @@ o que impedia o acionamento do fluxo de rascunho de trabalho. Corrigido: retorno
 | E2 — conflito entre emendas | Prompt | Varredura prévia; cautela por menor número; ERROS_CRITICOS + SUGESTOES_NORMATIVAS |
 | Subemendas — caso normal | Python (pré-IA) | Substitui texto da emenda-pai; subemenda retirada da lista |
 | Subemendas — conflito | Python (pré-IA) | **ERROS_CRITICOS §2º** → rascunho; nenhuma substituição automática |
-| Subemendas — inoperante | Python (pré-IA) | Aviso §1º; subemenda não vai à IA |
+| Subemendas — inoperante (pai rejeitado) | Python (pré-IA) | Aviso §1º; subemenda não vai à IA |
+| Subemendas — P1 auto-referência | Python (pré-IA) | **ERROS_CRITICOS §2º**; emenda excluída |
+| Subemendas — P2 pai inexistente | Python (pré-IA) | **ERROS_CRITICOS §2º**; deliberação sem efeito |
+| Subemendas — P3 cadeia (sub de sub) | Python (pré-IA) | **ERROS_CRITICOS §2º**; subemenda excluída |
 | Detecção estrutural absurdos | Python | Circular, inoperante — independe do modelo |
 | Escalada de §1º para §2º | Python | Padrões semânticos nos avisos |
 | Validação XML | Python | Par completo de 8 tags ou ValueError |
@@ -298,11 +312,13 @@ o que impedia o acionamento do fluxo de rascunho de trabalho. Corrigido: retorno
 
 ## Perguntas para sua auditoria
 
-1. **O bug de subemendas corrigido em rev.14 é suficientemente coberto?**
-   - O retorno de 4 valores em `_resolver_subemendas()` é a abordagem correta?
-   - Há outros edge cases de subemendas não cobertos? (ex: subemenda de subemenda? auto-referência?)
-   - A lógica de "menor número como cautela" do E2 deveria se aplicar também ao conflito
-     de subemendas (ou mantém a abordagem atual de não aplicar nenhuma)?
+1. **Os edge cases de subemendas (rev.15) foram bem cobertos?**
+   - Para P3 (cadeia), a abordagem de **proibir com ERRO CRÍTICO** é a mais segura, ou
+     deveríamos tentar **resolver recursivamente** (neto prevalece sobre filho)?
+   - Para P2 (pai inexistente), a equiparação com A4.2 (§2º) é a abordagem correta,
+     ou seria mais útil um aviso §1º com a instrução de corrigir o vínculo manualmente?
+   - Há algum edge case adicional que ainda não cobrimos?
+     (ex: dois conflitos encadeados? pai aprovado mas `novo_texto` vazio?)
 
 2. **A regra E2 reformulada é suficientemente robusta?**
    - A política de "aplicar emenda de menor número como cautela" é a abordagem correta?

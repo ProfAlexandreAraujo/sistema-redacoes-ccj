@@ -122,6 +122,9 @@ def _resolver_subemendas(
     - SubEmenda aprovada + Emenda-pai NÃO aprovada → inoperante; registra aviso (§1º).
     - SubEmenda rejeitada/prejudicada → emenda-pai mantém texto original; registra log.
     - Duas subemendas aprovadas para a mesma emenda-pai → CONFLITO → erro crítico (§2º).
+    - Auto-referência (subemenda_de == numero) → erro crítico (§2º); emenda excluída.
+    - Emenda-pai inexistente na lista → erro crítico (§2º); deliberação sem efeito.
+    - Subemenda encadeada (pai é também subemenda) → erro crítico (§2º); não aplicada.
 
     Parâmetros:
     - todas_emendas: lista completa (para verificar status da emenda-pai)
@@ -137,28 +140,79 @@ def _resolver_subemendas(
     aprovadas_copia: list["Emenda"] = [copy.copy(e) for e in aprovadas]
     por_num_apr: dict[int, int] = {e.numero: i for i, e in enumerate(aprovadas_copia)}
 
-    # Mapear subemendas APROVADAS por emenda-pai
-    subs_apr_por_pai: dict[int, list[int]] = defaultdict(list)
-    for i, e in enumerate(aprovadas_copia):
-        if e.subemenda_de is not None:
-            subs_apr_por_pai[e.subemenda_de].append(i)
-
     log: list[str] = []
     avisos: list[str] = []          # §1º — avisos informativos
     erros_criticos: list[str] = []  # §2º — conflitos que bloqueiam publicação
-    excluir: set[int] = set()   # índices de subemendas a retirar da lista final
+    excluir: set[int] = set()       # índices de subemendas a retirar da lista final
 
+    # Conjunto de números de emendas que são subemendas (têm subemenda_de != None).
+    # Usado para detectar encadeamentos (subemenda de subemenda).
+    nums_que_sao_subemendas: set[int] = {
+        e.numero for e in todas_emendas if e.subemenda_de is not None
+    }
+
+    # ── Mapear subemendas APROVADAS por emenda-pai ───────────────────────────
+    # Detecta auto-referência (P1) e encadeamento (P3) antes de mapear.
+    subs_apr_por_pai: dict[int, list[int]] = defaultdict(list)
+    for i, e in enumerate(aprovadas_copia):
+        if e.subemenda_de is None:
+            continue
+
+        # P1 — Auto-referência: subemenda aponta para si mesma → ERRO CRÍTICO §2º
+        if e.subemenda_de == e.numero:
+            erros_criticos.append(
+                f"🚨 AUTO-REFERÊNCIA DE SUBEMENDA — Emenda {e.numero}: "
+                f"campo subemenda_de aponta para si mesma (subemenda_de={e.numero}). "
+                "Emenda não aplicada. Corrija o vínculo e reharmonize "
+                "(art. 250, §2º RI)."
+            )
+            log.append(
+                f"Emenda {e.numero}: auto-referência detectada (subemenda_de == numero) "
+                "— não aplicada (§2º)."
+            )
+            excluir.add(i)
+            continue
+
+        # P3 — Subemenda encadeada: o pai é ele próprio uma subemenda → ERRO CRÍTICO §2º
+        if e.subemenda_de in nums_que_sao_subemendas:
+            pai_obj = todas_por_num.get(e.subemenda_de)
+            avo_num = pai_obj.subemenda_de if pai_obj else "?"
+            erros_criticos.append(
+                f"🚨 SUBEMENDA ENCADEADA — SubEmenda {e.numero} referencia SubEmenda "
+                f"{e.subemenda_de} (que é subemenda de Emenda {avo_num}). "
+                "Cadeias de subemendas não são suportadas automaticamente — decisão do "
+                "relator obrigatória antes da harmonização (art. 250, §2º RI)."
+            )
+            log.append(
+                f"SubEmenda {e.numero}: subemenda encadeada "
+                f"(subemenda_de={e.subemenda_de}, que também é subemenda) "
+                "— não aplicada (§2º)."
+            )
+            excluir.add(i)
+            continue
+
+        subs_apr_por_pai[e.subemenda_de].append(i)
+
+    # ── Processar cada grupo de subemendas por emenda-pai ────────────────────
     for pai_num, sub_idxs in subs_apr_por_pai.items():
         pai_em_todas = todas_por_num.get(pai_num)
         pai_apr_idx  = por_num_apr.get(pai_num)
 
-        # Subemenda referencia emenda inexistente
+        # P2 — Emenda-pai não existe na lista → ERRO CRÍTICO §2º (não §1º)
+        # Uma subemenda aprovada que não pode ser aplicada é uma deliberação do
+        # Plenário sem efeito — situação equivalente a A4.2 (emenda sem alvo).
         if pai_em_todas is None:
             for si in sub_idxs:
                 s = aprovadas_copia[si]
-                avisos.append(
-                    f"⚠ SubEmenda {s.numero}: referencia Emenda {pai_num} que não "
-                    "consta na lista — verifique a numeração."
+                erros_criticos.append(
+                    f"🚨 SUBEMENDA SEM PAI — SubEmenda {s.numero}: referencia Emenda "
+                    f"{pai_num} que não consta na lista de emendas. SubEmenda aprovada "
+                    "não foi aplicada — deliberação do Plenário sem efeito. "
+                    "Corrija o vínculo e reharmonize (art. 250, §2º RI)."
+                )
+                log.append(
+                    f"SubEmenda {s.numero}: Emenda {pai_num} inexistente — "
+                    "não aplicada (§2º)."
                 )
                 excluir.add(si)
             continue
@@ -197,7 +251,7 @@ def _resolver_subemendas(
                 f"Prevalece o texto da SubEmenda {sub.numero}."
             )
         else:
-            # Subemenda aprovada mas emenda-pai não aprovada → inoperante
+            # Subemenda aprovada mas emenda-pai não aprovada → inoperante (§1º)
             status_pai = pai_em_todas.status.value
             avisos.append(
                 f"⚠ SubEmenda {sub.numero} aprovada, mas Emenda {pai_num} não foi aprovada "

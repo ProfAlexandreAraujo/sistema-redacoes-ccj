@@ -1,5 +1,5 @@
 # 🔍 AUDITORIA DO SISTEMA — CCJ CMRJ
-### Documento técnico para revisão externa — versão 2026-05-26 **rev.14**
+### Documento técnico para revisão externa — versão 2026-05-26 **rev.15**
 
 ---
 
@@ -157,6 +157,7 @@ Qualquer item escalado move-se de `avisos` para `alertas_absurdos`, ativando o m
 | 26/05/2026 | TXT exportado sem limpeza de marcadores inline `[[⚠️ CCJ:...]]` (DOCX limpava, TXT não) | Qualidade do produto | ✅ app.py — `_marker_re_txt` aplicado antes de codificar TXT; verificar.py rev.10 — 2 testes na seção [7f] |
 | 26/05/2026 | Sistema não suportava subemendas (emenda que substitui o texto de outra emenda antes de votá-la) | Funcional — lacuna legislativa | ✅ harmonizer.py rev.13 — campo `subemenda_de` no dataclass; `_resolver_subemendas()` pré-processa substituições antes da chamada à IA; parser IA reconhece subemenda; app.py — painel de subemendas na aba 4, badges nas abas 2/3, campo de edição; verificar.py rev.10 — seção [15] com 12 testes; resultado: 105/106 |
 | 26/05/2026 | `_resolver_subemendas()` roteava "🚨 CONFLITO DE SUBEMENDAS" para `avisos` (§1º) em vez de `erros_criticos` (§2º) — conflito de subemendas aprovadas **não disparava** o fluxo de rascunho de trabalho, deixando o documento ser exportado como Redação Final normal | Regimental crítico | ✅ harmonizer.py rev.14 — assinatura alterada para 4 valores `(lista, log, avisos_simples, erros_criticos)`; conflito de subemendas → `erros_criticos` (§2º); `erros_criticos_sub` injetado em `erros_list` em `harmonizar_texto()`; verificar.py rev.11 — 2 testes adicionais na seção [15]: §2º gerado + NÃO em §1º; resultado: 106/107 |
+| 26/05/2026 | **[P1]** Auto-referência (`subemenda_de == numero`): emenda removida silenciosamente sem erro, sem rascunho. **[P2]** Pai inexistente na lista: era `avisos` §1º, mas deliberação do Plenário sem efeito exige §2º. **[P3]** Subemenda encadeada (Sub8 da Sub7 da E3): cadeia não resolvida — E3 recebia texto de Sub7, não de Sub8 | Regimental crítico (3 edge cases apontados por auditoria externa) | ✅ harmonizer.py rev.15 — P1: detectada no mapeamento (`subemenda_de == numero`) → `erros_criticos`; P2: `pai_em_todas is None` → `erros_criticos` (não mais `avisos`); P3: `nums_que_sao_subemendas` detecta cadeia no mapeamento → `erros_criticos` + excluída; verificar.py rev.12 — 9 testes novos (P1×3, P2×3, P3×3); resultado: 115/116 |
 
 ---
 
@@ -484,7 +485,7 @@ _PADROES_ABSURDO_AVISO = re.compile(
 
 ---
 
-### 11.6 Resultado dos testes automatizados (verificar.py rev.11 — 106/107)
+### 11.6 Resultado dos testes automatizados (verificar.py rev.12 — 115/116)
 
 ```
 [1]  IMPORTAÇÕES               ✅ 3/3
@@ -536,17 +537,20 @@ _PADROES_ABSURDO_AVISO = re.compile(
   ✅  Cautela menor número; marcador CONFLITO DE EMENDAS; formato 'CONFLITO / Emendas'
   ✅  SUGESTOES_NORMATIVAS em _TODAS_TAGS; sugestão normativa gerada
   ✅  'Nenhuma sugestão.' no skip set; campo no dataclass; app.py exibe mas não exporta
-[15] SUBEMENDAS — pré-processamento (14 verificações — rev.14)
+[15] SUBEMENDAS — pré-processamento (23 verificações — rev.15)
   ✅  subemenda_de no dataclass Emenda
   ✅  SubEmenda aprovada + pai aprovado → texto substituído; subemenda retirada da lista; log
   ✅  SubEmenda aprovada + pai rejeitado → aviso inoperante; subemenda não vai à IA
   ✅  SubEmenda rejeitada → pai mantém texto original; log registra
-  ✅  Conflito de subemendas → erro crítico §2º gerado (não §1º aviso)  ← NEW (rev.14)
-  ✅  Conflito de subemendas → NÃO entra em avisos §1º (somente §2º)   ← NEW (rev.14)
+  ✅  Conflito de subemendas → erro crítico §2º gerado (não §1º aviso)
+  ✅  Conflito de subemendas → NÃO entra em avisos §1º (somente §2º)
   ✅  Conflito de subemendas → nenhuma substituição automática (texto pai preservado)
+  ✅  P1: auto-referência → §2º; emenda excluída; NÃO entra em §1º  ← NEW (rev.15)
+  ✅  P2: pai inexistente → §2º; NÃO em §1º (era bug); excluída       ← NEW (rev.15)
+  ✅  P3: encadeada (sub de sub) → §2º; NÃO em §1º; excluída          ← NEW (rev.15)
   ✅  parsear_emendas_com_ia reconhece subemenda_de; app.py exibe painel de subemendas
 
-RESULTADO: 106/107 (único fail = API key ausente — esperado)
+RESULTADO: 115/116 (único fail = API key ausente — esperado)
 ```
 
 ---
@@ -565,7 +569,10 @@ RESULTADO: 106/107 (único fail = API key ausente — esperado)
 | Resultado harmonizado sobrevivia a mudanças pós-harmonização | Possível em sessão longa | **✅ Corrigido (rev.8)** | `_invalidar_resultado()` aplicado em todos os pontos: votação, importação, edição, remoção de emendas |
 | `parsear_emendas_com_ia`: IA não retorna JSON → `continue` silencioso descartava o lote inteiro sem erro | Baixa (lotes com texto muito formatado) | **✅ Corrigido (rev.11)** | `raise ValueError` com mensagem explícita; `except` ampliado para `ValueError`; fallback bruto cria emendas marcadas para revisão manual — nenhuma emenda é perdida silenciosamente |
 | Conflito de subemendas (`🚨 CONFLITO DE SUBEMENDAS`) roteado para `avisos` (§1º) em vez de `erros_criticos` (§2º) — rascunho de trabalho não era disparado | Confirmado (bug ativo até rev.13) | **✅ Corrigido (rev.14)** | `_resolver_subemendas()` retorna 4 valores; conflito vai para `erros_criticos_sub` e é injetado em `erros_list` em `harmonizar_texto()`; verificar.py rev.11 testa explicitamente os dois lados (§2º positivo + §1º negativo) |
+| Auto-referência de subemenda (`subemenda_de == numero`): emenda removida silenciosamente da lista sem erro nem rascunho | Confirmado (bug ativo até rev.14) | **✅ Corrigido (rev.15)** | Detectada no mapeamento antes de popular `subs_apr_por_pai`; vai para `erros_criticos` (§2º); verificar.py rev.12: 3 testes |
+| Subemenda com pai inexistente: era `avisos` §1º — deliberação do Plenário aprovada sem efeito deveria ser §2º | Confirmado (bug ativo até rev.14) | **✅ Corrigido (rev.15)** | `pai_em_todas is None` → `erros_criticos` (§2º); verificar.py rev.12: 3 testes |
+| Subemenda encadeada (sub de sub): cadeia não resolvida — pai recebe texto do filho direto, não do neto aprovado | Confirmado (comportamento incorreto até rev.14) | **✅ Corrigido (rev.15)** | `nums_que_sao_subemendas` detecta quando o pai é ele próprio subemenda → `erros_criticos` (§2º); verificar.py rev.12: 3 testes |
 
 ---
 
-*Versão rev.14 — 26/05/2026 — Sistema de Redações CCJ CMRJ*
+*Versão rev.15 — 26/05/2026 — Sistema de Redações CCJ CMRJ*
