@@ -1,5 +1,5 @@
 # 🔍 AUDITORIA DO SISTEMA — CCJ CMRJ
-### Documento técnico para revisão externa — versão 2026-05-26 **rev.18**
+### Documento técnico para revisão externa — versão 2026-05-26 **rev.21**
 
 ---
 
@@ -542,7 +542,7 @@ _PADROES_ABSURDO_AVISO = re.compile(
 
 ---
 
-### 11.6 Resultado dos testes automatizados (verificar.py — 116/117)
+### 11.6 Resultado dos testes automatizados (verificar.py — 125/126)
 
 ```
 [1]  IMPORTAÇÕES               ✅ 3/3
@@ -558,22 +558,29 @@ _PADROES_ABSURDO_AVISO = re.compile(
   ✅  Absurdo cita §2º e reabertura (não §1º/ofício)
   ✅  Seção avisos não diz 'preservados exatamente'
   ✅  TXT rascunho: cabeçalho, reabertura, slug correto    (total: 18 verificações)
+[7g] FORMATAÇÃO B7 (rev.18/rev.19/rev.20)               ✅ 7/7
+  ✅  Normal.font.name == 'Arial'
+  ✅  Normal.font.size == 11pt
+  ✅  Apenas 1 tabela no DOCX (assinaturas; ementa não é tabela)
+  ✅  Ementa aparece como parágrafo simples
+  ✅  Corpo do texto: run.font.name == 'Arial'
+  ✅  Heading 2 style: font.name == 'Arial'
+  ✅  Heading 2 style: font.size == 11pt
 [7e] PARSING                   ✅ 6/6
-[8]  ANÁLISE ESTRUTURAL        ✅ 4/4  ← rev.16: +1 teste 'Art sem ponto (B1)'
-  ✅  2 artigos (texto padrão)
-  ✅  2 parágrafos
-  ✅  3 anexos
-  ✅  4 artigos (inclui "Art 14." sem ponto)   ← NEW rev.16
+[8]  ANÁLISE ESTRUTURAL        ✅ 4/4  (inclui 'Art sem ponto B1' — rev.16)
 [9]  API KEY                   ❌ 0/1  (esperado — chave ausente localmente)
-[10] ARQUIVOS STRESS TEST      ✅ 2/2
+[10] ARQUIVOS STRESS TEST      ✅ 2/2  (condicional — skipped se arquivos ausentes)
 [11] VALIDAÇÃO XML GENERALIZADA ✅ 16/16
 [12] HELPER _invalidar_resultado() ✅ 5/5
 [13] REGRA A4                  ✅ 11/11
 [14] REGRA E2                  ✅ 12/12
 [15] SUBEMENDAS (rev.15)       ✅ 23/23
   (inclui P1, P2, P3 confirmados)
+[B6] FALLBACK MULTI-LOTE (rev.17) ✅ 2/2
+  ✅  Sequência [1,2,3,4] (não [1,2,5,6])
+  ✅  Offset após fallback = 4
 
-RESULTADO: 116/117 (único fail = API key ausente — esperado)
+RESULTADO: 125/126 (único fail = API key ausente — esperado)
 ```
 
 ---
@@ -613,4 +620,4 @@ Os seguintes arquivos são rastreados no repositório como referência de format
 
 ---
 
-*Versão rev.20 — 26/05/2026 — Sistema de Redações CCJ CMRJ*
+*Versão rev.21 — 26/05/2026 — Sistema de Redações CCJ CMRJ*

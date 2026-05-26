@@ -1,5 +1,5 @@
 # Prompt de Auditoria Externa — Sistema de Redações CCJ CMRJ
-### Versão rev.20 — 26/05/2026
+### Versão rev.21 — 26/05/2026
 
 ---
 
@@ -263,7 +263,7 @@ alteradas por subemendas aprovadas era aplicado na versão original, ignorando a
 
 ---
 
-### 6. verificar.py — estado atual (rev.18)
+### 6. verificar.py — estado atual (rev.21)
 
 - **Seção 8:** 4 testes de análise estrutural (inclui novo teste B1 — "Art sem ponto")
 - **Seção 11:** valida 8 tags XML (inclui `NOTAS_TECNICAS` e `SUGESTOES_NORMATIVAS`)
@@ -581,7 +581,7 @@ for parte in partes:
 
 ---
 
-## Arquitetura de proteções (estado atual — rev.19)
+## Arquitetura de proteções (estado atual — rev.21)
 
 | Proteção | Onde | O que faz |
 |---|---|---|
