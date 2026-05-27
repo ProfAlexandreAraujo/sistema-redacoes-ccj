@@ -273,7 +273,7 @@ if _DOCX_OK:
             "=" * 60 + "\n\n"
         )
         # Simula limpeza de marcadores no TXT (P2 — auditoria externa)
-        _marker_re_txt_sim = re.compile(r'\s*\[\[⚠️ CCJ:[^\]]*\]\]', re.UNICODE)
+        _marker_re_txt_sim = re.compile(r'\s*\[\[⚠️? CCJ:[^\]]*\]\]', re.UNICODE)  # rev.23: U+FE0F opcional
         _texto_com_marcador = "Art. 1º Texto. [[⚠️ CCJ: CONFLITO DE EMENDAS — decisão do relator obrigatória]]\nArt. 2º Fim."
         _texto_limpo_sim = _marker_re_txt_sim.sub('', _texto_com_marcador)
         _txt_content = (_cab + _texto_limpo_sim).encode('utf-8')

@@ -482,7 +482,7 @@ def _remover_bordas_tabela(tabela) -> None:
 ```python
 _CAMARA_RE  = re.compile(r'^\s*A\s+C[ÂA]MARA\s+MUNICIPAL', re.IGNORECASE)
 _DECRETA_RE = re.compile(r'^\s*D[\s]*E[\s]*C[\s]*R[\s]*E[\s]*T[\s]*A', re.IGNORECASE)
-_MARKER_RE  = re.compile(r'\[\[⚠️.*?\]\]')
+_MARKER_RE  = re.compile(r'\s*\[\[⚠️? CCJ:[^\]]*\]\]', re.UNICODE)  # rev.23: ️? = U+FE0F opcional
 
 # "A CÂMARA MUNICIPAL..." → BOLD + JUSTIFY
 # "D E C R E T A"        → BOLD + RIGHT

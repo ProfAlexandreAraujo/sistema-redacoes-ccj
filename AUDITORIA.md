@@ -542,7 +542,7 @@ _PADROES_ABSURDO_AVISO = re.compile(
 
 ---
 
-### 11.6 Resultado dos testes automatizados (verificar.py — 125/126)
+### 11.6 Resultado dos testes automatizados (verificar.py — 128/129)
 
 ```
 [1]  IMPORTAÇÕES               ✅ 3/3
@@ -580,7 +580,7 @@ _PADROES_ABSURDO_AVISO = re.compile(
   ✅  Sequência [1,2,3,4] (não [1,2,5,6])
   ✅  Offset após fallback = 4
 
-RESULTADO: 125/126 (único fail = API key ausente — esperado)
+RESULTADO: 128/129 (único fail = API key ausente — esperado; +3 testes 7h regex marcador rev.23)
 ```
 
 ---
