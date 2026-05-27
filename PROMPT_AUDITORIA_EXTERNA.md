@@ -1,5 +1,5 @@
 # Prompt de Auditoria Externa — Sistema de Redações CCJ CMRJ
-### Versão rev.23 — 26/05/2026
+### Versão rev.24 — 26/05/2026
 
 ---
 
@@ -263,7 +263,7 @@ alteradas por subemendas aprovadas era aplicado na versão original, ignorando a
 
 ---
 
-### 6. verificar.py — estado atual (rev.23)
+### 6. verificar.py — estado atual (rev.24)
 
 - **Seção 8:** 4 testes de análise estrutural (inclui novo teste B1 — "Art sem ponto")
 - **Seção 11:** valida 8 tags XML (inclui `NOTAS_TECNICAS` e `SUGESTOES_NORMATIVAS`)
@@ -578,11 +578,11 @@ for parte in partes:
 ```
 
 **Novos testes em verificar.py:** 2 verificações do cenário multi-lote com fallback
-(118/119 após fix de B6; 123/124 após rev.19 com 5 testes B7; 125/126 após rev.20 com 2 testes heading; 1 falha esperada = API key ausente).
+(118/119 após B6; 123/124 após rev.19; 125/126 após rev.20; 128/129 após rev.23 com 3 testes regex marcador; 1 falha esperada = API key ausente).
 
 ---
 
-## Arquitetura de proteções (estado atual — rev.23)
+## Arquitetura de proteções (estado atual — rev.24)
 
 | Proteção | Onde | O que faz |
 |---|---|---|

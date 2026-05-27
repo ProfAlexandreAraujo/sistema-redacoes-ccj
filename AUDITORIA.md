@@ -1,5 +1,5 @@
 # 🔍 AUDITORIA DO SISTEMA — CCJ CMRJ
-### Documento técnico para revisão externa — versão 2026-05-26 **rev.23**
+### Documento técnico para revisão externa — versão 2026-05-26 **rev.24**
 
 ---
 
@@ -620,4 +620,4 @@ Os seguintes arquivos são rastreados no repositório como referência de format
 
 ---
 
-*Versão rev.23 — 26/05/2026 — Sistema de Redações CCJ CMRJ*
+*Versão rev.24 — 26/05/2026 — Sistema de Redações CCJ CMRJ*

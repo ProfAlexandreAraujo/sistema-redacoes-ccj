@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-verificar.py — Verificação do Sistema de Redações CCJ CMRJ (rev.23)
+verificar.py — Verificação do Sistema de Redações CCJ CMRJ (rev.24)
 Testa todos os comportamentos críticos do AUDITORIA.md sem custo de API.
 
 Uso:
@@ -32,7 +32,7 @@ def chk(nome: str, ok: bool, detalhe: str = "") -> None:
 
 print()
 print("=" * 65)
-print("  VERIFICAÇÃO DO SISTEMA — CCJ CMRJ — rev.23")
+print("  VERIFICAÇÃO DO SISTEMA — CCJ CMRJ — rev.24")
 print("=" * 65)
 
 # ────────────────────────────────────────────────────────────────────────────
