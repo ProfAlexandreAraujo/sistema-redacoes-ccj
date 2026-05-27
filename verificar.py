@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-verificar.py — Verificação do Sistema de Redações CCJ CMRJ (rev.21)
+verificar.py — Verificação do Sistema de Redações CCJ CMRJ (rev.23)
 Testa todos os comportamentos críticos do AUDITORIA.md sem custo de API.
 
 Uso:
@@ -32,7 +32,7 @@ def chk(nome: str, ok: bool, detalhe: str = "") -> None:
 
 print()
 print("=" * 65)
-print("  VERIFICAÇÃO DO SISTEMA — CCJ CMRJ — rev.21")
+print("  VERIFICAÇÃO DO SISTEMA — CCJ CMRJ — rev.23")
 print("=" * 65)
 
 # ────────────────────────────────────────────────────────────────────────────
@@ -293,6 +293,26 @@ if _DOCX_OK:
             ).read_text(encoding='utf-8'))
     except Exception as e:
         chk("7f — TXT modo rascunho", False, str(e))
+
+    # 7h — regex de marcador tolera ⚠ sem variation selector U+FE0F (rev.23)
+    try:
+        from utils import _MARKER_RE as _mrk_re
+        # ⚠️ com selector (forma original da IA) — \s* consome o espaço antes de [[
+        chk("Marcador ⚠️ com U+FE0F é removido pelo regex",
+            "[[" not in _mrk_re.sub('', "Texto [[⚠️ CCJ: TESTE]] fim"))
+        # ⚠ sem selector (forma que algumas IAs devolvem)
+        chk("Marcador ⚠ sem U+FE0F também é removido pelo regex",
+            "[[" not in _mrk_re.sub('', "Texto [[⚠ CCJ: TESTE]] fim"))
+        # No DOCX gerado: marcador ⚠ sem selector não vaza
+        _docx_sem_fe0f = exportar_redacao_final_docx(
+            texto="Art. 1º Normal.\nArt. 2º Problema. [[⚠ CCJ: SEM SELECTOR]]\nArt. 3º Fim.",
+            nome_projeto="PLC 1/2026", avisos=[], erros=[],
+        )
+        _txts_sem = [p.text for p in Document(BytesIO(_docx_sem_fe0f)).paragraphs]
+        chk("DOCX: marcador ⚠ sem U+FE0F não vaza para o documento",
+            not any("[[" in t for t in _txts_sem))
+    except Exception as e:
+        chk("7h — regex marcador variation selector", False, str(e))
 
     # 7g — B7: Arial 11pt + ementa como parágrafo simples (rev.18)
     try:

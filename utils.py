@@ -267,7 +267,7 @@ _MESES_PT = {
 # Padrões para formatação especial do corpo
 _CAMARA_RE  = re.compile(r'^\s*A\s+C[ÂA]MARA\s+MUNICIPAL', re.IGNORECASE)
 _DECRETA_RE = re.compile(r'^\s*D[\s]*E[\s]*C[\s]*R[\s]*E[\s]*T[\s]*A', re.IGNORECASE)
-_MARKER_RE  = re.compile(r'\s*\[\[⚠️ CCJ:[^\]]*\]\]', re.UNICODE)
+_MARKER_RE  = re.compile(r'\s*\[\[⚠️? CCJ:[^\]]*\]\]', re.UNICODE)  # ️? = U+FE0F opcional
 
 
 # ─────────────────────────────────────────────────────────────────────────────

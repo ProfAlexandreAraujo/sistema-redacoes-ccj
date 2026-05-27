@@ -1,5 +1,5 @@
 # Prompt de Auditoria Externa — Sistema de Redações CCJ CMRJ
-### Versão rev.21 — 26/05/2026
+### Versão rev.23 — 26/05/2026
 
 ---
 
@@ -263,7 +263,7 @@ alteradas por subemendas aprovadas era aplicado na versão original, ignorando a
 
 ---
 
-### 6. verificar.py — estado atual (rev.21)
+### 6. verificar.py — estado atual (rev.23)
 
 - **Seção 8:** 4 testes de análise estrutural (inclui novo teste B1 — "Art sem ponto")
 - **Seção 11:** valida 8 tags XML (inclui `NOTAS_TECNICAS` e `SUGESTOES_NORMATIVAS`)
@@ -280,7 +280,8 @@ alteradas por subemendas aprovadas era aplicado na versão original, ignorando a
   - parsear reconhece `subemenda_de`; app.py exibe painel
   - **2 novos testes em rev.17:** fallback multi-lote [1,2,3,4] e offset após fallback = 4
   - **5 novos testes em rev.19 (seção 7g):** Normal Arial 11pt, 1 tabela apenas, ementa como parágrafo, corpo Arial, heading fonts
-- **Resultado: 125/126** (1 falha esperada: chave API não configurada localmente)
+  - **3 novos testes em rev.23 (seção 7h):** regex tolera ⚠ com e sem U+FE0F; DOCX não vaza marcador sem selector
+- **Resultado: 128/129** (1 falha esperada: chave API não configurada localmente; 2 checks de stress test requerem arquivos TAB locais — 126/127 em CI)
 
 Novo teste adicionado em rev.16 (Seção 8):
 ```python
@@ -581,7 +582,7 @@ for parte in partes:
 
 ---
 
-## Arquitetura de proteções (estado atual — rev.21)
+## Arquitetura de proteções (estado atual — rev.23)
 
 | Proteção | Onde | O que faz |
 |---|---|---|
@@ -721,5 +722,8 @@ for parte in partes:
   (seção 7g): Normal Arial 11pt, 1 tabela apenas, ementa como parágrafo, corpo Arial;
   Heading 1/2/3 unificados para Arial 11pt em utils.py; PROMPT_AUDITORIA_EXTERNA.md e
   AUDITORIA.md corrigidos: critérios B4 históricos marcados, contagens atualizadas (123/124).
-- **rev.20:** resposta à auditoria externa do rev.19 — 2 testes de heading adicionados
-  (Heading 2 Arial 11pt); PROMPT e AUDITORIA.md com versões e contagens sincronizadas (125/126).
+- **rev.20–22:** resposta à auditoria externa — 2 testes heading (Heading 2 Arial 11pt);
+  PROMPT e AUDITORIA.md com versões e contagens sincronizadas; stress test condicional.
+- **rev.23:** [P2] regex de marcador [[⚠ CCJ:...]] corrigida — U+FE0F (variation selector)
+  agora opcional (`⚠️?`) em utils.py e app.py; 3 novos testes (seção 7h); versões
+  sincronizadas com o commit (AUDITORIA.md, PROMPT, verificar.py todos em rev.23).

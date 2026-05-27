@@ -894,7 +894,7 @@ with aba5:
 
         # TXT simples — respeita o mesmo modo do DOCX
         # Remove marcadores inline de trabalho [[⚠️ CCJ:...]] (mesma lógica do DOCX)
-        _marker_re_txt = re.compile(r'\s*\[\[⚠️ CCJ:[^\]]*\]\]', re.UNICODE)
+        _marker_re_txt = re.compile(r'\s*\[\[⚠️? CCJ:[^\]]*\]\]', re.UNICODE)  # ️? = U+FE0F opcional
         _texto_limpo_txt = _marker_re_txt.sub('', texto_editavel)
         if _eh_rascunho_aba5:
             _cabecalho_rascunho = (
