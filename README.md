@@ -89,6 +89,7 @@ Quando uma **emenda modificativa ou substitutiva** chega sem alvo identificável
 | Preservação verbatim (A1) | Prompt | Emenda aprovada nunca é alterada em conteúdo |
 | Referências cruzadas (A2) | Prompt | Única alteração automática de conteúdo permitida |
 | Preservação de anexos (A3) | Prompt | Conteúdo de anexos nunca alterado sem emenda expressa |
+| Conteúdo gráfico/tabular (A3.1) | Prompt | Placeholder `[INSERIR CONTEÚDO…]` + ⚠ Aviso; nunca 🚨 Erro Crítico nem 🔴 Absurdo |
 | A4.1 — aditiva sem alvo | Prompt | Posicionamento temático com AVISO + LOG obrigatórios |
 | A4.2 — modificativa sem alvo | Prompt | Não aplica; gera ERRO CRÍTICO (§2º) + LOG |
 | Subemendas | Python (pré-IA) | Substitui texto da emenda-pai; conflito detectado; inoperante registrado |
@@ -98,7 +99,7 @@ Quando uma **emenda modificativa ou substitutiva** chega sem alvo identificável
 | E2 — conflito entre emendas | Prompt | Varredura prévia; cautela por menor número; ERROS_CRITICOS + SUGESTOES_NORMATIVAS |
 | Detecção estrutural absurdos | Python | Circular, inoperante — independe do modelo |
 | Escalada de §1º para §2º | Python | Padrões semânticos nos avisos |
-| Validação XML | Python | Par completo de 8 tags ou ValueError |
+| Validação XML | Python | TEXTO_HARMONIZADO obrigatório; 7 demais tags opcionais com ⚠ aviso (degradação graciosa) |
 | Rascunho de trabalho | Python + App | §2º → DOCX sai como rascunho até relator confirmar |
 | `_invalidar_resultado()` | App | Qualquer mudança limpa resultado anterior |
 | Skip set completo | Python | Strings "Nenhum/a..." filtradas corretamente |

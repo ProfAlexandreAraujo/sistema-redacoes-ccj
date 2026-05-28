@@ -647,10 +647,71 @@ with aba4:
 
     with cc1:
         if all_ok:
-            st.success(
-                f"Pronto para harmonizar **{aprovadas_count} emendas aprovadas** "
-                f"sobre o projeto **{nome_projeto or 'sem nome'}**."
-            )
+            # ── Verificações de segurança ─────────────────────────────────────
+            _aprovadas_aba4 = [e for e in emendas if e.status == StatusEmenda.APROVADA]
+            _numeros_todos  = {e.numero for e in emendas}
+            _bloqueios: list[str] = []   # bloqueiam o botão
+            _alertas_aba4: list[str] = []  # apenas avisam, não bloqueiam
+
+            # Aviso 1 (não bloqueia): emendas aprovadas sem tipo/alvo revisado
+            # A IA de harmonização consegue inferir pelo texto bruto; o resultado
+            # pode ficar menos preciso mas não quebra a redação.
+            _nao_revisadas_aba4 = [e for e in _aprovadas_aba4 if not e.parseada]
+            if _nao_revisadas_aba4:
+                _nums_nr = ', '.join(str(e.numero) for e in _nao_revisadas_aba4[:10])
+                if len(_nao_revisadas_aba4) > 10:
+                    _nums_nr += f' …+{len(_nao_revisadas_aba4) - 10}'
+                _alertas_aba4.append(
+                    f"**{len(_nao_revisadas_aba4)} emenda(s) sem tipo/alvo revisado** "
+                    f"(nº {_nums_nr}). A IA usará o texto bruto — revise o resultado na aba 5 "
+                    "ou corrija tipo/alvo na aba 2 antes de harmonizar."
+                )
+
+            # Trava 2 (bloqueia): subemendas aprovadas sem emenda-pai definida
+            _subs_sem_vinculo_aba4 = [
+                e for e in _aprovadas_aba4
+                if e.subemenda_de is None
+                and re.match(r'^\s*SUBEMENDA\b', e.texto_bruto, re.IGNORECASE)
+            ]
+            if _subs_sem_vinculo_aba4:
+                _nums_sv = ', '.join(str(e.numero) for e in _subs_sem_vinculo_aba4)
+                _bloqueios.append(
+                    f"**{len(_subs_sem_vinculo_aba4)} subemenda(s) aprovada(s) sem emenda-pai definida** "
+                    f"(nº {_nums_sv}). Informe 'SubEmenda da Emenda Nº' na aba 2."
+                )
+
+            # Trava 3 (bloqueia): subemendas aprovadas com emenda-pai ausente na lista
+            _subs_pai_faltando_aba4 = [
+                e for e in _aprovadas_aba4
+                if e.subemenda_de is not None and e.subemenda_de not in _numeros_todos
+            ]
+            if _subs_pai_faltando_aba4:
+                _pares_sf = ', '.join(
+                    f"S{e.numero}→E{e.subemenda_de}" for e in _subs_pai_faltando_aba4
+                )
+                _bloqueios.append(
+                    f"**{len(_subs_pai_faltando_aba4)} subemenda(s) aprovada(s) com emenda-pai ausente na lista** "
+                    f"({_pares_sf}). Verifique se a emenda-pai está carregada com o número correto."
+                )
+
+            # Exibe alertas (não-bloqueantes) como warning
+            if _alertas_aba4:
+                for _a in _alertas_aba4:
+                    st.warning(f"⚠️ {_a}")
+
+            if _bloqueios:
+                st.error("🚫 **Harmonização bloqueada — corrija os problemas abaixo antes de continuar:**")
+                for _b in _bloqueios:
+                    st.error(f"• {_b}")
+                st.info(
+                    "💡 Na aba 2, informe o vínculo de subemenda (campo 'SubEmenda da Emenda Nº') "
+                    "para cada subemenda marcada acima."
+                )
+            else:
+                st.success(
+                    f"Pronto para harmonizar **{aprovadas_count} emendas aprovadas** "
+                    f"sobre o projeto **{nome_projeto or 'sem nome'}**."
+                )
 
             # ── Painel de subemendas detectadas ──
             _subs_aba4 = [e for e in emendas if e.subemenda_de is not None]
@@ -683,59 +744,60 @@ with aba4:
                                 f"**Emenda {_s.subemenda_de}** mantém texto original."
                             )
 
-            # Estimativa de tempo
-            if aprovadas_count <= 30:
-                tempo_est = "30–60 segundos"
-            elif aprovadas_count <= 80:
-                tempo_est = "1–3 minutos"
-            elif aprovadas_count <= 130:
-                tempo_est = "3–5 minutos"
-            else:
-                tempo_est = "5–8 minutos"
+            if not _bloqueios:
+                # Estimativa de tempo
+                if aprovadas_count <= 30:
+                    tempo_est = "30–60 segundos"
+                elif aprovadas_count <= 80:
+                    tempo_est = "1–3 minutos"
+                elif aprovadas_count <= 130:
+                    tempo_est = "3–5 minutos"
+                else:
+                    tempo_est = "5–8 minutos"
 
-            st.info(
-                f"⏱️ **Tempo estimado: {tempo_est}** para {aprovadas_count} emendas. "
-                "A IA está processando — **não recarregue a página** enquanto o spinner estiver ativo."
-            )
+                st.info(
+                    f"⏱️ **Tempo estimado: {tempo_est}** para {aprovadas_count} emendas. "
+                    "A IA está processando — **não recarregue a página** enquanto o spinner estiver ativo."
+                )
 
-            if st.button(
-                f"🔄 Harmonizar agora ({aprovadas_count} emendas)",
-                type="primary",
-                use_container_width=True,
-            ):
-                with st.spinner(
-                    f"⚙️ Harmonizando {aprovadas_count} emendas — aguarde, isso é normal demorar. "
-                    "NÃO feche nem recarregue esta página..."
+                if st.button(
+                    f"🔄 Harmonizar agora ({aprovadas_count} emendas)",
+                    type="primary",
+                    use_container_width=True,
                 ):
-                    try:
-                        resultado = harmonizar_texto(
-                            texto_original,
-                            emendas,
-                            api_key,
-                            nome_projeto,
-                        )
-                        st.session_state.resultado_harm = resultado
-                        # Reset explícito: nova harmonização invalida qualquer confirmação anterior
-                        st.session_state.pop('confirmar_sec_2_aba5', None)
-                        st.session_state.pop('texto_redacao_final', None)
-
-                        # ── Salvar sessão automaticamente para não perder o trabalho ──
+                    with st.spinner(
+                        f"⚙️ Harmonizando {aprovadas_count} emendas — aguarde, isso é normal demorar. "
+                        "NÃO feche nem recarregue esta página..."
+                    ):
                         try:
-                            p = salvar_sessao(nome_projeto, texto_original, emendas)
-                            st.success(
-                                f"✅ Harmonização concluída! Sessão salva automaticamente em `{p.name}`. "
-                                "**Vá para a aba Redação Final e baixe o .docx agora.**"
+                            resultado = harmonizar_texto(
+                                texto_original,
+                                emendas,
+                                api_key,
+                                nome_projeto,
                             )
-                        except Exception:
-                            st.success("✅ Harmonização concluída! Vá para a aba Redação Final.")
+                            st.session_state.resultado_harm = resultado
+                            # Reset explícito: nova harmonização invalida qualquer confirmação anterior
+                            st.session_state.pop('confirmar_sec_2_aba5', None)
+                            st.session_state.pop('texto_redacao_final', None)
 
-                        st.rerun()
-                    except Exception as ex:
-                        st.error(f"Erro na harmonização: {ex}")
-                        st.warning(
-                            "💡 Se o erro for de conexão ou timeout, tente novamente — "
-                            "o estado das emendas foi preservado."
-                        )
+                            # ── Salvar sessão automaticamente para não perder o trabalho ──
+                            try:
+                                p = salvar_sessao(nome_projeto, texto_original, emendas)
+                                st.success(
+                                    f"✅ Harmonização concluída! Sessão salva automaticamente em `{p.name}`. "
+                                    "**Vá para a aba Redação Final e baixe o .docx agora.**"
+                                )
+                            except Exception:
+                                st.success("✅ Harmonização concluída! Vá para a aba Redação Final.")
+
+                            st.rerun()
+                        except Exception as ex:
+                            st.error(f"Erro na harmonização: {ex}")
+                            st.warning(
+                                "💡 Se o erro for de conexão ou timeout, tente novamente — "
+                                "o estado das emendas foi preservado."
+                            )
         else:
             st.warning("Preencha os pré-requisitos para habilitar a harmonização.")
 

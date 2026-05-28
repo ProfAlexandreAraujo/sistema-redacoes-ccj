@@ -1,5 +1,5 @@
 # 🔍 AUDITORIA DO SISTEMA — CCJ CMRJ
-### Documento técnico para revisão externa — versão 2026-05-26 **rev.24**
+### Documento técnico para revisão externa — versão 2026-05-28 **rev.25**
 
 ---
 
@@ -78,6 +78,13 @@ Registrar no LOG: `A2-aglut / Art. Xº: 'Art. Y' → 'Art. X' (conteúdo migrou 
 ### A3 — Anexos
 Preservação integral obrigatória. Nunca renumerar nem alterar sem emenda expressa. Referências a anexos atualizadas se o anexo for renumerado por emenda.
 
+### A3.1 — Conteúdo Gráfico, Tabular e Georreferenciado (tratamento obrigatório)
+Quando uma emenda aprovada inclui anexo gráfico, tabela, mapa ou conteúdo georreferenciado que não pode ser reproduzido em texto puro:
+a) O conteúdo ausente NÃO configura erro crítico nem absurdo manifesto — é limitação estrutural do formato texto plano, não uma incongruência normativa.
+b) No local do conteúdo ausente, inserir exatamente: `[INSERIR CONTEÚDO — Emenda Nº N / ANEXO X — (título)]`
+c) Gerar APENAS um AVISO (§1º) — NÃO erro crítico, NÃO absurdo manifesto.
+d) NUNCA gerar ERROS_CRITICOS nem ALERTAS_ABSURDOS por ausência de conteúdo gráfico, tabular ou georreferenciado.
+
 ### E1 — Correções automáticas de linguagem (art. 250, §1º RI)
 Erros de linguagem que **não alterem o significado jurídico** são **corrigidos automaticamente**.
 Para cada correção: LOG → `E1 / Art. Xº: [original] → [corrigido]` e AVISOS → `⚠ E1 / Art. Xº: corrigido — [original] → [corrigido]`.
@@ -109,6 +116,14 @@ Contradição entre emendas aprovadas → a providência regimental indicada é 
 ### E3 — Absurdo Manifesto (§2º RI)
 Ininteligibilidade formal de um dispositivo → a providência regimental indicada é a reabertura da discussão. **Nunca resolve.**
 Quatro casos obrigatórios: (1) autoreferência circular; (2) condição remetendo a § suprimido; (3) "artigo anterior" materialmente incompatível; (4) referência exclusiva a dispositivo suprimido.
+
+**Situações que NÃO configuram Absurdo Manifesto — classificar como ⚠ AVISO, nunca 🔴:**
+- Instrução de renumeração de dispositivos de lei externa (ex: "o art. 15 passa a ser o art. 14") — é técnica legislativa válida, não produz ininteligibilidade no PLC em análise.
+- Erro tipográfico de numeração no texto votado (ex: inciso com dupla indicação "VII - V –") quando o inciso é identificável pelo contexto — é impropriedade de linguagem (§1º), não absurdo.
+- Referência a número de lei externa que pode ter sido alterada por legislação posterior — remissão a lei externa é válida; eventual desatualização é mérito, não ininteligibilidade formal.
+- Cláusula de redação incomum, sub-ótima ou passiva sem sujeito explícito, quando ainda é possível extrair o comando normativo — torpe não é o mesmo que ininteligível.
+
+> **Regra de calibragem:** na dúvida, classifique como ⚠ AVISO. Absurdo Manifesto exige ininteligibilidade **inequívoca** — quando o texto votado, mesmo imperfeito, permite identificar o comando normativo, o §1º é a via correta.
 
 ### P1 — Pós-processamento Python (camada independente do modelo)
 Após o modelo responder, `harmonizer.py` executa detectores estruturais sobre o texto harmonizado para escalar absurdos que o modelo classificou como §1º:
@@ -165,6 +180,15 @@ Qualquer item escalado move-se de `avisos` para `alertas_absurdos`, ativando o m
 | 26/05/2026 | **[B5]** `from docx.oxml.ns import qn` e `from docx.oxml import OxmlElement` no topo de `utils.py` causavam `ImportError` no Streamlit Cloud ao carregar o módulo | Deploy crítico (app fora do ar) | ✅ utils.py rev.16.1 — imports movidos para lazy dentro de `_remover_bordas_tabela()`; ✅ **CONFIRMADO rev.17**: download DOCX no Cloud funciona corretamente |
 | 26/05/2026 | **[B7]** `exportar_redacao_final_docx()`: ementa gerada em tabela sem bordas (resíduo de B4) em vez de parágrafo simples; corpo e assinaturas com fonte `'Times New Roman'` 10pt em vez de `Arial` 11pt (padrão CMRJ) | Produto (formatação inconsistente com modelos de referência) | ✅ utils.py rev.18 — ementa movida para `_para()` simples; todas as fontes unificadas para `Arial` 11pt via constantes `_FONT`/`_FSIZE` |
 | 26/05/2026 | **[B6]** `parsear_emendas_com_ia()`: fallback bruto com `offset + len(todas_emendas) + 1` somava o offset duas vezes em múltiplos lotes — ex: lotes [E1,E2] ok + [fallback] produzia [1,2,5,6] em vez de [1,2,3,4] | Bug funcional silencioso (numeração errada afeta votação e subemenda_de) | ✅ harmonizer.py rev.17 — fallback usa `offset + idx_fb + 1` onde `idx_fb` é relativo ao lote atual |
+| 28/05/2026 | **[FB1]** Fallback regex `r'\n(?=EMENDA\s)'` ignorava SUBEMENDA — subemendas eram concatenadas no corpo da emenda anterior | Bug funcional (parsing) | ✅ harmonizer.py rev.25 — `r'\n(?=(?:SUB)?EMENDA\s)'` |
+| 28/05/2026 | **[FB2]** Fallback atribuía números por posição (`offset + idx + 1`) em vez de extrair do cabeçalho — Emenda 17 virava "Emenda 4" em lotes grandes | Bug funcional (numeração) | ✅ harmonizer.py rev.25 — extração de `EMENDA\s+N[ºo°]?\s*(\d+)` no cabeçalho |
+| 28/05/2026 | **[FB3]** Fallback nunca extraía `subemenda_de` — todas as subemendas ficavam com `subemenda_de=None` | Bug funcional (subemendas) | ✅ harmonizer.py rev.25 — parse de "à EMENDA Nº N" no cabeçalho |
+| 28/05/2026 | `parsear_emendas_com_ia`: enviava `texto_bruto` completo em JSON para 78 emendas — overflow de tokens → 100% das respostas caíam no fallback | Bug crítico (tokens) | ✅ harmonizer.py rev.25 — nova abordagem dois passos: segmentação determinística Python + IA classifica apenas tipo/alvo/autor via `_resumo_para_ia()` (600 chars); `max_tokens=6000` por lote de 25 |
+| 28/05/2026 | Validação XML exigia par completo das 8 tags — LOG_ALTERACOES truncado com 76+ emendas causava falha completa da harmonização | Falha silenciosa crítica | ✅ harmonizer.py rev.25 — degradação graciosa: apenas `TEXTO_HARMONIZADO` obrigatório; 7 demais tags opcionais com ⚠ aviso |
+| 28/05/2026 | `max_tokens` de harmonização: 60.000 insuficiente para PLCs com 80+ emendas | Funcional | ✅ harmonizer.py rev.25 — 60k → 64k |
+| 28/05/2026 | Conteúdo gráfico/tabular/georreferenciado em emendas gerava 🚨 ERRO CRÍTICO em vez de ⚠️ AVISO com placeholder | Calibragem (classificação indevida) | ✅ harmonizer.py rev.25 — nova regra A3.1 no prompt; placeholder `[INSERIR CONTEÚDO — ...]` |
+| 28/05/2026 | Renumeração de lei externa e erro tipográfico de numeração no texto votado (ex: "VII - V –") classificados como 🔴 ABSURDO MANIFESTO | Calibragem (classificação indevida) | ✅ harmonizer.py rev.25 — seção E3 com lista de situações que NÃO configuram absurdo |
+| 28/05/2026 | Trava 1 bloqueava harmonização quando emendas não tinham tipo/alvo revisado — excessivamente restritivo porque a IA pode inferir a classificação do `texto_bruto` | Usabilidade/calibragem | ✅ app.py rev.25 — Trava 1 rebaixada de bloqueio (`st.error`) para aviso (`st.warning`); Travas 2 e 3 (subemendas sem pai) permanecem como bloqueios |
 
 ---
 
@@ -262,8 +286,9 @@ Executa adicionalmente: harmonização completa do PLC 17/2026 com as 10 emendas
 | Parâmetro | Valor | Motivo |
 |---|---|---|
 | Modelo | `claude-sonnet-4-6` | Equilíbrio custo/performance para textos jurídicos longos |
-| max_tokens (harmonização) | 60.000 | Suporta PLCs grandes + 180 emendas (teto: 64k) |
-| max_tokens (parsing) | 20.000 | Suficiente para 180 emendas em JSON |
+| max_tokens (harmonização) | 64.000 | Suporta PLCs grandes + 80+ emendas; elevado de 60k→64k em rev.25 |
+| max_tokens (parsing) | 6.000 | Suficiente para lote de 25 emendas com apenas tipo/alvo/autor (sem texto_bruto); reduzido de 20k→6k em rev.25 |
+| Modo de parsing | Dois passos: segmentação Python determinística + classificação IA por lote de 25 | Elimina overflow: regex Python extrai número/subemenda_de do cabeçalho; IA recebe apenas `_resumo_para_ia()` (≤600 chars por emenda) |
 | Modo de chamada | Streaming obrigatório | Evita timeout em operações longas |
 | Custo estimado (100 emendas + PLC 50k chars) | ~$0,40–$0,60 | Sonnet: $3/M input, $15/M output |
 
@@ -494,26 +519,37 @@ docx_bytes = exportar_redacao_final_docx(
 
 ---
 
-### 11.4 `harmonizer.py` — validação XML obrigatória — rev.12
+### 11.4 `harmonizer.py` — validação XML com degradação graciosa — rev.25
+
+A partir de rev.25, apenas `TEXTO_HARMONIZADO` é obrigatório. As 7 demais tags são opcionais — se ausentes (ex: LOG_ALTERACOES truncado em 80+ emendas), geram ⚠ aviso na interface mas não abortem a harmonização.
 
 ```python
-_TODAS_TAGS      = [
-    "TEXTO_HARMONIZADO", "MAPA_RENUMERACAO",
-    "AVISOS", "ERROS_CRITICOS", "ALERTAS_ABSURDOS",
+_TAG_OBRIGATORIA = "TEXTO_HARMONIZADO"
+_TAGS_OPCIONAIS  = [
+    "MAPA_RENUMERACAO", "AVISOS", "ERROS_CRITICOS", "ALERTAS_ABSURDOS",
     "NOTAS_TECNICAS", "SUGESTOES_NORMATIVAS", "LOG_ALTERACOES",
 ]
-_TAGS_NAO_VAZIAS = {"TEXTO_HARMONIZADO", "LOG_ALTERACOES"}
 
-for _tag in _TODAS_TAGS:
+# Obrigatória: aborta se ausente ou vazia
+_m_obrig = re.search(
+    rf'<{_TAG_OBRIGATORIA}>(.*?)</{_TAG_OBRIGATORIA}>', resp_text, re.DOTALL
+)
+if not _m_obrig or not _m_obrig.group(1).strip():
+    raise ValueError(
+        f"Resposta inválida — <{_TAG_OBRIGATORIA}> ausente ou vazia."
+    )
+
+# Opcionais: aviso se ausentes, sem abortar
+_avisos_degradacao: list[str] = []
+for _tag in _TAGS_OPCIONAIS:
     _m = re.search(rf'<{_tag}>(.*?)</{_tag}>', resp_text, re.DOTALL)
     if not _m:
-        _sem_par.append(_tag)
-    elif _tag in _TAGS_NAO_VAZIAS and not _m.group(1).strip():
-        _conteudo_vazio.append(_tag)
-
-if _sem_par:
-    raise ValueError(f"Resposta truncada — par completo ausente: {', '.join(_sem_par)}.")
+        _avisos_degradacao.append(
+            f"⚠ Tag <{_tag}> ausente na resposta — campo omitido (possível truncamento)."
+        )
 ```
+
+> **Histórico:** rev.12 a rev.24 exigiam par completo das 8 tags — LOG_ALTERACOES truncado (comum com 76+ emendas) causava falha completa. Rev.25 adota degradação graciosa para PLCs grandes.
 
 ---
 
@@ -620,4 +656,4 @@ Os seguintes arquivos são rastreados no repositório como referência de format
 
 ---
 
-*Versão rev.24 — 26/05/2026 — Sistema de Redações CCJ CMRJ*
+*Versão rev.25 — 28/05/2026 — Sistema de Redações CCJ CMRJ*

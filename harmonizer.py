@@ -426,111 +426,174 @@ def _escalar_avisos_para_absurdos(
     return avisos_restantes, todos
 
 
+def _resumo_para_ia(texto: str, max_chars: int = 600) -> str:
+    """
+    Extrai o conteúdo substantivo da emenda para classificação pela IA.
+    Pula o bloco de autores/comissões (boilerplate) que impede a classificação.
+    O bloco termina tipicamente com "FINANCEIRA." seguido do conteúdo real.
+    """
+    primeira_linha = texto.split('\n')[0].strip()
+
+    # Estratégia 1: bloco de autores termina com "FINANCEIRA." (padrão mais comum)
+    m = re.search(r'FINANCEIRA\.\s*\n', texto, re.IGNORECASE)
+    if m:
+        conteudo = texto[m.end():].strip()[:max_chars].replace('\n', ' ')
+        return f"{primeira_linha} | {conteudo}"
+
+    # Estratégia 2: primeira linha em minúsculas ou verbo legislativo típico
+    for linha in texto.split('\n')[1:]:
+        l = linha.strip()
+        if not l:
+            continue
+        if re.match(
+            r'^(?:Fica|Ficam|O\s|Os\s|A\s|As\s|Art\.|§|"Art\.|Inclua|Redija|'
+            r'Modifica|Suprima|Acrescenta|Adiciona|Altera|Revoga|EMENTA|Texto\s+da)',
+            l, re.IGNORECASE
+        ):
+            pos = texto.find(l)
+            conteudo = texto[pos:pos + max_chars].replace('\n', ' ')
+            return f"{primeira_linha} | {conteudo}"
+
+    # Fallback: remove bloco Autor(es) e retorna o que restar
+    sem_autores = re.sub(r'Autor\(es\)\s*:.*', '', texto,
+                         flags=re.IGNORECASE | re.DOTALL).strip()
+    return sem_autores[:max_chars].replace('\n', ' ')
+
+
 def parsear_emendas_com_ia(texto_emendas: str, api_key: str) -> list[Emenda]:
     """
-    Usa Claude para identificar e estruturar emendas a partir de um texto bruto.
-    Divide em lotes se o texto for muito longo.
-    """
-    client = anthropic.Anthropic(api_key=api_key)
-    chunks = _chunk_text(texto_emendas, max_chars=60_000)
-    todas_emendas: list[Emenda] = []
-    offset = 0
+    Usa Claude para classificar tipo, alvo e autor de cada emenda.
 
-    for chunk in chunks:
+    Estratégia em dois passos:
+    1. Segmentação determinística por regex — extrai numero e subemenda_de do cabeçalho.
+    2. IA em lotes (max 25 peças) — retorna APENAS metadados; não reproduz texto_bruto.
+       Isso evita overflow de tokens para projetos com emendas muito longas.
+    """
+    client   = anthropic.Anthropic(api_key=api_key)
+    tipo_map = {t.value: t for t in TipoEmenda}
+
+    # ── Passo 1: segmentar deterministicamente ───────────────────────────────
+    partes_raw = re.split(r'\n(?=(?:SUB)?EMENDA\s)', texto_emendas, flags=re.IGNORECASE)
+
+    pecas: list[dict] = []
+    for idx_fb, parte in enumerate(partes_raw):
+        parte_s = parte.strip()
+        if not parte_s:
+            continue
+
+        cab    = parte_s.split('\n')[0]
+        sub_de = None
+        num_m  = None
+
+        if re.match(r'^\s*SUBEMENDA\b', parte_s, re.IGNORECASE):
+            partes_cab = re.split(r'\s+[AÀà]\s+EMENDA\b', cab, maxsplit=1, flags=re.IGNORECASE)
+            proprio    = partes_cab[0]
+            pai_txt    = partes_cab[1] if len(partes_cab) > 1 else ''
+            num_m      = re.search(r'N[ºo°]?\s*(\d+)', proprio, re.IGNORECASE)
+            pai_m      = re.search(r'N[ºo°]?\s*(\d+)', pai_txt,  re.IGNORECASE)
+            if pai_m:
+                sub_de = int(pai_m.group(1))
+        else:
+            num_m = re.search(r'EMENDA\s+N[ºo°]?\s*(\d+)', cab, re.IGNORECASE)
+
+        pecas.append({
+            'numero_cab':   int(num_m.group(1)) if num_m else None,
+            'sub_de':       sub_de,
+            'texto':        parte_s,
+        })
+
+    if not pecas:
+        return []
+
+    # Número sequencial para peças sem número no cabeçalho
+    _max_num = max((p['numero_cab'] for p in pecas if p['numero_cab']), default=0)
+    _seq     = _max_num
+    for p in pecas:
+        if p['numero_cab'] is None:
+            _seq += 1
+            p['numero_final'] = _seq
+        else:
+            p['numero_final'] = p['numero_cab']
+
+    # ── Passo 2: classificar com IA em lotes de 25 peças ─────────────────────
+    # Envia só as primeiras 400 chars de cada peça — suficiente para classificar.
+    # A IA devolve APENAS metadados (tipo, alvo, autor, notas) sem reproduzir texto.
+    LOTE = 25
+    todas: list[Emenda] = []
+
+    for inicio in range(0, len(pecas), LOTE):
+        lote = pecas[inicio:inicio + LOTE]
+
+        linhas_resumo = []
+        for p in lote:
+            resumo = _resumo_para_ia(p['texto'], max_chars=600)
+            linhas_resumo.append(f"No {p['numero_final']}: {resumo}")
+
         prompt = f"""Você é especialista em técnica legislativa municipal brasileira.
 
-Analise o texto abaixo contendo emendas a um projeto de lei da Câmara Municipal do Rio de Janeiro.
-Extraia CADA emenda separadamente em formato JSON.
+Classifique as emendas abaixo. Retorne APENAS os metadados — NÃO reproduza o texto.
 
-Para cada emenda, identifique:
-- numero: número da emenda (inteiro; se não houver, use sequência a partir de {offset + 1})
+Para cada emenda identifique:
+- numero: o número indicado no início (ex: "No 17" → 17)
 - tipo: "Modificativa" | "Supressiva" | "Aditiva" | "Substitutiva" | "Aglutinativa" | "Outro"
-- alvo: dispositivo afetado (ex: "Art. 5º", "Art. 10, §3º", "Inciso II do Art. 7º", "Anexo I", etc.) ou null
-- novo_texto: para Modificativa/Aditiva/Substitutiva, o texto novo a ser inserido; null para Supressiva
-- texto_bruto: texto integral original da emenda EXATAMENTE como aparece no documento, sem omissão
-- autor: nome do vereador autor, se mencionado; null caso contrário
-- subemenda_de: se for SUBEMENDA, informe o número inteiro da emenda-pai que substitui (ex: 3 para
-  "Subemenda à Emenda nº 3"); null se não for subemenda. Textos como "SUBEMENDA", "Subemenda à
-  Emenda nº X", "SubEmenda Modificativa à Emenda X" indicam subemenda.
-- notas: observações relevantes (ex: emenda está incompleta, referência ambígua, etc.) ou null
+- alvo: dispositivo afetado (ex: "Art. 5o", "paragrafo 1o do Art. 7o", "inciso VII do Art. 4o", "Anexo III") ou null
+- autor: nome do vereador/vereadora principal (apenas o primeiro, sem comissões) ou null
+- notas: observação importante (ex: "alvo ambiguo", "emenda incompleta") ou null
 
-Responda SOMENTE com JSON válido no formato:
+Responda SOMENTE com JSON valido:
 {{"emendas": [
-  {{"numero": 1, "tipo": "Modificativa", "alvo": "Art. 5º", "novo_texto": "...", "texto_bruto": "Emenda nº 1 — ...", "autor": "Fulano", "subemenda_de": null, "notas": null}},
-  {{"numero": 2, "tipo": "Supressiva",   "alvo": "Art. 4º", "novo_texto": null,  "texto_bruto": "Emenda nº 2 — Suprima-se o Art. 4º", "autor": null, "subemenda_de": null, "notas": null}},
-  {{"numero": 3, "tipo": "Modificativa", "alvo": "Art. 5º", "novo_texto": "Novo texto...", "texto_bruto": "Subemenda à Emenda nº 1 — ...", "autor": "Sicrano", "subemenda_de": 1, "notas": "Substitui o texto da Emenda 1"}},
-  ...
+  {{"numero": 17, "tipo": "Aditiva", "alvo": "Art. 4o", "autor": "Maira do MST", "notas": null}}
 ]}}
 
-TEXTO DAS EMENDAS:
-{chunk}"""
+EMENDAS PARA CLASSIFICAR:
+{chr(10).join(linhas_resumo)}"""
 
-        n_antes = len(todas_emendas)   # para corrigir offset ao final do lote
-
+        meta_por_num: dict[int, dict] = {}
         try:
             with client.messages.stream(
                 model="claude-sonnet-4-6",
-                max_tokens=20000,
+                max_tokens=6000,
                 messages=[{"role": "user", "content": prompt}]
             ) as stream:
                 resp_text = stream.get_final_text()
 
-            # Extrai JSON da resposta
-            match = re.search(r'\{.*\}', resp_text, re.DOTALL)
-            if not match:
-                raise ValueError(
-                    "IA não retornou JSON válido neste lote — "
-                    "emendas serão criadas como brutas para revisão manual."
-                )
-            data = json.loads(match.group())
+            m = re.search(r'\{.*\}', resp_text, re.DOTALL)
+            if m:
+                data = json.loads(m.group())
+                for item in data.get('emendas', []):
+                    n = item.get('numero')
+                    if n is not None:
+                        meta_por_num[int(n)] = item
+        except Exception:
+            pass  # fallback: meta_por_num vazio → emendas entram como brutas
 
-            for idx_item, item in enumerate(data.get("emendas", []), start=1):
-                tipo_map = {t.value: t for t in TipoEmenda}
-                # texto_bruto: preferir campo explícito; fallback para novo_texto ou
-                # para o texto do item como string (nunca vazio para emendas supressivas)
-                texto_bruto = (
-                    item.get("texto_bruto")
-                    or item.get("novo_texto")
-                    or f"[Emenda {item.get('numero', '?')} — {item.get('tipo', '')} | {item.get('alvo', '')}]"
-                )
-                numero = item.get("numero")
-                if numero is None:
-                    numero = offset + idx_item   # posição no lote, não acumulativo
-                _sub_de_raw = item.get("subemenda_de")
-                e = Emenda(
-                    numero       = numero,
-                    texto_bruto  = texto_bruto,
-                    tipo         = tipo_map.get(item.get("tipo") or "", TipoEmenda.OUTRO),
-                    alvo         = item.get("alvo"),
-                    novo_texto   = item.get("novo_texto"),
-                    autor        = item.get("autor"),
-                    parseada     = True,
-                    notas_parse  = item.get("notas"),
-                    subemenda_de = int(_sub_de_raw) if _sub_de_raw is not None else None,
-                )
-                todas_emendas.append(e)
+        for p in lote:
+            num      = p['numero_final']
+            meta     = meta_por_num.get(num, {})
+            tipo_str = meta.get('tipo') or ''
+            _parseada = bool(meta)   # qualquer resposta da IA = parsing realizado
 
-        except (json.JSONDecodeError, KeyError, IndexError, ValueError):
-            # Se parsing falhar, cria emendas brutas.
-            # IMPORTANTE: usar idx_fb relativo ao lote — NÃO usar len(todas_emendas),
-            # pois isso incluiria emendas de lotes anteriores e causaria double-counting.
-            # Ex: offset=2, lote fallback com 2 partes → números 3, 4 (e não 5, 6).
-            partes = re.split(r'\n(?=EMENDA\s)', chunk, flags=re.IGNORECASE)
-            idx_fb = 0
-            for parte in partes:
-                if parte.strip():
-                    num = offset + idx_fb + 1   # posição relativa ao lote, não ao total
-                    todas_emendas.append(Emenda(
-                        numero=num, texto_bruto=parte.strip(), parseada=False,
-                        notas_parse="Parsing automático falhou — revisar manualmente"
-                    ))
-                    idx_fb += 1
+            if not meta:
+                _notas = "Parsing automático falhou — revisar manualmente"
+                if p['numero_cab'] is None:
+                    _notas += " (numero nao reconhecido no cabecalho)"
+            else:
+                _notas = meta.get('notas') or None
 
-        offset += len(todas_emendas) - n_antes   # incrementa só o lote atual
+            todas.append(Emenda(
+                numero       = num,
+                texto_bruto  = p['texto'],
+                tipo         = tipo_map.get(tipo_str, TipoEmenda.OUTRO),
+                alvo         = meta.get('alvo'),
+                novo_texto   = None,   # harmonizer usa texto_bruto como fallback
+                autor        = meta.get('autor'),
+                parseada     = _parseada,
+                notas_parse  = _notas,
+                subemenda_de = p['sub_de'],
+            ))
 
-    # Garante unicidade e ordenação por número
-    todas_emendas.sort(key=lambda e: e.numero)
-    return todas_emendas
+    todas.sort(key=lambda e: e.numero)
+    return todas
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -637,6 +700,28 @@ A3. ANEXOS (preservação integral obrigatória)
     Preserve o conteúdo de cada Anexo exatamente como consta no projeto original, inclusive
     coordenadas UTM, tabelas de parâmetros e descrições de perímetros.
     Referências a Anexos nos artigos devem ser atualizadas se o Anexo for renumerado por emenda.
+
+A3.1 — CONTEÚDO GRÁFICO, TABULAR E GEORREFERENCIADO (tratamento obrigatório)
+    Quando uma emenda cria ou altera Anexo cujo conteúdo é essencialmente gráfico ou tabular
+    (mapas, plantas, quadros de parâmetros, tabelas de fatores, coordenadas UTM, delimitações
+    georreferenciadas, figuras) e esse conteúdo NÃO foi fornecido no texto da emenda
+    (ex.: a emenda nomeia o Anexo sem trazer seu corpo; menciona "conforme tabela" sem fornecer
+    a tabela; fornece apenas o título "ANEXO X — [nome]" sem o conteúdo):
+
+    a) Incorpore normalmente o texto normativo da emenda (artigos, incisos, parágrafos, caput).
+    b) No local do conteúdo ausente, insira exatamente:
+       [INSERIR CONTEÚDO — Emenda Nº N / ANEXO X — (título)]
+    c) Gere APENAS um AVISO (§1º) — NÃO erro crítico, NÃO absurdo manifesto:
+       "⚠ Emenda N / Anexo X: conteúdo gráfico/tabular não fornecido no texto da emenda —
+        inserir o arquivo antes da publicação."
+    d) NUNCA gere ERROS_CRITICOS nem ALERTAS_ABSURDOS por ausência de conteúdo gráfico,
+       tabular ou georreferenciado. Mapas, tabelas e coordenadas não existem em formato
+       texto puro — sua ausência no input é esperada e não configura ininteligibilidade
+       jurídica nem falha normativa da CCJ.
+
+    Aplica-se a: Quadros de Parâmetros Urbanísticos, Tabelas de Fator de Ajuste Locacional,
+    Tabelas de Potencial Construtivo, Mapas de Subsetores, Anexos de Bens Imóveis, Plantas,
+    e qualquer Anexo cujo conteúdo essencial seja visual ou tabular extenso.
 
 A4. EMENDAS SEM ALVO DEFINIDO — "acrescente-se onde couber"
 
@@ -885,6 +970,18 @@ E3. ALERTA DE ABSURDO MANIFESTO (art. 250, §2º RI — providência regimental 
     Em AMBOS (E2 e E3): a providência regimental indicada é a reabertura da discussão (§2º RI).
     Para casos fora dos quatro acima: na dúvida, classifique como ⚠ AVISO.
 
+    SITUAÇÕES QUE NÃO CONFIGURAM ABSURDO MANIFESTO — classificar como ⚠ AVISO, nunca 🔴:
+    — Instrução de renumeração de dispositivos de lei externa (ex: "renumerando os demais
+      parágrafos do art. X da LC Y") — questão de técnica legislativa sobre eficácia em lei
+      externa; o dispositivo desta lei é inteligível; gere aviso de verificação, não 🔴.
+    — Erro tipográfico de numeração no texto votado (ex: inciso com dupla indicação "VII - V –")
+      quando o inciso é identificável pelo contexto e posição — gere ⚠ AVISO descrevendo o
+      problema tipográfico; 🔴 só se o dispositivo ficar completamente ininteligível.
+    — Referência a número de lei externa que pode ter sido alterada — incerteza factual, não
+      absurdo; gere ⚠ AVISO recomendando verificação.
+    — Cláusula de redação incomum, sub-ótima ou passiva sem sujeito explícito, quando ainda
+      é possível extrair o comando normativo — imperfeição redacional, não absurdo.
+
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 TEXTO ORIGINAL DO PROJETO:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -958,7 +1055,7 @@ O texto do dispositivo permanece exatamente como aprovado — apenas acrescente 
 
     with client.messages.stream(
         model="claude-sonnet-4-6",
-        max_tokens=60000,   # teto: 64k — seguro para PLCs grandes + 180 emendas
+        max_tokens=64000,   # teto máximo do modelo (claude-sonnet-4-6)
         messages=[{"role": "user", "content": prompt}]
     ) as stream:
         resp_text = stream.get_final_text()
@@ -967,37 +1064,28 @@ O texto do dispositivo permanece exatamente como aprovado — apenas acrescente 
         m = re.search(rf'<{tag}>(.*?)</{tag}>', resp_text, re.DOTALL)
         return m.group(1).strip() if m else default
 
-    # ── Validação: todas as tags esperadas devem ter par completo ───────────
-    # Verificar só a tag de abertura não protege contra truncamento:
-    # resposta cortada após <TAG> faria extrair() devolver "" silenciosamente.
-    # TEXTO_HARMONIZADO e LOG_ALTERACOES também exigem conteúdo não vazio.
-    _TODAS_TAGS      = [
-        "TEXTO_HARMONIZADO", "MAPA_RENUMERACAO",
-        "AVISOS", "ERROS_CRITICOS", "ALERTAS_ABSURDOS",
+    # ── Validação: TEXTO_HARMONIZADO é obrigatório; demais tags são opcionais ─
+    # Para projetos muito extensos (76+ emendas com capítulos inteiros reescritos),
+    # o output da IA pode ser truncado após gerar o texto principal.
+    # Estratégia: falhar apenas se o texto harmonizado estiver ausente/vazio;
+    # para as demais tags, usar defaults e emitir aviso de resposta parcial.
+    _m_texto = re.search(
+        r'<TEXTO_HARMONIZADO>(.*?)</TEXTO_HARMONIZADO>', resp_text, re.DOTALL
+    )
+    if not _m_texto or not _m_texto.group(1).strip():
+        raise ValueError(
+            "Texto harmonizado ausente ou vazio — resposta da IA inválida. "
+            "Tente novamente."
+        )
+
+    _TAGS_META = [
+        "MAPA_RENUMERACAO", "AVISOS", "ERROS_CRITICOS", "ALERTAS_ABSURDOS",
         "NOTAS_TECNICAS", "SUGESTOES_NORMATIVAS", "LOG_ALTERACOES",
     ]
-    _TAGS_NAO_VAZIAS = {"TEXTO_HARMONIZADO", "LOG_ALTERACOES"}
-
-    _sem_par:        list[str] = []
-    _conteudo_vazio: list[str] = []
-
-    for _tag in _TODAS_TAGS:
-        _m = re.search(rf'<{_tag}>(.*?)</{_tag}>', resp_text, re.DOTALL)
-        if not _m:
-            _sem_par.append(_tag)
-        elif _tag in _TAGS_NAO_VAZIAS and not _m.group(1).strip():
-            _conteudo_vazio.append(_tag)
-
-    if _sem_par:
-        raise ValueError(
-            f"Resposta da IA truncada — par completo ausente: {', '.join(_sem_par)}. "
-            "Tente novamente; se o erro persistir, reduza o número de emendas por lote."
-        )
-    if _conteudo_vazio:
-        raise ValueError(
-            f"Resposta da IA inválida — conteúdo obrigatório vazio em: "
-            f"{', '.join(_conteudo_vazio)}. Tente novamente."
-        )
+    _tags_truncadas = [
+        t for t in _TAGS_META
+        if not re.search(rf'<{t}>(.*?)</{t}>', resp_text, re.DOTALL)
+    ]
 
     texto_harm = re.search(
         r'<TEXTO_HARMONIZADO>(.*?)</TEXTO_HARMONIZADO>', resp_text, re.DOTALL
@@ -1038,6 +1126,20 @@ O texto do dispositivo permanece exatamente como aprovado — apenas acrescente 
     notas_list   = parse_linhas(notas_raw,   modo='paragrafo')
     sugest_list  = parse_linhas(sugest_raw,  modo='paragrafo')
     log_list     = parse_linhas(log_raw,     modo='linha')
+
+    # Se houve truncamento nas seções de metadados, registra aviso proeminente
+    if _tags_truncadas:
+        _aviso_truncamento = (
+            "⚠ ATENÇÃO — RESPOSTA PARCIAL: o projeto é extenso demais para gerar "
+            f"todos os metadados em uma única chamada. Seções ausentes: "
+            f"{', '.join(_tags_truncadas)}. "
+            "O TEXTO HARMONIZADO está completo. "
+            "Revise manualmente os dispositivos alterados antes de exportar como Redação Final."
+        )
+        avisos_list.insert(0, _aviso_truncamento)
+        log_list.insert(0,
+            f"RESPOSTA-PARCIAL: seções truncadas = {', '.join(_tags_truncadas)}"
+        )
 
     # Pós-processamento: eleva absurdos manifestos classificados erroneamente como §1º avisos
     avisos_list, alertas_list = _escalar_avisos_para_absurdos(
