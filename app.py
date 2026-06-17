@@ -22,6 +22,7 @@ from utils import (
     exportar_redacao_final_docx, exportar_relatorio_problemas_txt,
     extrair_ementa_autor,
 )
+import auditoria_gabarito as ag
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -231,12 +232,13 @@ Concepção e Desenvolvimento:<br>
 _tipo_rdz = st.session_state.get('tipo_redacao', 'Redação Final')
 _icon_rdz  = "✅" if _tipo_rdz == "Redação Final" else "📋"
 
-aba1, aba2, aba3, aba4, aba5 = st.tabs([
+aba1, aba2, aba3, aba4, aba5, aba6 = st.tabs([
     "📄 1 · Projeto",
     "📝 2 · Emendas",
     "🗳️ 3 · Votação",
     "⚖️ 4 · Harmonizar",
     f"{_icon_rdz} 5 · {_tipo_rdz}",
+    "🔎 6 · Auditoria",
 ])
 
 
@@ -1025,3 +1027,97 @@ with aba5:
                 mime="text/plain",
                 use_container_width=True,
             )
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# ABA 6 — AUDITORIA DE CONVERGÊNCIA COM O GABARITO OFICIAL
+# ══════════════════════════════════════════════════════════════════════════════
+
+with aba6:
+    st.header("🔎 Auditoria de Convergência")
+    st.caption(
+        "Confronta a harmonização gerada pelo app com a **redação final efetivamente "
+        "publicada** (gabarito oficial) e com o checklist técnico dela derivado — medindo "
+        "o quanto a saída do sistema converge com o resultado oficial."
+    )
+
+    gabaritos = ag.listar_gabaritos()
+
+    if not gabaritos:
+        st.info(
+            "Nenhum gabarito cadastrado. Para auditar um projeto, adicione em "
+            "`./gabaritos/` um par de arquivos: `<slug>_gabarito.json` (checklist técnico) "
+            "e `<slug>_redacao_oficial.txt` (texto da redação final publicada)."
+        )
+    elif not st.session_state.resultado_harm:
+        st.info("Execute a harmonização na **aba 4** para auditar a convergência com o gabarito.")
+    else:
+        # Seleção do gabarito (auto-detecção pelo nome do projeto)
+        _auto = ag.detectar_gabarito(nome_projeto)
+        _nomes = {p.stem.replace('_gabarito', ''): p for p in gabaritos}
+        _vals = list(_nomes.values())
+        _idx = _vals.index(_auto) if _auto in _vals else 0
+        _sel = st.selectbox("Gabarito de referência:", list(_nomes.keys()), index=_idx)
+        gab = ag.carregar_gabarito(_nomes[_sel])
+
+        res = st.session_state.resultado_harm
+        rel = ag.auditar(res, res.texto_harmonizado, emendas, gab)
+
+        # ── Placar de convergência ──
+        _cor = "#28a745" if rel.score >= 85 else "#ff9800" if rel.score >= 60 else "#dc3545"
+        st.markdown(
+            f"<div style='font-size:1.05rem;margin:.4rem 0'>Convergência com o oficial: "
+            f"<strong style='color:{_cor};font-size:1.6rem'>{rel.score}/100</strong></div>",
+            unsafe_allow_html=True,
+        )
+        st.progress(rel.score / 100)
+        m1, m2, m3 = st.columns(3)
+        m1.metric("✅ Convergente", rel.n_ok)
+        m2.metric("⚠️ Verificar",   rel.n_atencao)
+        m3.metric("❌ Diverge",     rel.n_falha)
+        st.caption(f"📚 Fonte do gabarito: {gab.get('fonte', '')}")
+
+        if rel.n_falha == 0 and rel.n_atencao == 0:
+            st.success("🎯 Convergência plena com o resultado oficial nos itens auditáveis.")
+
+        st.divider()
+
+        # ── Itens, ordenados por severidade ──
+        _ordem = {ag.FALHA: 0, ag.ATENCAO: 1, ag.OK: 2, ag.INFO: 3}
+        for it in sorted(rel.itens, key=lambda i: _ordem.get(i.status, 9)):
+            _box = (st.error if it.status == ag.FALHA else
+                    st.warning if it.status == ag.ATENCAO else
+                    st.success if it.status == ag.OK else st.info)
+            _box(f"{it.icone}  **[{it.grupo}]**  {it.titulo}")
+            if it.detalhe:
+                _det = it.detalhe.replace('\n', '<br>')
+                st.markdown(
+                    f"<div style='margin:-6px 0 8px 30px;font-size:0.87rem;color:#444'>{_det}</div>",
+                    unsafe_allow_html=True,
+                )
+            if it.sugestao:
+                _sug = it.sugestao.replace('\n', '<br>')
+                st.markdown(
+                    f"<div style='margin:-4px 0 12px 30px;font-size:0.85rem;color:#1a3a5c'>"
+                    f"💡 {_sug}</div>",
+                    unsafe_allow_html=True,
+                )
+
+        st.divider()
+
+        # ── Texto oficial de referência (gabarito) ──
+        _oficial = gab.get('_texto_oficial_conteudo', '')
+        if _oficial:
+            with st.expander("📜 Redação final publicada (gabarito) — texto de referência"):
+                st.download_button(
+                    "⬇️ Baixar gabarito oficial (.txt)",
+                    data=_oficial.encode('utf-8'),
+                    file_name=f"{_sel}_redacao_oficial.txt",
+                    mime="text/plain",
+                )
+                st.text_area(
+                    "Texto oficial:",
+                    value=_oficial,
+                    height=420,
+                    label_visibility="collapsed",
+                )

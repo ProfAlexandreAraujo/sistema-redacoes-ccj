@@ -6,6 +6,7 @@ Sistema de Redações — CCJ CMRJ
 import re
 import json
 import copy
+import unicodedata
 import anthropic
 from collections import defaultdict
 from dataclasses import dataclass, field, asdict
@@ -426,6 +427,97 @@ def _escalar_avisos_para_absurdos(
     return avisos_restantes, todos
 
 
+# ─────────────────────────────────────────────────────────────────────────────
+# PÓS-PROCESSAMENTO: DESESCALADA DE FALSOS §2º (convergência com a publicação)
+# ─────────────────────────────────────────────────────────────────────────────
+
+def _strip_acentos(s: str) -> str:
+    return ''.join(c for c in unicodedata.normalize('NFD', s)
+                   if unicodedata.category(c) != 'Mn')
+
+
+# Situações que o próprio regimento/técnica tratam como §1º (jamais §2º).
+# Padrões em texto SEM acento (o item é normalizado antes da comparação).
+_REGRAS_DESESCALAR: list[tuple[str, list[str]]] = [
+    ("ausência de conteúdo gráfico/tabular de anexo (regra A3.1 — §1º / conferência visual)",
+     [r'anexo.{0,160}(nao .{0,12}fornec|ausente|materialmente incomplet|sem o conteudo|sem o seu conteudo|conteudo nao|conteudo (grafico|tabular))',
+      r'(nao .{0,12}fornec|conteudo nao|conteudo (grafico|tabular)|materialmente incomplet).{0,160}anexo',
+      r'quadro de parametros.{0,80}(nao .{0,12}fornec|ausente)']),
+    ("instrução de renumeração de dispositivos de lei externa (regra E3 — §1º)",
+     [r'renumerand.{0,60}(paragrafos|incisos|demais)',
+      r'renumera.{0,30}demais.{0,30}(paragrafo|inciso)']),
+    ("dupla numeração tipográfica de inciso/alínea (regra E1/E3 — §1º; corrigir numeração)",
+     [r'dupla (indicacao|numeracao)', r'\bvi ?- ?v\b', r'dois numeros ordinais']),
+]
+
+# Marcadores de §2º GENUÍNO — se presentes, não desescalar (cautela máxima).
+_GUARDA_SEC2_GENUINO = re.compile(
+    r'autorefer|referencia circular|contradicao entre|conflito de emendas|conflito / emendas'
+    r'|condicao .{0,20}inoperante',
+    re.IGNORECASE)
+
+
+def _desescalar_falsos_sec2(
+    alertas_absurdos: list[str],
+    erros_criticos: list[str],
+    avisos: list[str],
+    log: list[str],
+) -> tuple[list[str], list[str], list[str], list[str]]:
+    """
+    Rebaixa para AVISO (§1º) itens classificados como ALERTA DE ABSURDO (§2º) ou
+    ERRO CRÍTICO (§2º) que, pela própria técnica legislativa e pelas regras A3.1/E3
+    do sistema, NÃO configuram absurdo manifesto:
+
+      · ausência de conteúdo gráfico/tabular de anexo (mapas, quadros, coordenadas)
+      · instrução de renumeração de dispositivos de LEI EXTERNA
+      · dupla numeração tipográfica de inciso/alínea (ex.: "VI - V")
+
+    Essas três situações eram a principal fonte de superescalada §2º que afastava a
+    saída do aplicativo do resultado efetivamente publicado pela CCJ. A desescalada é
+    conservadora: itens que contêm marca de §2º genuíno (autoreferência circular,
+    contradição entre emendas, condição inoperante) são preservados como estão.
+
+    Retorna (alertas, erros, avisos, log) atualizados.
+    """
+    regras_comp = [
+        (motivo, [re.compile(p, re.IGNORECASE | re.DOTALL) for p in pats])
+        for motivo, pats in _REGRAS_DESESCALAR
+    ]
+
+    def _motivo_desescalada(item: str):
+        alvo = _strip_acentos(item).lower()
+        if _GUARDA_SEC2_GENUINO.search(alvo):
+            return None  # §2º genuíno coexistente — não mexer
+        for motivo, pats in regras_comp:
+            if any(p.search(alvo) for p in pats):
+                return motivo
+        return None
+
+    novos_avisos: list[str] = []
+
+    def _filtrar(lista: list[str], rotulo: str) -> list[str]:
+        mantidos = []
+        for item in lista:
+            motivo = _motivo_desescalada(item)
+            if motivo:
+                limpo = re.sub(r'^[\s🔴🚨⚠️]+', '', item).strip()
+                novos_avisos.append(
+                    f"⚠ {limpo}  "
+                    f"[Reclassificado para §1º: {motivo} — não é absurdo manifesto; "
+                    f"alinhamento com a redação final publicada]"
+                )
+                log.append(
+                    f"DESESCALADO §2º→§1º ({rotulo}): {motivo}. Item movido para AVISOS."
+                )
+            else:
+                mantidos.append(item)
+        return mantidos
+
+    alertas_out = _filtrar(alertas_absurdos, "absurdo manifesto")
+    erros_out   = _filtrar(erros_criticos,   "erro crítico")
+    return alertas_out, erros_out, avisos + novos_avisos, log
+
+
 def _resumo_para_ia(texto: str, max_chars: int = 600) -> str:
     """
     Extrai o conteúdo substantivo da emenda para classificação pela IA.
@@ -718,6 +810,13 @@ A3.1 — CONTEÚDO GRÁFICO, TABULAR E GEORREFERENCIADO (tratamento obrigatório
        tabular ou georreferenciado. Mapas, tabelas e coordenadas não existem em formato
        texto puro — sua ausência no input é esperada e não configura ininteligibilidade
        jurídica nem falha normativa da CCJ.
+       ⚠ ISSO VALE MESMO QUANDO o Anexo é referenciado por ARTIGOS OPERATIVOS da lei
+       (ex.: "nos termos do Anexo VII", "conforme o Quadro de Parâmetros do Anexo III").
+       A referência operativa a um anexo cujo conteúdo é gráfico/tabular NÃO transforma a
+       ausência textual em erro crítico nem em absurdo. Trate SEMPRE como AVISO §1º de
+       "conferência visual" (cotejo contra o PDF/mapa oficial antes da publicação).
+       Esta regra A3.1 PREVALECE sobre E2/E3: na dúvida entre §1º (anexo ausente) e §2º,
+       é §1º.
 
     Aplica-se a: Quadros de Parâmetros Urbanísticos, Tabelas de Fator de Ajuste Locacional,
     Tabelas de Potencial Construtivo, Mapas de Subsetores, Anexos de Bens Imóveis, Plantas,
@@ -770,6 +869,16 @@ A4. EMENDAS SEM ALVO DEFINIDO — "acrescente-se onde couber"
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 BLOCO B — RENUMERAÇÃO (LC 95/1998, art. 10; LC 48/2000, art. 9)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+B0. ARQUITETURA ANTES DA NUMERAÇÃO (ordem obrigatória de montagem)
+    PRIMEIRO defina a ARQUITETURA FINAL de capítulos e seções (inclusive capítulos novos de
+    alteração de leis externas e capítulos inseridos "entre" outros); SÓ DEPOIS numere os
+    artigos em sequência única e atualize as remissões internas. Renumerar antes de fixar a
+    arquitetura rompe remissões e mistura capítulos materiais com alterações externas.
+    RESULTADO EXIGIDO: numeração de artigos CONTÍGUA e ÚNICA (1, 2, 3, … sem salto e sem
+    repetição). Se dois artigos novos forem inseridos no mesmo ponto (ex.: dois "onde couber"
+    após o mesmo artigo), ordene-os por afinidade temática e atribua números SEQUENCIAIS
+    distintos — JAMAIS dois artigos com o mesmo número.
 
 B1. ARTIGOS
     — Numeração ordinal até o 9º (Art. 1º, Art. 2º … Art. 9º)
@@ -855,6 +964,12 @@ E1. CORREÇÕES AUTOMÁTICAS DE LINGUAGEM (art. 250, §1º RI):
     — Pontuação do Bloco C, EXCETO o conectivo "; e" (ex: inciso encerrando com "." → ";";
       última alínea sem "." → acrescentar ".")
     — Uniformização de tempo verbal dentro do mesmo artigo
+    — DUPLA INDICAÇÃO DE NÚMERO em inciso/alínea (ex.: "VI - V –", "VII - V –") — é erro
+      tipográfico de NUMERAÇÃO, não de teor: corrija para o número ORDINAL CORRETO conforme a
+      posição do dispositivo no rol (renumeração sequencial), registre em LOG e AVISOS.
+      NUNCA preserve a dupla numeração no texto e NUNCA classifique como absurdo §2º — a
+      numeração de um dispositivo é estrutura, não conteúdo normativo. O teor (o que o inciso
+      manda) permanece intacto; apenas o rótulo numérico é acertado.
 
     Para cada correção: LOG_ALTERACOES → "E1 / Art. Xº: [original] → [corrigido]"
                         AVISOS → "⚠ E1 / Art. Xº: corrigido automaticamente — [original] → [corrigido]"
@@ -937,6 +1052,33 @@ E2. CONFLITOS ENTRE EMENDAS APROVADAS — DETECÇÃO OBRIGATÓRIA E SUGESTÃO NO
     — Emenda S estabelece prazo N dias; Emenda T estabelece prazo M dias para a MESMA obrigação
     — Resultado que gera absurdo jurídico manifesto insanável sem alterar teor (→ ver E3)
 
+E2.1. QUANDO **NÃO** HÁ CONFLITO — MONTAGEM OBRIGATÓRIA (não escalar §2º)
+    Antes de declarar conflito, verifique se as emendas são COMPATÍVEIS por montagem.
+    Nestes casos NÃO existe conflito; faça a MONTAGEM e, no máximo, gere ⚠ AVISO (§1º):
+
+    (i) EMENDA ADITIVA (acrescenta § ou inciso) + EMENDA SUBSTITUTIVA do MESMO artigo,
+        quando o dispositivo a que a aditiva se refere CONTINUA existindo no texto
+        substituído. → Use a substitutiva como base e INCORPORE a adição como parágrafo
+        NUMERADO seguinte (ou inciso na sequência). Não preserve "Parágrafo único" ao lado
+        de §§ numerados — converta para o número correto.
+        Exemplo real: Art. 28 — a substitutiva cria caput + §§ 1º e 2º; a aditiva acrescenta
+        um parágrafo sobre o mesmo inciso II (que existe em ambas). Resultado correto:
+        caput + §§ 1º, 2º e 3º (a adição vira §3º). Isso é MONTAGEM, não conflito §2º.
+        LOG: "E2.1 / Art. X: aditiva (Emenda N) incorporada como §K à base substitutiva (Emenda M)."
+
+    (ii) EMENDA MODIFICATIVA de um dispositivo que uma SUBSTITUTIVA/SUBEMENDA aprovada
+        REESTRUTUROU, quando o conteúdo da modificativa já foi MATERIALMENTE ABSORVIDO pela
+        nova redação. → Registre a absorção como harmonização e gere ⚠ AVISO (§1º) apontando
+        onde o comando da modificativa aparece na nova estrutura. §2º somente se houver dúvida
+        REAL sobre a intenção (ex.: a modificativa pretendia exceção mais ampla que a absorvida).
+        Exemplo real: Emenda 56 (exclui XX RA da AP3) absorvida pela alínea da nova Seção I
+        criada pela Subemenda 3 (Emenda 126). LOG: "E2.1 / Op. Interligada: Emenda 56 absorvida
+        pela alínea f) do inciso I (nova Seção I — Subemenda 3); harmonização §1º."
+
+    Conflito §2º REAL é apenas: duas redações que se EXCLUEM para o MESMO dispositivo
+    (duas substitutivas divergentes, ou substitutiva × supressiva), sem montagem possível
+    sem escolher uma e descartar a outra.
+
 E3. ALERTA DE ABSURDO MANIFESTO (art. 250, §2º RI — providência regimental indicada é a reabertura):
     QUATRO SITUAÇÕES QUE OBRIGATORIAMENTE geram 🔴 — NÃO downgrade para ⚠ AVISO:
 
@@ -981,6 +1123,38 @@ E3. ALERTA DE ABSURDO MANIFESTO (art. 250, §2º RI — providência regimental 
       absurdo; gere ⚠ AVISO recomendando verificação.
     — Cláusula de redação incomum, sub-ótima ou passiva sem sujeito explícito, quando ainda
       é possível extrair o comando normativo — imperfeição redacional, não absurdo.
+
+    CASO 5 — TOKEN ININTELIGÍVEL ISOLADO (preservar verbatim + 🔴 §2º):
+    Palavra ou token SOLTO, sem função normativa, encravado entre dispositivos (ex.: uma
+    palavra em caixa alta sozinha entre dois incisos, sem verbo, sem comando, sem sentido
+    no contexto — como um "ruído" de digitação no texto votado). NÃO é sigla conhecida,
+    NÃO é nome próprio, NÃO compõe o comando do dispositivo.
+    → PRESERVE o token VERBATIM no texto harmonizado (não remova: removê-lo é decisão do
+      relator, jamais automática — art. 250 RI) e classifique como 🔴 ABSURDO §2º
+      (ininteligibilidade). Insira o marcador inline de absurdo logo após o token.
+    Exemplo real: a palavra solta "TRADUZIK" entre os incisos II e III de um artigo aprovado.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+BLOCO E4 — VERIFICAÇÕES FORMAIS ATIVAS (gerar ⚠ AVISO §1º — nunca §2º)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Durante a montagem, procure ATIVAMENTE estes vícios FORMAIS e gere ⚠ AVISO (§1º) para cada um
+(sem alterar teor; quando a correção for inequívoca e meramente formal, aplique-a e registre):
+
+E4.1 — CONTAGEM ANUNCIADA × TRANSCRITA: o comando da emenda anuncia "incisos VII e VIII" mas
+    o texto transcrito traz VII, VIII e IX (ou vice-versa). Aponte a divergência entre o
+    enunciado e o conteúdo efetivamente transcrito; inclua todos os dispositivos transcritos.
+
+E4.2 — REMISSÃO INTERNA IMPRÓPRIA EM ARTIGO AUTÔNOMO: expressão "neste parágrafo" dentro de um
+    dispositivo que, na montagem, virou ARTIGO autônomo (não parágrafo). Aponte para ajuste a
+    "neste artigo" (correção formal inequívoca — §1º).
+
+E4.3 — IDENTIFICAÇÃO DA PROPOSIÇÃO: menção a "Projeto de Lei nº X" quando a proposição é
+    "Projeto de Lei COMPLEMENTAR nº X". Registre correção de referência, sem alterar o teor.
+
+E4.4 — EMENTA INCONSISTENTE COM O CONJUNTO APROVADO: a ementa cita diploma/data divergente das
+    peças aprovadas (ex.: "LC 232, de 2016" quando as peças tratam de "LC 232, de 2021"), ou
+    omite lei efetivamente alterada, ou cita lei sem alteração operativa aprovada. Gere ⚠ AVISO
+    detalhado; ajuste a ementa apenas com fundamentação formal expressa (na dúvida material, §2º).
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 TEXTO ORIGINAL DO PROJETO:
@@ -1144,6 +1318,13 @@ O texto do dispositivo permanece exatamente como aprovado — apenas acrescente 
     # Pós-processamento: eleva absurdos manifestos classificados erroneamente como §1º avisos
     avisos_list, alertas_list = _escalar_avisos_para_absurdos(
         avisos_list, texto_harm, alertas_list
+    )
+
+    # Pós-processamento: rebaixa para §1º os falsos §2º que afastavam a saída da
+    # redação final publicada (anexo sem conteúdo gráfico, renumeração de lei externa,
+    # dupla numeração tipográfica). Conservador — preserva §2º genuíno.
+    alertas_list, erros_list, avisos_list, log_list = _desescalar_falsos_sec2(
+        alertas_list, erros_list, avisos_list, log_list
     )
 
     # Injeta log, avisos e erros críticos de subemendas no início (pré-processamento visível)

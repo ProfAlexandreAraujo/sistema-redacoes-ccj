@@ -1,0 +1,114 @@
+{
+  "projeto": "PLC 92/2025 — AEIU Praça XI Maravilha",
+  "nome_match": ["92", "aeiu", "praça onze", "praça xi", "praca onze", "praca xi"],
+  "fonte": "DCM nº 107, de 15/06/2026 — Redação Final do PLC 92-A/2025 (pp. 27-50), arquivo-fonte 'DCM RF PLC 92.pdf' na pasta do app. Checklist técnico: Diagnóstico de Harmonização (Alexandre Araujo, 28/05/2026), Tabela 11.",
+  "texto_oficial": "PLC92_2025_redacao_oficial.txt",
+  "data_publicacao": "2026-06-15",
+
+  "entrada_esperada": {
+    "emendas_aprovadas": 66,
+    "subemendas_aprovadas": 9,
+    "total_pecas": 75,
+    "observacao": "Inclui E78 (aprovada em destaque). Excluir E79 e E143 (retiradas) e todas as rejeitadas."
+  },
+
+  "estrutura_final": {
+    "total_artigos": 63,
+    "artigo_vigencia": 63,
+    "total_capitulos": 6,
+    "sequencia_contigua": true,
+    "observacao": "Art. 1 a Art. 63 sem colisão nem salto de numeração; Art. 63 = entrada em vigor."
+  },
+
+  "subemendas": [
+    {"sub": 1, "emenda_pai": 105},
+    {"sub": 2, "emenda_pai": 122},
+    {"sub": 3, "emenda_pai": 126},
+    {"sub": 4, "emenda_pai": 128},
+    {"sub": 5, "emenda_pai": 99},
+    {"sub": 6, "emenda_pai": 102},
+    {"sub": 7, "emenda_pai": 96},
+    {"sub": 8, "emenda_pai": 136},
+    {"sub": 9, "emenda_pai": 101}
+  ],
+
+  "alertas_criticos_esperados": [
+    {
+      "id": "TRADUZIK",
+      "peca": "S1/E105",
+      "padrao": "TRADUZIK",
+      "tipo": "ininteligibilidade — token sem sentido normativo entre incisos do artigo de urbanismo humanizado",
+      "decisao_oficial": "Removido na publicação como erro material de publicação (§1º) — decisão do relator. O app DEVE preservar verbatim no rascunho e ALERTAR; a remoção é decisão humana, nunca automática."
+    }
+  ],
+
+  "avisos_formais_esperados": [
+    {"peca": "E66",   "match": ["66"],  "assunto": "dupla numeração 'VI - V' no inciso de diretrizes do art. 3º — renumerar sequencialmente (§1º)"},
+    {"peca": "S7/E96","match": ["96", "ementa"], "assunto": "ementa inconsistente (LC 232 data 2016 vs 2021; LC 281 não citada; LC 299 sem alteração operativa)"},
+    {"peca": "E129",  "match": ["129"], "assunto": "comando anuncia incisos VII e VIII mas transcreve VII, VIII e IX (Anexo VII)"},
+    {"peca": "S8/E136","match": ["136"], "assunto": "remissão interna 'neste parágrafo' em artigo autônomo — ajustar para 'neste artigo'"},
+    {"peca": "E149",  "match": ["149"], "assunto": "renumeração de parágrafos de lei externa (LC 270/2024) — eficácia em consolidação (§1º, não §2º)"},
+    {"peca": "E140",  "match": ["140"], "assunto": "menção a 'Projeto de Lei nº 92/2025' quando é Projeto de Lei Complementar"}
+  ],
+
+  "alertas_proibidos": {
+    "pecas_rejeitadas_ou_retiradas": ["E6", "E84", "E41", "E29", "E77", "E9", "E34", "E95", "E79", "E143"],
+    "motivo": "Peças rejeitadas ou retiradas na sessão de 27/05/2026 — não devem gerar conflito nem alerta na saída do app."
+  },
+
+  "harmonizacoes_obrigatorias": [
+    {"nucleo": "Art. 3º (diretrizes)",        "match": ["72", "42", "66", "104", "108"]},
+    {"nucleo": "Art. 4º (intervenções)",      "match": ["110", "134", "43", "51", "52", "53", "61", "100", "146"]},
+    {"nucleo": "Operação Interligada",        "match": ["126", "56", "127"]},
+    {"nucleo": "Art. 28 (instrumentos econômicos)", "match": ["147", "2"]},
+    {"nucleo": "Pacote de anexos do PLC",     "match": ["106", "118", "119", "120", "121", "127", "129", "145"]},
+    {"nucleo": "Alterações externas + ementa","match": ["96", "99", "116", "123", "128", "130", "131", "135", "139", "149"]}
+  ],
+
+  "conferencia_visual": ["99", "106", "118", "119", "120", "121", "127", "128", "129", "145"],
+
+  "nao_escalar_2": [
+    {
+      "id": "anexo_sem_conteudo",
+      "classe_correta": "§1º aviso / conferência visual",
+      "fundamento": "Regra A3.1 do harmonizador + Tabela 4 do Diagnóstico: ausência de conteúdo gráfico/tabular nunca é erro crítico nem absurdo manifesto. (Padrões em texto sem acento; casados case-insensitive com DOTALL.)",
+      "padroes": [
+        "anexo.{0,140}(nao .{0,12}fornec|ausente|materialmente incomplet|sem o conteudo|sem o seu conteudo|conteudo nao|conteudo (grafico|tabular))",
+        "(nao .{0,12}fornec|conteudo nao|conteudo grafico|conteudo tabular|materialmente incomplet).{0,140}anexo",
+        "quadro de parametros.{0,60}(nao .{0,12}fornec|ausente)"
+      ]
+    },
+    {
+      "id": "renumeracao_lei_externa",
+      "classe_correta": "§1º aviso",
+      "fundamento": "Regra E3 do harmonizador: instrução de renumeração de dispositivos de lei externa é técnica legislativa, gera aviso de verificação, não 🔴.",
+      "padroes": [
+        "renumerand.{0,60}(paragrafos|incisos|demais)",
+        "renumera.{0,30}demais.{0,30}(paragrafo|inciso)"
+      ]
+    },
+    {
+      "id": "dupla_numeracao_tipografica",
+      "classe_correta": "§1º correção de numeração + log",
+      "fundamento": "Regra E3 (erro tipográfico de numeração identificável pelo contexto) + decisão oficial: a CCJ renumerou 'VI - V' para sequencial sem qualquer alerta de §2º.",
+      "padroes": [
+        "dupla (indicacao|numeracao)",
+        "VI ?- ?V",
+        "dois numeros ordinais"
+      ]
+    }
+  ],
+
+  "conflitos_que_sao_harmonizacao": [
+    {
+      "pecas": ["2", "147"],
+      "dispositivo": "Art. 28 (ex-original) / art. consolidado",
+      "resolucao": "Montar: E147 como base + parágrafo único da E2 como parágrafo NUMERADO (§3º). O inciso II ao qual a E2 remete existe em ambas as versões. NÃO tratar como conflito §2º insanável."
+    },
+    {
+      "pecas": ["56", "126"],
+      "dispositivo": "Operação Interligada (Seção I do Cap. III)",
+      "resolucao": "E56 (exclusão da XX RA da AP3) absorvida pela nova Seção I da S3/E126 (alínea 'f' do inciso I). Harmonização com nota §1º; §2º apenas se houver dúvida real sobre a intenção da E56."
+    }
+  ]
+}
